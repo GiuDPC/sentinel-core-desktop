@@ -1,0 +1,18 @@
+# Archivos sensibles y personales
+Prompt.md
+.env
+.env.local
+
+# Dependencias (cada subcarpeta tiene su propio .gitignore pero por si acaso)
+node_modules/
+
+# Prisma generated
+generated/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

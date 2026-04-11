@@ -7,7 +7,7 @@
     "esModuleInterop": true,
     "ignoreDeprecations": "6.0",
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "."
   },
-  "include": ["src/**/*", "prisma.config.ts"]
+  "include": ["src/**/*", "generated/**/*", "prisma.config.ts"]
 }

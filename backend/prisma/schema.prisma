@@ -6,3 +6,146 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum TicketStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  ON_HOLD
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  users User[]
+
+  @@map("roles")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  roleId       Int      @map("role_id")
+  fullName     String   @map("full_name")
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  phone        String?
+  department   String?
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  role        Role         @relation(fields: [roleId], references: [id])
+  tickets     Ticket[]     @relation("TicketCreator")
+  assignments Assignment[]
+  comments    Comment[]
+  auditLogs   AuditLog[]
+
+  @@map("users")
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  slaHours  Int      @map("sla_hours")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tickets Ticket[]
+
+  @@map("categories")
+}
+
+model Ticket {
+  id          String         @id @default(uuid())
+  ticketCode  String         @unique @map("ticket_code")
+  creatorId   String         @map("creator_id")
+  categoryId  Int            @map("category_id")
+  title       String
+  description String
+  location    String
+  status      TicketStatus   @default(OPEN)
+  priority    TicketPriority
+  dueDate     DateTime?      @map("due_date")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  creator     User         @relation("TicketCreator", fields: [creatorId], references: [id])
+  category    Category     @relation(fields: [categoryId], references: [id])
+  assignments Assignment[]
+  comments    Comment[]
+  attachments Attachment[]
+  auditLogs   AuditLog[]
+
+  @@map("tickets")
+}
+
+model Assignment {
+  ticketId     String   @map("ticket_id")
+  technicianId String   @map("technician_id")
+  assignedAt   DateTime @default(now()) @map("assigned_at")
+
+  ticket     Ticket @relation(fields: [ticketId], references: [id])
+  technician User   @relation(fields: [technicianId], references: [id])
+
+  @@id([ticketId, technicianId])
+  @@map("assignments")
+}
+
+model Comment {
+  id         String   @id @default(uuid())
+  ticketId   String   @map("ticket_id")
+  userId     String   @map("user_id")
+  content    String
+  isInternal Boolean  @default(false) @map("is_internal")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("comments")
+}
+
+model Attachment {
+  id        String   @id @default(uuid())
+  ticketId  String   @map("ticket_id")
+  fileUrl   String   @map("file_url")
+  fileName  String   @map("file_name")
+  fileSize  Int      @map("file_size")
+  fileType  String   @map("file_type")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+
+  @@map("attachments")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  ticketId  String   @map("ticket_id")
+  userId    String   @map("user_id")
+  action    String
+  oldValue  String?  @map("old_value")
+  newValue  String?  @map("new_value")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}

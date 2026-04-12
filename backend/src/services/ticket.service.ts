@@ -44,7 +44,7 @@ async function create(data: {
       include: {
         category: true,
         creator: {
-          select: { id: true, fullName: true, email: true },
+          select: { id: true, firstName: true, lastName: true, email: true },
         },
       },
     });
@@ -90,12 +90,12 @@ async function findAll(filters: {
       include: {
         category: true,
         creator: {
-          select: { id: true, fullName: true, email: true },
+          select: { id: true, firstName: true, lastName: true, email: true },
         },
         assignments: {
           include: {
             technician: {
-              select: { id: true, fullName: true },
+              select: { id: true, firstName: true, lastName: true },
             },
           },
         },
@@ -121,19 +121,19 @@ async function findById(id: string) {
     include: {
       category: true,
       creator: {
-        select: { id: true, fullName: true, email: true },
+        select: { id: true, firstName: true, lastName: true, email: true },
       },
       assignments: {
         include: {
           technician: {
-            select: { id: true, fullName: true, department: true },
+            select: { id: true, firstName: true, lastName: true, department: true },
           },
         },
       },
       comments: {
         include: {
           user: {
-            select: { id: true, fullName: true },
+            select: { id: true, firstName: true, lastName: true },
           },
         },
         orderBy: { createdAt: 'asc' },
@@ -141,7 +141,7 @@ async function findById(id: string) {
       auditLogs: {
         include: {
           user: {
-            select: { id: true, fullName: true },
+            select: { id: true, firstName: true, lastName: true },
           },
         },
         orderBy: { createdAt: 'asc' },

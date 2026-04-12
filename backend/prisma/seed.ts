@@ -67,7 +67,8 @@ async function main() {
     where: { email: 'admin@sentinel.local' },
     update: {},
     create: {
-      fullName: 'Administrador del Sistema',
+      firstName: 'Administrador',
+      lastName: 'del Sistema',
       email: 'admin@sentinel.local',
       passwordHash,
       roleId: adminRole.id,
@@ -84,7 +85,8 @@ async function main() {
     where: { email: 'carlos.perez@sentinel.local' },
     update: {},
     create: {
-      fullName: 'Carlos Pérez',
+      firstName: 'Carlos',
+      lastName: 'Pérez',
       email: 'carlos.perez@sentinel.local',
       passwordHash: techPassword,
       roleId: techRole.id,
@@ -97,7 +99,8 @@ async function main() {
     where: { email: 'maria.lopez@sentinel.local' },
     update: {},
     create: {
-      fullName: 'María López',
+      firstName: 'María',
+      lastName: 'López',
       email: 'maria.lopez@sentinel.local',
       passwordHash: techPassword,
       roleId: techRole.id,
@@ -115,7 +118,8 @@ async function main() {
     where: { email: 'juan.garcia@sentinel.local' },
     update: {},
     create: {
-      fullName: 'Juan García',
+      firstName: 'Juan',
+      lastName: 'García',
       email: 'juan.garcia@sentinel.local',
       passwordHash: reqPassword,
       roleId: reqRole.id,

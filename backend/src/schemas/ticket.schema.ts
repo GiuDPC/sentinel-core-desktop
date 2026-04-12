@@ -1,0 +1,16 @@
+import { z } from 'zod';
+
+export const createTicketSchema = z.object({
+    title: z.string().min(5, 'El titulo debe tener minimo 5 caracteres'),
+    description: z.string().min(10, 'Describi el problema con al menos 10 caracteres'),
+    location: z.string().min(3, 'Indica la ubicacion del problema'),
+    categoryId: z.number().int().positive('Categoria invalida'),
+    priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
+});
+
+export const updateStatusSchema = z.object({
+  status: z.enum([
+    'OPEN', 'ASSIGNED', 'IN_PROGRESS',
+    'ON_HOLD', 'RESOLVED', 'CLOSED',
+  ]),
+});

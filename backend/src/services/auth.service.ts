@@ -30,7 +30,8 @@ async function login(email: string, password: string) {
     token,
     user: {
       id: user.id,
-      fullName: user.fullName,
+      firstName: user.firstName,
+      lastName: user.lastName,
       email: user.email,
       role: user.role.name,
     },
@@ -38,10 +39,11 @@ async function login(email: string, password: string) {
 }
 
 async function register(data: {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
-  roleId: number;
+  roleId?: number;
   phone?: string;
   department?: string;
 }) {
@@ -52,14 +54,27 @@ async function register(data: {
     throw new AppError(409, 'El email ya está registrado');
   }
 
+  // Si no viene roleId, se asigna REQUESTER (id = 3) por defecto
+  let roleId = data.roleId;
+  if (!roleId) {
+    const requesterRole = await prisma.role.findUnique({
+      where: { name: 'REQUESTER' },
+    });
+    if (!requesterRole) {
+      throw new AppError(500, 'Rol REQUESTER no encontrado. Ejecutá el seed.');
+    }
+    roleId = requesterRole.id;
+  }
+
   const passwordHash = await argon2.hash(data.password);
 
   const user = await prisma.user.create({
     data: {
-      fullName: data.fullName,
+      firstName: data.firstName,
+      lastName: data.lastName,
       email: data.email,
       passwordHash,
-      roleId: data.roleId,
+      roleId,
       phone: data.phone,
       department: data.department,
     },
@@ -68,7 +83,8 @@ async function register(data: {
 
   return {
     id: user.id,
-    fullName: user.fullName,
+    firstName: user.firstName,
+    lastName: user.lastName,
     email: user.email,
     role: user.role.name,
   };

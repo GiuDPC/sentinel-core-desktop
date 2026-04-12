@@ -2,6 +2,8 @@ import { prisma } from '../config/prisma.js';
 import { calculateDueDate } from '../utils/sla-calculator.js';
 import { generateTicketCode } from '../utils/ticket-code.js';
 import { AppError } from '../utils/app-error.js';
+import { auditService } from './audit.service.js';
+import { isValidTransition } from '../utils/state-machine.js';
 
 async function create(data: {
   title: string;
@@ -156,4 +158,47 @@ async function findById(id: string) {
   return ticket;
 }
 
-export const ticketService = { create, findAll, findById };
+async function updateStatus(
+  ticketId: string,
+  newStatus: string,
+  userId: string
+) {
+  const ticket = await prisma.ticket.findUnique({
+    where: { id: ticketId },
+  });
+  if (!ticket) {
+    throw new AppError(404, 'Ticket no encontrado');
+  }
+  // Validar transición con la State Machine
+  if (!isValidTransition(ticket.status, newStatus)) {
+    throw new AppError(
+      422,
+      `Transición inválida: no se puede cambiar de ${ticket.status} a ${newStatus}`
+    );
+  }
+  // Actualizar estado + crear audit log en una transacción atómica
+  return prisma.$transaction(async (tx) => {
+    const updated = await tx.ticket.update({
+      where: { id: ticketId },
+      data: { status: newStatus as any },
+      include: {
+        category: true,
+        creator: {
+          select: { id: true, firstName: true, lastName: true, email: true },
+        },
+      },
+    });
+    // Audit log — silencioso, automático, inmutable
+    await auditService.logAction(
+      ticketId,
+      userId,
+      'STATUS_CHANGE',
+      ticket.status,
+      newStatus,
+      tx
+    );
+    return updated;
+  });
+}
+
+export const ticketService = { create, findAll, findById, updateStatus };

@@ -1,5 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ticketService } from '../services/ticket.service.js';
+import { assignmentService } from '../services/assignment.service.js';
+
 
 async function create(req: Request, res: Response, next: NextFunction) {
   try {
@@ -43,4 +45,41 @@ async function findById(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-export const ticketController = { create, findAll, findById };
+async function updateStatus(req: Request, res: Response, next: NextFunction) {
+  try {
+    const ticket = await ticketService.updateStatus(
+      String(req.params.id),
+      req.body.status,
+      req.user!.id
+    );
+    res.json({ ticket });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function assignTechnician(req: Request, res: Response, next: NextFunction) {
+  try {
+    const ticket = await assignmentService.assignTechnician(
+      String(req.params.id),
+      req.body.technicianId,
+      req.user!.id
+    );
+    res.json({ ticket });
+  } catch (error) {
+    next(error);
+  }
+}
+async function getTechniciansWorkload(_req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await assignmentService.getTechniciansByWorkload();
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export const ticketController = {
+  create, findAll, findById, updateStatus,
+  assignTechnician, getTechniciansWorkload,
+};

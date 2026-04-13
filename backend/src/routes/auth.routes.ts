@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { authController } from '../controllers/auth.controller';
 import { validate } from '../middlewares/validate.middleware';
-import { authMiddlware } from '../middlewares/auth.middleware';
-import { roleGuard } from '../middlewares/role.middlware';
+import { authMiddleware } from '../middlewares/auth.middleware.js';
+import { roleGuard } from '../middlewares/role.middleware.js';
 import { loginSchema, registerSchema } from '../schemas/auth.schema';
 
 const router = Router();
@@ -13,16 +13,16 @@ router.post('/login', validate(loginSchema), authController.login);
 // POST /api/auth/register — Solo Admin
 router.post(
   '/register',
-  authMiddlware,
+  authMiddleware,
   roleGuard('ADMIN'),
   validate(registerSchema),
   authController.register
 );
 
 // POST /api/auth/logout — Autenticado
-router.post('/logout', authMiddlware, authController.logout);
+router.post('/logout', authMiddleware, authController.logout);
 
-// GET /api/auth/me — Autenticado
-router.get('/me', authMiddlware, authController.me);
+// GET /api/auth/me — Obtener usuario actual
+router.get('/me', authMiddleware, authController.me);
 
 export default router;

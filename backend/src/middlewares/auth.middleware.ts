@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { error } from 'node:console';
 
-export function authMiddlware(req: Request, res: Response, next: NextFunction): void {
+export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
     const token = req.cookies?.token;
 
     if(!token) {

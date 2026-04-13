@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { ticketController } from '../controllers/ticket.controller.js';
 import { validate } from '../middlewares/validate.middleware.js';
-import { authMiddlware } from '../middlewares/auth.middleware.js';
-import { roleGuard } from '../middlewares/role.middlware.js';
+import { authMiddleware } from '../middlewares/auth.middleware.js';
+import { roleGuard } from '../middlewares/role.middleware.js';
 import { createTicketSchema, updateStatusSchema } from '../schemas/ticket.schema.js';
 import { assignTechnicianSchema } from '../schemas/assignment.schema.js';
 import commentRoutes from './comment.routes.js';
@@ -10,7 +10,7 @@ import commentRoutes from './comment.routes.js';
 const router = Router();
 
 // Todas las rutas de tickets requieren autenticación
-router.use(authMiddlware);
+router.use(authMiddleware);
 
 // POST /api/tickets — Admin y Solicitante pueden crear
 router.post(

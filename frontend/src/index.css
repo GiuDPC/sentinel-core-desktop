@@ -1,2 +1,18 @@
 @import "tailwindcss";
 
+@theme {
+  --color-primary: #003091;
+  --color-primary-light: #1e4a8c;
+  --color-surface: #F8FAFC;
+}
+
+@layer base {
+  .font-display {
+    font-family: "Manrope", system-ui, sans-serif;
+  }
+  
+  .font-body {
+    font-family: "Inter", system-ui, sans-serif;
+  }
+}
+

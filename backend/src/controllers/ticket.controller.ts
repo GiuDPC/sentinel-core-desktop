@@ -70,9 +70,10 @@ async function assignTechnician(req: Request, res: Response, next: NextFunction)
     next(error);
   }
 }
-async function getTechniciansWorkload(_req: Request, res: Response, next: NextFunction) {
+async function getTechniciansWorkload(req: Request, res: Response, next: NextFunction) {
   try {
-    const result = await assignmentService.getTechniciansByWorkload();
+    const department = req.query.department as string | undefined;
+    const result = await assignmentService.getTechniciansByWorkload(department);
     res.json(result);
   } catch (error) {
     next(error);

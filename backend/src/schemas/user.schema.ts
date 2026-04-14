@@ -5,7 +5,7 @@ export const updateUserSchema = z.object({
   lastName: z.string().min(2).optional(),
   email: z.string().email().optional(),
   phone: z.string().optional(),
-  department: z.string().optional(),
+  department: z.enum(['ELECTRICIDAD', 'AGUAS_Y_SANEAMIENTO', 'INFRAESTRUCTURA_VIAL', 'ASEO_URBANO', 'PROTECCION_CIVIL', 'TELECOMUNICACIONES', 'SALUD_PUBLICA', 'ADMINISTRACION', 'OTROS']).optional(),
   roleId: z.number().int().positive().optional(),
   isActive: z.boolean().optional(),
 });

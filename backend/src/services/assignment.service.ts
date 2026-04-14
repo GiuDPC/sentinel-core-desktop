@@ -7,11 +7,12 @@ import { auditService } from './audit.service.js';
  * Obtiene técnicos ordenados por carga de trabajo (menor a mayor).
  * El primero de la lista es el sugerido (Least Connections).
  */
-async function getTechniciansByWorkload() {
+async function getTechniciansByWorkload(department?: string) {
   const technicians = await prisma.user.findMany({
     where: {
       role: { name: 'TECHNICIAN' },
       isActive: true,
+      ...(department ? { department: department as any } : {}),
     },
     include: {
       assignments: {

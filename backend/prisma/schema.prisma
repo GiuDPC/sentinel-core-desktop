@@ -23,6 +23,18 @@ enum TicketPriority {
   CRITICAL
 }
 
+enum Department {
+  ELECTRICIDAD
+  AGUAS_Y_SANEAMIENTO
+  INFRAESTRUCTURA_VIAL
+  ASEO_URBANO
+  PROTECCION_CIVIL
+  TELECOMUNICACIONES
+  SALUD_PUBLICA
+  ADMINISTRACION
+  OTROS
+}
+
 model Role {
   id          Int      @id @default(autoincrement())
   name        String   @unique
@@ -36,17 +48,17 @@ model Role {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  roleId       Int      @map("role_id")
-  firstName    String   @map("first_name")
-  lastName     String   @map("last_name")
-  email        String   @unique
-  passwordHash String   @map("password_hash")
+  id           String      @id @default(uuid())
+  roleId       Int         @map("role_id")
+  firstName    String      @map("first_name")
+  lastName     String      @map("last_name")
+  email        String      @unique
+  passwordHash String      @map("password_hash")
   phone        String?
-  department   String?
-  isActive     Boolean  @default(true) @map("is_active")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  department   Department?
+  isActive     Boolean     @default(true) @map("is_active")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
 
   role        Role         @relation(fields: [roleId], references: [id])
   tickets     Ticket[]     @relation("TicketCreator")
@@ -58,12 +70,13 @@ model User {
 }
 
 model Category {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  slaHours  Int      @map("sla_hours")
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id         Int        @id @default(autoincrement())
+  name       String     @unique
+  department Department @default(OTROS)
+  slaHours   Int        @map("sla_hours")
+  isActive   Boolean    @default(true) @map("is_active")
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
 
   tickets Ticket[]
 

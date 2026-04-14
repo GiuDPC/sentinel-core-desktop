@@ -37,4 +37,13 @@ async function me(req: Request, res: Response) {
   res.json({ user: req.user });
 }
 
-export const authController = { login, register, logout, me };
+async function registerPublic(req: Request, res: Response, next: NextFunction) {
+  try {
+    const user = await authService.registerPublic(req.body);
+    res.status(201).json({ user });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export const authController = { login, register, logout, me, registerPublic };

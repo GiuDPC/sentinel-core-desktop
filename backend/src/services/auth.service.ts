@@ -4,12 +4,16 @@ import { prisma } from '../config/prisma.js';
 import { env } from '../config/env.js';
 import { JWT_EXPIRATION } from '../config/constants.js';
 import { AppError } from '../utils/app-error.js';
+import { Department } from '../../generated/prisma/enums.js';
+
+// Helper para acceder al role con el include
+type UserWithRole = Awaited<ReturnType<typeof prisma.user.findUnique>> & { role: { name: string } };
 
 async function login(email: string, password: string) {
-  const user = await prisma.user.findUnique({
+  const user = (await prisma.user.findUnique({
     where: { email },
     include: { role: true },
-  });
+  })) as UserWithRole | null;
 
   if (!user || !user.isActive) {
     throw new AppError(401, 'Credenciales inválidas');
@@ -45,7 +49,7 @@ async function register(data: {
   password: string;
   roleId?: number;
   phone?: string;
-  department?: string;
+  department?: Department;
 }) {
   const existing = await prisma.user.findUnique({
     where: { email: data.email },
@@ -68,7 +72,7 @@ async function register(data: {
 
   const passwordHash = await argon2.hash(data.password);
 
-  const user = await prisma.user.create({
+  const user = (await prisma.user.create({
     data: {
       firstName: data.firstName,
       lastName: data.lastName,
@@ -76,10 +80,10 @@ async function register(data: {
       passwordHash,
       roleId,
       phone: data.phone,
-      department: data.department,
+      department: data.department ?? null,
     },
     include: { role: true },
-  });
+  })) as UserWithRole;
 
   return {
     id: user.id,
@@ -90,4 +94,52 @@ async function register(data: {
   };
 }
 
-export const authService = { login, register };
+async function registerPublic(data: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  phone?: string;
+}) {
+  // Verificar email único
+  const existing = await prisma.user.findUnique({
+    where: { email: data.email },
+  });
+  if (existing) {
+    throw new AppError(409, 'El email ya está registrado');
+  }
+
+  // Obtener rol REQUESTER obligatoriamente
+  const requesterRole = await prisma.role.findUnique({
+    where: { name: 'REQUESTER' },
+  });
+  if (!requesterRole) {
+    throw new AppError(500, 'Rol REQUESTER no encontrado. Ejecutá el seed.');
+  }
+
+  const passwordHash = await argon2.hash(data.password);
+
+  // Crear usuario REQUESTER (sin department - son ciudadanos)
+  const user = (await prisma.user.create({
+    data: {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      passwordHash,
+      roleId: requesterRole.id,
+      phone: data.phone || null,
+      department: null, // REQUESTER no tiene departamento
+    },
+    include: { role: true },
+  })) as UserWithRole;
+
+  return {
+    id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    role: user.role.name,
+  };
+}
+
+export const authService = { login, register, registerPublic };

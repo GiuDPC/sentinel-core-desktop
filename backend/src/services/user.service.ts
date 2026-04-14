@@ -1,5 +1,6 @@
 import { prisma } from '../config/prisma.js';
 import { AppError } from '../utils/app-error.js';
+import { Department } from '../../generated/prisma/enums.js';
 
 async function findAll() {
   const users = await prisma.user.findMany({
@@ -31,7 +32,7 @@ async function update(id: string, data: {
   lastName?: string;
   email?: string;
   phone?: string;
-  department?: string;
+  department?: Department;
   roleId?: number;
   isActive?: boolean;
 }) {
@@ -52,7 +53,10 @@ async function update(id: string, data: {
 
   const updated = await prisma.user.update({
     where: { id },
-    data,
+    data: {
+      ...data,
+      department: data.department ?? undefined,
+    },
     include: { role: true },
   });
 

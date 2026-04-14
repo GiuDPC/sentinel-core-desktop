@@ -1,24 +1,43 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../Contexts/AuthContext'
 import { AuthLayout } from '../components/auth/AuthLayout'
 import { LoginForm } from '../components/auth/LoginForm'
 import { SigninForm } from '../components/auth/SigninForm'
+import notifications from '../components/ui/Notifications'
 
 export default function LoginPage() {
   const [showRegister, setShowRegister] = useState(false)
   const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
+  const { login, register } = useAuth()
 
   async function handleLogin(formData) {
     setLoading(true)
-    console.log('Login:', formData)
-    // await api.login(formData)
-    setLoading(false)
+    try {
+      await login(formData)
+      notifications.success('¡Bienvenido de vuelta!', 'Sesión iniciada')
+      navigate('/')
+    } catch (error) {
+      console.error('Login:', error)
+      notifications.error(error.message || 'Credenciales inválidas', 'Error de autenticación')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleRegister(formData) {
     setLoading(true)
-    console.log('Registro:', formData)
-    // await api.register(formData)
-    setLoading(false)
+    try {
+      await register(formData)
+      notifications.success('Tu cuenta ha sido creada exitosamente', '¡Bienvenido!')
+      navigate('/')
+    } catch (error) {
+      console.error('Registro:', error)
+      notifications.error(error.message || 'No se pudo crear la cuenta', 'Error de registro')
+    } finally {
+      setLoading(false)
+    }
   }
 
   function handleSwitch(e) {

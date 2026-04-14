@@ -40,9 +40,15 @@ export function AuthProvider({ children }) {
   async function register(userData) {
     setError(null)
     try {
-      const data = await authApi.register(userData)
-      setUser(data.user)
-      return data
+      // Registrar usuario
+      await authApi.register(userData)
+      // Auto-login después de registro exitoso
+      const loginData = await authApi.login({
+        email: userData.email,
+        password: userData.password,
+      })
+      setUser(loginData.user)
+      return loginData
     } catch (err) {
       setError(err.message)
       throw err

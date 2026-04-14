@@ -10,13 +10,20 @@ const router = Router();
 // POST /api/auth/login — Público
 router.post('/login', validate(loginSchema), authController.login);
 
-// POST /api/auth/register — Solo Admin
+// POST /api/auth/register — Solo Admin (crea cualquier rol)
 router.post(
   '/register',
   authMiddleware,
   roleGuard('ADMIN'),
   validate(registerSchema),
   authController.register
+);
+
+// POST /api/auth/register-public — Público (solo crea REQUESTER)
+router.post(
+  '/register-public',
+  validate(registerSchema),
+  authController.registerPublic
 );
 
 // POST /api/auth/logout — Autenticado

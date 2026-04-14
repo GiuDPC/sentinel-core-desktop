@@ -27,7 +27,7 @@ export const authApi = {
   },
 
   async register({ firstName, lastName, email, password, phone }) {
-    const response = await fetch(`${API_URL}/auth/register`, {
+    const response = await fetch(`${API_URL}/auth/register-public`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -37,6 +37,7 @@ export const authApi = {
         lastName,
         email,
         password,
+        confirmPassword: password, // El backend valida que coincidan
         phone: phone || undefined,
       }),
     })

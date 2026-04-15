@@ -7,7 +7,7 @@ export function Input({ type = 'text', name, placeholder, value, onChange, error
   const inputType = isPassword && showPassword ? 'text' : type
 
   return (
-    <div className={`flex flex-col gap-3 ${className}`}>
+    <div className={`flex flex-col gap-1.5 ${className}`}>
       {label && (
         <label 
           htmlFor={name}
@@ -27,13 +27,13 @@ export function Input({ type = 'text', name, placeholder, value, onChange, error
           className={`
             w-full py-3 px-4 pr-12
             font-body text-sm text-gray-900
-            bg-white border border-gray-200
+            bg-white/50 border border-gray-200/80
             rounded-lg
             placeholder:text-gray-400
-            transition-all duration-200
-            focus:outline-none focus:ring-2 focus:ring-[#003091]/20 focus:border-[#003091]
-            hover:border-gray-300
-            ${error ? 'border-red-400 focus:ring-red-400/20 focus:border-red-400' : ''}
+            transition-all duration-300 ease-out
+            focus:outline-none focus:bg-white focus:ring-4 focus:ring-[#003091]/10 focus:border-[#003091]
+            hover:bg-white/80 hover:border-gray-300
+            ${error ? 'border-red-400 focus:ring-red-400/20 focus:border-red-400 bg-red-50/50' : ''}
           `}
         />
         {isPassword && (
@@ -55,14 +55,16 @@ export function Input({ type = 'text', name, placeholder, value, onChange, error
           </button>
         )}
       </div>
-      {error && (
-        <span className="font-body text-xs text-red-500 flex items-center gap-1">
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          {error}
-        </span>
-      )}
+      <div className="min-h-[18px]">
+        {error && (
+          <span className="font-body text-xs text-red-500 flex items-center gap-1">
+            <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {error}
+          </span>
+        )}
+      </div>
     </div>
   )
 }

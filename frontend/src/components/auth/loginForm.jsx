@@ -50,7 +50,7 @@ export function LoginForm({ onSubmit, onSwitchToRegister, loading }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-sm flex flex-col gap-3">
+    <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
       <Input
         type="email"
         name="email"

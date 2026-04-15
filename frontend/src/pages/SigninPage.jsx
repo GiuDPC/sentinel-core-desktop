@@ -31,8 +31,8 @@ export default function SigninPage() {
 
   return (
     <AuthLayout>
-      <div className="w-full max-w-md">
-        <h1 className="font-display text-3xl font-bold text-center text-[#001b52] mb-8">Crear Cuenta</h1>
+      <div className="w-full flex flex-col items-center">
+        <h1 className="font-display text-3xl font-bold text-center text-[#001b52] mb-6">SentinelCore</h1>
         <SigninForm onSubmit={handleRegister} onSwitchToLogin={handleSwitchToLogin} loading={loading} />
       </div>
     </AuthLayout>

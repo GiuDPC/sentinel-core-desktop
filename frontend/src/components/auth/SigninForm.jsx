@@ -88,7 +88,7 @@ export function SigninForm({ onSubmit, onSwitchToLogin, loading: externalLoading
   const isLoading = externalLoading ?? loading
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-sm flex flex-col gap-3">
+    <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-4">
         <Input
           type="text"
@@ -111,45 +111,49 @@ export function SigninForm({ onSubmit, onSwitchToLogin, loading: externalLoading
         />
       </div>
       
-      <Input
-        type="email"
-        name="email"
-        label="Correo electrónico"
-        placeholder="tucorreo@ejemplo.com"
-        value={formData.email}
-        onChange={(value) => handleChange('email', value)}
-        error={errors.email}
-      />
+      <div className="grid grid-cols-2 gap-4">
+        <Input
+          type="email"
+          name="email"
+          label="Correo electrónico"
+          placeholder="tucorreo@ejemplo.com"
+          value={formData.email}
+          onChange={(value) => handleChange('email', value)}
+          error={errors.email}
+        />
+        
+        <Input
+          type="tel"
+          name="phone"
+          label="Teléfono"
+          placeholder="0412-xxx-xxxx"
+          value={formData.phone}
+          onChange={(value) => handleChange('phone', formatPhone(value))}
+          error={errors.phone}
+        />
+      </div>
       
-      <Input
-        type="tel"
-        name="phone"
-        label="Teléfono"
-        placeholder="0412-xxx-xxxx"
-        value={formData.phone}
-        onChange={(value) => handleChange('phone', formatPhone(value))}
-        error={errors.phone}
-      />
-      
-      <Input
-        type="password"
-        name="password"
-        label="Contraseña"
-        placeholder="••••••••"
-        value={formData.password}
-        onChange={(value) => handleChange('password', value)}
-        error={errors.password}
-      />
-      
-      <Input
-        type="password"
-        name="confirmPassword"
-        label="Confirmar"
-        placeholder="••••••••"
-        value={formData.confirmPassword}
-        onChange={(value) => handleChange('confirmPassword', value)}
-        error={errors.confirmPassword}
-      />
+      <div className="grid grid-cols-2 gap-4">
+        <Input
+          type="password"
+          name="password"
+          label="Contraseña"
+          placeholder="••••••••"
+          value={formData.password}
+          onChange={(value) => handleChange('password', value)}
+          error={errors.password}
+        />
+        
+        <Input
+          type="password"
+          name="confirmPassword"
+          label="Confirmar"
+          placeholder="••••••••"
+          value={formData.confirmPassword}
+          onChange={(value) => handleChange('confirmPassword', value)}
+          error={errors.confirmPassword}
+        />
+      </div>
 
       <Button type="submit" loading={isLoading} className="mt-1">
         Crear Cuenta

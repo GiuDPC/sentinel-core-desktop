@@ -47,9 +47,9 @@ export default function LoginPage() {
 
   return (
     <AuthLayout>
-      <div className="w-full max-w-md">
-        <h1 className="font-display text-3xl font-bold text-center text-[#001b52] mb-8">
-          {showRegister ? 'Crear Cuenta' : 'Iniciar Sesión'}
+      <div className="w-full flex flex-col items-center">
+        <h1 className="font-display text-3xl font-bold text-center text-[#001b52] mb-6">
+          SentinelCore
         </h1>
         
         {showRegister ? (

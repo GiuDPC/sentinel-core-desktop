@@ -67,7 +67,7 @@ export const authApi = {
             'Authorization': `Bearer ${token}`,
           },
         })
-      } catch (error) {
+      } catch {
         // Ignorar errores en logout
       }
     }

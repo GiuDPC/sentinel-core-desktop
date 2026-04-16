@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export function AuthContent({ children }) {
   const [shouldAnimate, setShouldAnimate] = useState(false)
 
   useEffect(() => {
-    setShouldAnimate(true)
+    const timer = setTimeout(() => setShouldAnimate(true), 50)
+    return () => clearTimeout(timer)
   }, [])
 
   return (

@@ -1,4 +1,5 @@
-import app from './app';
+import './docs/extendZod.js'; // IMPORTANT: Must be FIRST import to hack Zod prototypes
+import app from './app.js';
 import { env } from './config/env';
 
 app.listen(env.PORT, () => {

@@ -1,9 +1,6 @@
-import { OpenAPIRegistry, OpenApiGeneratorV3, extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi';
+import { OpenAPIRegistry, OpenApiGeneratorV3 } from '@asteasolutions/zod-to-openapi';
 import { z } from 'zod';
-import { loginSchema, registerSchema } from '../schemas/auth.schema.js';
-
-// Extender Zod con el método .openapi() requerido por la library v8.x
-extendZodWithOpenApi(z);
+import { loginSchema, registerSchema } from '../schemas/auth.schema.js';  
 import { createTicketSchema, updateStatusSchema } from '../schemas/ticket.schema.js';
 import { createCommentSchema } from '../schemas/comment.schema.js';
 import { assignTechnicianSchema } from '../schemas/assignment.schema.js';

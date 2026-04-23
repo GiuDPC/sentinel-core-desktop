@@ -33,8 +33,13 @@ async function logout(_req: Request, res: Response) {
   res.json({ message: 'Sesión cerrada' });
 }
 
-async function me(req: Request, res: Response) {
-  res.json({ user: req.user });
+async function me(req: Request, res: Response, next: NextFunction) {
+  try {
+    const fullUser = await authService.getProfile(req.user!.id);
+    res.json({ user: fullUser });
+  } catch (error) {
+    next(error);
+  }
 }
 
 async function registerPublic(req: Request, res: Response, next: NextFunction) {

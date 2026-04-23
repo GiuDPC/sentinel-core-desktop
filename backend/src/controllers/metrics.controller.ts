@@ -19,4 +19,22 @@ async function getSlaBreached(_req: Request, res: Response, next: NextFunction) 
   }
 }
 
-export const metricsController = { getDashboard, getSlaBreached };
+export const metricsController = { getDashboard, getSlaBreached, getRequesterMetrics, getTechnicianMetrics };
+
+async function getRequesterMetrics(req: Request, res: Response, next: NextFunction) {
+  try {
+    const metrics = await metricsService.getRequesterMetrics(req.user!.id);
+    res.json(metrics);
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function getTechnicianMetrics(req: Request, res: Response, next: NextFunction) {
+  try {
+    const metrics = await metricsService.getTechnicianMetrics(req.user!.id);
+    res.json(metrics);
+  } catch (error) {
+    next(error);
+  }
+}

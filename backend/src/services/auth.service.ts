@@ -142,4 +142,25 @@ async function registerPublic(data: {
   };
 }
 
-export const authService = { login, register, registerPublic };
+export const authService = { login, register, registerPublic, getProfile };
+
+async function getProfile(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { role: true },
+  }) as UserWithRole | null;
+
+  if (!user || !user.isActive) {
+    throw new AppError(401, 'Usuario no encontrado o inactivo');
+  }
+
+  return {
+    id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    role: user.role.name,
+    department: user.department,
+  };
+}
+

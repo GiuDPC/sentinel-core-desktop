@@ -201,4 +201,72 @@ async function updateStatus(
   });
 }
 
-export const ticketService = { create, findAll, findById, updateStatus };
+export const ticketService = { create, findAll, findById, updateStatus, findByCreator, findAssigned };
+
+/**
+ * Tickets creados por un solicitante específico.
+ */
+async function findByCreator(creatorId: string, filters: { status?: string; page?: number; limit?: number }) {
+  const page = filters.page || 1;
+  const limit = filters.limit || 20;
+  const skip = (page - 1) * limit;
+
+  const where: any = { creatorId };
+  if (filters.status) where.status = filters.status;
+
+  const [tickets, total] = await Promise.all([
+    prisma.ticket.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        category: true,
+        assignments: {
+          include: {
+            technician: {
+              select: { id: true, firstName: true, lastName: true },
+            },
+          },
+        },
+      },
+    }),
+    prisma.ticket.count({ where }),
+  ]);
+
+  return {
+    data: tickets,
+    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+  };
+}
+
+/**
+ * Tickets asignados a un técnico específico.
+ */
+async function findAssigned(technicianId: string, filters: { status?: string }) {
+  const where: any = {
+    assignments: { some: { technicianId } },
+  };
+  if (filters.status) where.status = filters.status;
+
+  const tickets = await prisma.ticket.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+    include: {
+      category: true,
+      creator: {
+        select: { id: true, firstName: true, lastName: true, email: true },
+      },
+      assignments: {
+        include: {
+          technician: {
+            select: { id: true, firstName: true, lastName: true },
+          },
+        },
+      },
+    },
+  });
+
+  return { data: tickets, total: tickets.length };
+}
+

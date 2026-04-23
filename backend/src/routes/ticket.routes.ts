@@ -31,6 +31,20 @@ router.get(
   ticketController.getTechniciansWorkload
 );
 
+// GET /api/tickets/my-tickets — Tickets propios del solicitante
+router.get(
+  '/my-tickets',
+  roleGuard('REQUESTER'),
+  ticketController.findMyTickets
+);
+
+// GET /api/tickets/assigned — Tickets asignados al técnico
+router.get(
+  '/assigned',
+  roleGuard('TECHNICIAN'),
+  ticketController.findAssigned
+);
+
 // GET /api/tickets/:id — Detalle de un ticket
 router.get('/:id', ticketController.findById);
 

@@ -1,7 +1,16 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useState, useEffect } from 'react'
 import { authApi } from '../api/auth'
+import { useAuth } from '../hooks/useAuth'
 
-const AuthContext = createContext(null)
+export { useAuth }
+export const AuthContext = createContext(null)
+
+/** Mapa de redirección por rol después del login */
+const ROLE_DASHBOARD_MAP = {
+  ADMIN: '/admin/dashboard',
+  TECHNICIAN: '/technician/dashboard',
+  REQUESTER: '/requester/dashboard',
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
@@ -14,11 +23,9 @@ export function AuthProvider({ children }) {
 
   async function checkAuth() {
     try {
-      if (authApi.isAuthenticated()) {
-        const userData = await authApi.getCurrentUser()
-        setUser(userData)
-      }
-    } catch (err) {
+      const data = await authApi.getCurrentUser()
+      setUser(data.user || data)
+    } catch {
       setUser(null)
     } finally {
       setLoading(false)
@@ -40,7 +47,6 @@ export function AuthProvider({ children }) {
   async function register(userData) {
     setError(null)
     try {
-      // Registrar usuario
       await authApi.register(userData)
       // Auto-login después de registro exitoso
       const loginData = await authApi.login({
@@ -63,6 +69,24 @@ export function AuthProvider({ children }) {
     }
   }
 
+  /**
+   * Verifica si el usuario tiene uno de los roles permitidos.
+   * @param {string|string[]} roles — Un rol o array de roles permitidos
+   */
+  function hasRole(roles) {
+    if (!user) return false
+    const allowed = Array.isArray(roles) ? roles : [roles]
+    return allowed.includes(user.role)
+  }
+
+  /**
+   * Obtiene la ruta del dashboard correspondiente al rol del usuario.
+   */
+  function getDashboardPath() {
+    if (!user) return '/login'
+    return ROLE_DASHBOARD_MAP[user.role] || '/login'
+  }
+
   const value = {
     user,
     loading,
@@ -71,6 +95,8 @@ export function AuthProvider({ children }) {
     login,
     register,
     logout,
+    hasRole,
+    getDashboardPath,
     clearError: () => setError(null),
   }
 
@@ -79,12 +105,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   )
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth debe usarse dentro de AuthProvider')
-  }
-  return context
 }

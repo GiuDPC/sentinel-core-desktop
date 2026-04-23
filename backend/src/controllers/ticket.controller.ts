@@ -80,7 +80,31 @@ async function getTechniciansWorkload(req: Request, res: Response, next: NextFun
   }
 }
 
+async function findMyTickets(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await ticketService.findByCreator(req.user!.id, {
+      status: req.query.status as string | undefined,
+      page: req.query.page ? parseInt(req.query.page as string, 10) : undefined,
+    });
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function findAssigned(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await ticketService.findAssigned(req.user!.id, {
+      status: req.query.status as string | undefined,
+    });
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
 export const ticketController = {
   create, findAll, findById, updateStatus,
   assignTechnician, getTechniciansWorkload,
+  findMyTickets, findAssigned,
 };

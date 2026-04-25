@@ -15,13 +15,15 @@ export default function LoginPage() {
   async function handleLogin(formData) {
     setLoading(true)
     try {
-      await login(formData)
-      notifications.success('¡Bienvenido de vuelta!', 'Sesión iniciada')
-      // Redirigir al dashboard correspondiente al rol
-      navigate(getDashboardPath())
+      const data = await login(formData)
+      notifications.success('Bienvenido de vuelta', 'Sesion iniciada')
+      // Usar el rol del response directamente porque getDashboardPath() lee state viejo
+      const role = data.user?.role || data.role
+      const dashPaths = { ADMIN: '/admin/dashboard', TECHNICIAN: '/technician/dashboard', REQUESTER: '/requester/dashboard' }
+      navigate(dashPaths[role] || '/login')
     } catch (error) {
       console.error('Login:', error)
-      notifications.error(error.message || 'Credenciales inválidas', 'Error de autenticación')
+      notifications.error(error.message || 'Credenciales invalidas', 'Error de autenticacion')
     } finally {
       setLoading(false)
     }

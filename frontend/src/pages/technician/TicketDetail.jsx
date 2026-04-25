@@ -30,10 +30,33 @@ export default function TicketDetail() {
   async function handleStatusChange(newStatus) {
     try {
       await ticketsApi.updateStatus(id, newStatus)
-      notifications.success('Estado actualizado', '✅')
+      notifications.success('Estado actualizado', 'Operacion exitosa')
       loadTicket()
     } catch (error) {
       notifications.error(error.message || 'Error al cambiar estado', 'Error')
+    }
+  }
+
+  const [showResolveForm, setShowResolveForm] = useState(false)
+  const [resolutionNote, setResolutionNote] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  async function handleResolve() {
+    if (resolutionNote.trim().length < 10) {
+      notifications.error('La nota debe tener al menos 10 caracteres', 'Formulario incompleto')
+      return
+    }
+    setSubmitting(true)
+    try {
+      await ticketsApi.resolveWithNote(id, resolutionNote)
+      notifications.success('Ticket enviado para confirmacion del solicitante', 'Resuelto')
+      setShowResolveForm(false)
+      setResolutionNote('')
+      loadTicket()
+    } catch (error) {
+      notifications.error(error.message || 'Error al resolver', 'Error')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -53,7 +76,7 @@ export default function TicketDetail() {
           onClick={() => navigate('/technician/assigned')}
           className="mt-4 text-accent hover:underline cursor-pointer"
         >
-          ← Volver a tickets asignados
+          Volver a tickets asignados
         </button>
       </div>
     )
@@ -68,7 +91,7 @@ export default function TicketDetail() {
             onClick={() => navigate('/technician/assigned')}
             className="text-sm text-text-secondary hover:text-text-primary mb-2 inline-block cursor-pointer"
           >
-            ← Volver a tickets
+            Volver a tickets
           </button>
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold text-text-primary font-display">{ticket.ticketCode}</h2>
@@ -84,22 +107,22 @@ export default function TicketDetail() {
               onClick={() => handleStatusChange('IN_PROGRESS')}
               className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors cursor-pointer"
             >
-              ▶ Iniciar Trabajo
+              Iniciar Trabajo
             </button>
           )}
-          {ticket.status === 'IN_PROGRESS' && (
+          {ticket.status === 'IN_PROGRESS' && !showResolveForm && (
             <>
               <button
-                onClick={() => handleStatusChange('RESOLVED')}
+                onClick={() => setShowResolveForm(true)}
                 className="px-4 py-2 bg-success text-white rounded-lg hover:bg-success/90 transition-colors cursor-pointer"
               >
-                ✓ Marcar Resuelto
+                Marcar Resuelto
               </button>
               <button
                 onClick={() => handleStatusChange('ON_HOLD')}
                 className="px-4 py-2 border border-border text-text-secondary rounded-lg hover:bg-background transition-colors cursor-pointer"
               >
-                ⏸ Pausar
+                Pausar
               </button>
             </>
           )}
@@ -108,11 +131,46 @@ export default function TicketDetail() {
               onClick={() => handleStatusChange('IN_PROGRESS')}
               className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors cursor-pointer"
             >
-              ▶ Reanudar
+              Reanudar
             </button>
           )}
         </div>
       </div>
+
+      {/* Formulario de cierre técnico */}
+      {showResolveForm && (
+        <div className="bg-surface rounded-xl p-6 shadow-sm border-2 border-success/20">
+          <h3 className="text-sm font-semibold text-text-primary mb-4 font-display">Formulario de Cierre</h3>
+          <p className="text-xs text-text-secondary mb-4">
+            Describe el diagnostico de la falla y la solucion aplicada. El solicitante debera confirmar la resolucion antes del cierre definitivo.
+          </p>
+          <textarea
+            value={resolutionNote}
+            onChange={(e) => setResolutionNote(e.target.value)}
+            placeholder="Diagnostico: Causa de la falla detectada...\nAccion aplicada: Solucion implementada..."
+            rows={5}
+            className="w-full px-4 py-3 bg-background border border-border rounded-lg text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-success/30 resize-none"
+          />
+          <p className="text-xs text-text-secondary mt-1 mb-4">
+            Minimo 10 caracteres ({resolutionNote.length}/10)
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={handleResolve}
+              disabled={submitting || resolutionNote.trim().length < 10}
+              className="px-4 py-2 bg-success text-white rounded-lg hover:bg-success/90 disabled:opacity-50 transition-colors cursor-pointer"
+            >
+              {submitting ? 'Enviando...' : 'Enviar Resolucion'}
+            </button>
+            <button
+              onClick={() => { setShowResolveForm(false); setResolutionNote('') }}
+              className="px-4 py-2 border border-border text-text-secondary rounded-lg hover:bg-background transition-colors cursor-pointer"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Stepper */}
       <LiveTracker currentStatus={ticket.status} />

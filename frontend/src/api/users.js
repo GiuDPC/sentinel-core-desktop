@@ -1,8 +1,9 @@
 import { apiClient } from './client'
 
 export const usersApi = {
-  getAll() {
-    return apiClient.get('/users')
+  async getAll() {
+    const data = await apiClient.get('/users')
+    return data.users || data.data || data || []
   },
 
   getById(id) {
@@ -10,10 +11,10 @@ export const usersApi = {
   },
 
   update(id, data) {
-    return apiClient.put(`/users/${id}`, data)
+    return apiClient.patch(`/users/${id}`, data)
   },
 
-  delete(id) {
+  deactivate(id) {
     return apiClient.delete(`/users/${id}`)
   },
 }

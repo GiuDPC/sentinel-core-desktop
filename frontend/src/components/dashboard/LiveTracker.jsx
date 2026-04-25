@@ -1,34 +1,62 @@
 const STATUS_LABELS = {
   OPEN: 'Reportado',
   ASSIGNED: 'Asignado',
-  IN_PROGRESS: 'En Proceso',
-  RESOLVED: 'Completado',
+  IN_PROGRESS: 'En proceso',
+  RESOLVED: 'Resuelto',
+  AWAITING_CONFIRMATION: 'Confirmacion',
   CLOSED: 'Cerrado',
 }
 
-const STEPS = ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED']
+const STEPS = ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'AWAITING_CONFIRMATION', 'CLOSED']
 
 /**
- * Stepper horizontal de progreso del ticket.
- * @param {Object} props
- * @param {string} props.currentStatus — Estado actual del ticket
- * @param {string} [props.technicianName] — Nombre del técnico asignado
- * @param {string} [props.eta] — Tiempo estimado de resolución
+ * Stepper horizontal de progreso del ticket — profesional, sin emojis.
  */
-export default function LiveTracker({ currentStatus, technicianName, eta }) {
+export default function LiveTracker({ ticketCode, title, currentStatus, technicianName, eta, priority }) {
   const currentIndex = STEPS.indexOf(currentStatus)
 
   return (
     <div className="bg-surface rounded-xl p-6 shadow-sm">
-      <h3 className="text-sm font-semibold text-text-primary mb-6 font-display">
-        Estado del Ticket
-      </h3>
+      {/* Header del ticket */}
+      {ticketCode && (
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <span className="px-3 py-1 bg-primary text-white text-xs font-bold rounded-md font-mono">
+              TICKET {ticketCode}
+            </span>
+            <span className="text-sm text-text-primary font-medium">
+              {title || 'Ticket en Proceso'}
+            </span>
+          </div>
+          {technicianName && (
+            <div className="text-right">
+              <p className="text-xs text-text-secondary">Tecnico Asignado</p>
+              <p className="text-sm font-semibold text-text-primary">{technicianName}</p>
+              {eta && (
+                <span className="inline-block mt-1 px-2 py-0.5 bg-accent/10 text-accent text-xs font-bold rounded">
+                  ETA {eta}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {!ticketCode && (
+        <h3 className="text-sm font-semibold text-text-primary mb-6 font-display">
+          Estado del Ticket
+        </h3>
+      )}
+
+      {priority && (
+        <p className="text-xs text-text-secondary mb-4">
+          Reportado hace poco - Prioridad {priority}
+        </p>
+      )}
 
       {/* Stepper */}
       <div className="flex items-center justify-between relative">
-        {/* Línea de fondo */}
         <div className="absolute top-4 left-8 right-8 h-0.5 bg-border" />
-        {/* Línea de progreso */}
         <div
           className="absolute top-4 left-8 h-0.5 bg-accent transition-all duration-500"
           style={{ width: `${(currentIndex / (STEPS.length - 1)) * (100 - 16)}%` }}
@@ -50,7 +78,11 @@ export default function LiveTracker({ currentStatus, technicianName, eta }) {
                       : 'bg-border text-text-secondary'
                 }`}
               >
-                {isCompleted ? '✓' : i + 1}
+                {isCompleted ? (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                ) : i + 1}
               </div>
               <span
                 className={`mt-2 text-xs font-medium ${
@@ -64,14 +96,12 @@ export default function LiveTracker({ currentStatus, technicianName, eta }) {
         })}
       </div>
 
-      {/* Info adicional */}
-      {(technicianName || eta) && (
+      {/* Info adicional sin emojis */}
+      {technicianName && !ticketCode && (
         <div className="mt-6 flex items-center gap-6 text-xs text-text-secondary">
-          {technicianName && (
-            <span>👷 Técnico: <strong className="text-text-primary">{technicianName}</strong></span>
-          )}
+          <span>Tecnico: <strong className="text-text-primary">{technicianName}</strong></span>
           {eta && (
-            <span>⏱️ ETA: <strong className="text-text-primary">{eta}</strong></span>
+            <span>ETA: <strong className="text-text-primary">{eta}</strong></span>
           )}
         </div>
       )}

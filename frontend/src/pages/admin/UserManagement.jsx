@@ -13,7 +13,7 @@ export default function UserManagement() {
   async function loadUsers() {
     try {
       const data = await usersApi.getAll()
-      setUsers(data.data || data || [])
+      setUsers(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Error cargando usuarios:', error)
     } finally {
@@ -26,7 +26,7 @@ export default function UserManagement() {
       await usersApi.update(userId, { isActive: !isActive })
       notifications.success(
         isActive ? 'Usuario desactivado' : 'Usuario activado',
-        '✅'
+        'Operacion exitosa'
       )
       loadUsers()
     } catch (error) {

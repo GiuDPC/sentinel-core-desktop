@@ -13,10 +13,7 @@ async function create(data: {
   priority: string;
   creatorId: string;
 }) {
-  // Transacción: genera el código + crea el ticket de forma atómica.
-  // Si dos requests llegan al mismo tiempo, no habrá códigos duplicados.
   return prisma.$transaction(async (tx) => {
-    // Buscar categoría para obtener SLA
     const category = await tx.category.findUnique({
       where: { id: data.categoryId },
     });
@@ -24,14 +21,10 @@ async function create(data: {
       throw new AppError(404, 'Categoría no encontrada');
     }
 
-    // Generar código secuencial
     const ticketCode = await generateTicketCode(tx);
-
-    // Calcular due_date según SLA
     const now = new Date();
     const dueDate = calculateDueDate(now, category.slaHours);
 
-    // Crear ticket
     const ticket = await tx.ticket.create({
       data: {
         ticketCode,
@@ -51,7 +44,6 @@ async function create(data: {
       },
     });
 
-    // Audit log de creación
     await tx.auditLog.create({
       data: {
         ticketId: ticket.id,
@@ -70,6 +62,7 @@ async function findAll(filters: {
   status?: string;
   priority?: string;
   categoryId?: number;
+  search?: string;
   page?: number;
   limit?: number;
 }) {
@@ -77,11 +70,20 @@ async function findAll(filters: {
   const limit = filters.limit || 20;
   const skip = (page - 1) * limit;
 
-  // Construir where dinámico — solo incluye filtros que vengan definidos
   const where: any = {};
   if (filters.status) where.status = filters.status;
   if (filters.priority) where.priority = filters.priority;
   if (filters.categoryId) where.categoryId = filters.categoryId;
+
+  // Búsqueda por texto en múltiples campos
+  if (filters.search) {
+    where.OR = [
+      { ticketCode: { contains: filters.search, mode: 'insensitive' } },
+      { title: { contains: filters.search, mode: 'insensitive' } },
+      { description: { contains: filters.search, mode: 'insensitive' } },
+      { location: { contains: filters.search, mode: 'insensitive' } },
+    ];
+  }
 
   const [tickets, total] = await Promise.all([
     prisma.ticket.findMany({
@@ -169,14 +171,12 @@ async function updateStatus(
   if (!ticket) {
     throw new AppError(404, 'Ticket no encontrado');
   }
-  // Validar transición con la State Machine
   if (!isValidTransition(ticket.status, newStatus)) {
     throw new AppError(
       422,
       `Transición inválida: no se puede cambiar de ${ticket.status} a ${newStatus}`
     );
   }
-  // Actualizar estado + crear audit log en una transacción atómica
   return prisma.$transaction(async (tx) => {
     const updated = await tx.ticket.update({
       where: { id: ticketId },
@@ -188,7 +188,6 @@ async function updateStatus(
         },
       },
     });
-    // Audit log — silencioso, automático, inmutable
     await auditService.logAction(
       ticketId,
       userId,
@@ -201,7 +200,119 @@ async function updateStatus(
   });
 }
 
-export const ticketService = { create, findAll, findById, updateStatus, findByCreator, findAssigned };
+/**
+ * Técnico resuelve con nota obligatoria.
+ * IN_PROGRESS → RESOLVED → AWAITING_CONFIRMATION (automático)
+ */
+async function resolveWithNote(
+  ticketId: string,
+  data: { resolutionNote: string },
+  userId: string
+) {
+  const ticket = await prisma.ticket.findUnique({ where: { id: ticketId } });
+  if (!ticket) throw new AppError(404, 'Ticket no encontrado');
+
+  if (!isValidTransition(ticket.status, 'RESOLVED')) {
+    throw new AppError(422, `No se puede resolver un ticket en estado ${ticket.status}`);
+  }
+
+  if (!data.resolutionNote || data.resolutionNote.trim().length < 10) {
+    throw new AppError(400, 'La nota de resolución debe tener al menos 10 caracteres');
+  }
+
+  return prisma.$transaction(async (tx) => {
+    // Primero marcar como RESOLVED, luego automáticamente AWAITING_CONFIRMATION
+    const updated = await tx.ticket.update({
+      where: { id: ticketId },
+      data: {
+        status: 'AWAITING_CONFIRMATION',
+        resolutionNote: data.resolutionNote.trim(),
+        resolvedAt: new Date(),
+      },
+      include: {
+        category: true,
+        creator: {
+          select: { id: true, firstName: true, lastName: true, email: true },
+        },
+      },
+    });
+
+    await auditService.logAction(ticketId, userId, 'STATUS_CHANGE', ticket.status, 'RESOLVED', tx);
+    await auditService.logAction(ticketId, userId, 'STATUS_CHANGE', 'RESOLVED', 'AWAITING_CONFIRMATION', tx);
+    await auditService.logAction(ticketId, userId, 'RESOLUTION_NOTE', null, data.resolutionNote.trim(), tx);
+
+    return updated;
+  });
+}
+
+/**
+ * Solicitante confirma o reabre el ticket.
+ * AWAITING_CONFIRMATION → CLOSED (confirma) o AWAITING_CONFIRMATION → IN_PROGRESS (reabre)
+ */
+async function confirmTicket(
+  ticketId: string,
+  data: { confirmed: boolean; rating?: number; ratingComment?: string },
+  userId: string
+) {
+  const ticket = await prisma.ticket.findUnique({ where: { id: ticketId } });
+  if (!ticket) throw new AppError(404, 'Ticket no encontrado');
+
+  if (ticket.status !== 'AWAITING_CONFIRMATION') {
+    throw new AppError(422, 'El ticket no está esperando confirmación');
+  }
+
+  if (ticket.creatorId !== userId) {
+    throw new AppError(403, 'Solo el creador del ticket puede confirmar');
+  }
+
+  return prisma.$transaction(async (tx) => {
+    if (data.confirmed) {
+      // Confirmar → CLOSED con rating
+      if (data.rating && (data.rating < 1 || data.rating > 5)) {
+        throw new AppError(400, 'La calificación debe ser entre 1 y 5');
+      }
+
+      const updated = await tx.ticket.update({
+        where: { id: ticketId },
+        data: {
+          status: 'CLOSED',
+          rating: data.rating || null,
+          ratingComment: data.ratingComment || null,
+        },
+        include: {
+          category: true,
+          creator: { select: { id: true, firstName: true, lastName: true, email: true } },
+        },
+      });
+
+      await auditService.logAction(ticketId, userId, 'STATUS_CHANGE', 'AWAITING_CONFIRMATION', 'CLOSED', tx);
+      if (data.rating) {
+        await auditService.logAction(ticketId, userId, 'RATING', null, `${data.rating}/5`, tx);
+      }
+
+      return updated;
+    } else {
+      // Reabrir → IN_PROGRESS
+      const updated = await tx.ticket.update({
+        where: { id: ticketId },
+        data: {
+          status: 'IN_PROGRESS',
+          resolvedAt: null,
+          resolutionNote: null,
+        },
+        include: {
+          category: true,
+          creator: { select: { id: true, firstName: true, lastName: true, email: true } },
+        },
+      });
+
+      await auditService.logAction(ticketId, userId, 'STATUS_CHANGE', 'AWAITING_CONFIRMATION', 'IN_PROGRESS', tx);
+      await auditService.logAction(ticketId, userId, 'TICKET_REOPENED', null, data.ratingComment || 'Falla persiste', tx);
+
+      return updated;
+    }
+  });
+}
 
 /**
  * Tickets creados por un solicitante específico.
@@ -270,3 +381,8 @@ async function findAssigned(technicianId: string, filters: { status?: string }) 
   return { data: tickets, total: tickets.length };
 }
 
+export const ticketService = {
+  create, findAll, findById, updateStatus,
+  findByCreator, findAssigned,
+  resolveWithNote, confirmTicket,
+};

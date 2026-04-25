@@ -6,6 +6,7 @@ export const ticketsApi = {
     if (filters.status) params.set('status', filters.status)
     if (filters.priority) params.set('priority', filters.priority)
     if (filters.categoryId) params.set('categoryId', String(filters.categoryId))
+    if (filters.search) params.set('search', filters.search)
     if (filters.page) params.set('page', String(filters.page))
     if (filters.limit) params.set('limit', String(filters.limit))
     const query = params.toString()
@@ -46,5 +47,13 @@ export const ticketsApi = {
   getTechniciansWorkload(department) {
     const query = department ? `?department=${department}` : ''
     return apiClient.get(`/tickets/technicians/workload${query}`)
+  },
+
+  resolveWithNote(ticketId, resolutionNote) {
+    return apiClient.post(`/tickets/${ticketId}/resolve`, { resolutionNote })
+  },
+
+  confirmTicket(ticketId, { confirmed, rating, ratingComment }) {
+    return apiClient.post(`/tickets/${ticketId}/confirm`, { confirmed, rating, ratingComment })
   },
 }

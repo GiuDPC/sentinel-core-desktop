@@ -26,7 +26,6 @@ export default function TechDashboard() {
       setMetrics(metricsData)
       setAssignedTickets(ticketsData.data || [])
 
-      // Ticket en progreso más reciente
       const active = ticketsData.data?.find(
         (t) => t.status === 'IN_PROGRESS'
       ) || ticketsData.data?.find(
@@ -34,7 +33,7 @@ export default function TechDashboard() {
       )
       setActiveTicket(active || null)
     } catch (error) {
-      console.error('Error cargando dashboard técnico:', error)
+      console.error('Error cargando dashboard tecnico:', error)
     } finally {
       setLoading(false)
     }
@@ -52,7 +51,7 @@ export default function TechDashboard() {
     <div className="space-y-8">
       <div>
         <h2 className="text-2xl font-bold text-text-primary font-display">
-          Panel del Técnico
+          Panel del Tecnico
         </h2>
         <p className="text-sm text-text-secondary mt-1">
           Tus tickets asignados y rendimiento
@@ -64,26 +63,22 @@ export default function TechDashboard() {
         <KPICard
           title="Tickets Asignados"
           value={metrics?.totalAssigned || 0}
-          icon="🔧"
           color="blue"
         />
         <KPICard
           title="En Proceso"
           value={metrics?.inProgress || 0}
-          icon="🔄"
           color="yellow"
         />
         <KPICard
           title="Resueltos"
           value={metrics?.resolved || 0}
-          icon="✅"
           color="green"
         />
         <KPICard
           title="Tiempo Promedio"
           value={`${metrics?.avgResolutionHours || 0}h`}
-          subtitle="Tiempo de resolución"
-          icon="⏱️"
+          subtitle="Tiempo de resolucion"
           color="blue"
         />
       </div>
@@ -91,13 +86,14 @@ export default function TechDashboard() {
       {/* Live Tracker */}
       {activeTicket && (
         <LiveTracker
+          ticketCode={activeTicket.ticketCode}
+          title={activeTicket.title}
           currentStatus={activeTicket.status}
           technicianName={`${activeTicket.creator?.firstName} ${activeTicket.creator?.lastName}`}
-          eta={activeTicket.dueDate ? `${new Date(activeTicket.dueDate).toLocaleString('es-VE')}` : null}
+          eta={activeTicket.dueDate ? new Date(activeTicket.dueDate).toLocaleString('es-VE') : null}
         />
       )}
 
-      {/* Actividad */}
       <RecentActivity
         tickets={assignedTickets}
         onViewAll={() => navigate('/technician/assigned')}

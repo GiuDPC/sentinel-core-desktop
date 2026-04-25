@@ -27,7 +27,6 @@ export default function RequesterDashboard() {
       setMetrics(metricsData)
       setRecentTickets(ticketsData.data || [])
 
-      // Buscar el ticket activo más reciente (no cerrado/resuelto)
       const active = ticketsData.data?.find(
         (t) => !['RESOLVED', 'CLOSED'].includes(t.status)
       )
@@ -49,7 +48,6 @@ export default function RequesterDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* Título */}
       <div>
         <h2 className="text-2xl font-bold text-text-primary font-display">
           Mi Panel de Control
@@ -59,31 +57,27 @@ export default function RequesterDashboard() {
         </p>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
           title="Tickets Totales"
           value={metrics?.totalTickets || 0}
-          icon="🎫"
           color="blue"
         />
         <KPICard
           title="En Proceso"
           value={metrics?.inProgressTickets || 0}
-          icon="🔄"
           color="yellow"
         />
         <KPICard
           title="Resueltos"
           value={metrics?.resolvedTickets || 0}
-          icon="✅"
           color="green"
         />
         <KPICard
           title="Cumplimiento SLA"
           value={`${metrics?.slaCompliance || 100}%`}
           subtitle={`Tiempo promedio: ${metrics?.avgResolutionHours || 0}h`}
-          icon="⏱️"
           color={metrics?.slaCompliance >= 80 ? 'green' : 'red'}
         />
       </div>
@@ -92,7 +86,12 @@ export default function RequesterDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {activeTicket ? (
           <LiveTracker
+            ticketCode={activeTicket.ticketCode}
+            title={activeTicket.title}
             currentStatus={activeTicket.status}
+            priority={
+              { LOW: 'Baja', MEDIUM: 'Media', HIGH: 'Alta', CRITICAL: 'Critica' }[activeTicket.priority]
+            }
             technicianName={
               activeTicket.assignments?.[0]?.technician
                 ? `${activeTicket.assignments[0].technician.firstName} ${activeTicket.assignments[0].technician.lastName}`
@@ -101,8 +100,12 @@ export default function RequesterDashboard() {
           />
         ) : (
           <div className="bg-surface rounded-xl p-6 shadow-sm flex flex-col items-center justify-center text-center">
-            <span className="text-4xl mb-3">🎉</span>
-            <p className="text-text-primary font-medium">¡Sin incidencias activas!</p>
+            <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mb-3">
+              <svg className="w-6 h-6 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p className="text-text-primary font-medium">Sin incidencias activas</p>
             <p className="text-sm text-text-secondary mt-1">
               Todos tus reportes han sido atendidos
             </p>
@@ -111,7 +114,6 @@ export default function RequesterDashboard() {
         <QuickActions />
       </div>
 
-      {/* Actividad Reciente */}
       <RecentActivity
         tickets={recentTickets}
         onViewAll={() => navigate('/requester/my-tickets')}

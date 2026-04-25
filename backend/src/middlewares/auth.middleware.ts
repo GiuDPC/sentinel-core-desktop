@@ -1,7 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
-import { error } from 'node:console';
 
 export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
     const token = req.cookies?.token;
@@ -20,6 +19,6 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
         req.user = payload
         next()
     } catch {
-        res.status(401).json({error: 'Token inválido o expirado'});
+        res.status(401).json({error: 'Token invalido o expirado'});
     }
 }

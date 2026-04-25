@@ -5,10 +5,10 @@ import { categoriesApi } from '../../api/categories'
 import notifications from '../../components/ui/Notifications'
 
 const PRIORITY_OPTIONS = [
-  { value: 'LOW', label: 'Baja', description: 'No afecta operaciones' },
-  { value: 'MEDIUM', label: 'Media', description: 'Afecta parcialmente' },
-  { value: 'HIGH', label: 'Alta', description: 'Impacto significativo' },
-  { value: 'CRITICAL', label: 'Crítica', description: 'Emergencia inmediata' },
+  { value: 'LOW', label: 'Bajo', description: 'No interfiere operaciones criticas. Sin riesgo inmediato.' },
+  { value: 'MEDIUM', label: 'Medio', description: 'Interrupcion parcial, afecta productividad de un area.' },
+  { value: 'HIGH', label: 'Alto', description: 'Interrupcion significativa. Mayor de seguridad o perdida.' },
+  { value: 'CRITICAL', label: 'Critico', description: 'Cese total de actividades. Mayor de seguridad o perdida.' },
 ]
 
 export default function CreateTicket() {
@@ -29,7 +29,6 @@ export default function CreateTicket() {
   }, [])
 
   useEffect(() => {
-    // Pre-seleccionar categoría desde QuickActions
     if (location.state?.preselectedCategory && categories.length > 0) {
       const cat = categories.find((c) => c.name === location.state.preselectedCategory)
       if (cat) {
@@ -43,7 +42,7 @@ export default function CreateTicket() {
       const data = await categoriesApi.getAll()
       setCategories(data.data || data || [])
     } catch (error) {
-      console.error('Error cargando categorías:', error)
+      console.error('Error cargando categorias:', error)
     }
   }
 
@@ -66,7 +65,7 @@ export default function CreateTicket() {
         ...form,
         categoryId: parseInt(form.categoryId, 10),
       })
-      notifications.success('Tu reporte ha sido creado exitosamente', '¡Reporte Creado!')
+      notifications.success('Tu reporte ha sido creado exitosamente', 'Reporte Creado')
       navigate('/requester/my-tickets')
     } catch (error) {
       notifications.error(error.message || 'No se pudo crear el reporte', 'Error')
@@ -75,80 +74,112 @@ export default function CreateTicket() {
     }
   }
 
-  // Buscar la categoría seleccionada para mostrar el SLA
   const selectedCategory = categories.find((c) => String(c.id) === form.categoryId)
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-text-primary font-display">Nuevo Reporte</h2>
-        <p className="text-sm text-text-secondary mt-1">
-          Reporta una incidencia en el centro comercial
-        </p>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <nav className="text-xs text-text-secondary mb-1">
+            Inicio &gt; Mis Tickets &gt; Nuevo Reporte
+          </nav>
+          <h2 className="text-2xl font-bold text-text-primary font-display">Crear Reporte de Incidencia</h2>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/requester/dashboard')}
+            className="px-4 py-2 text-sm text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+          >
+            Cancelar
+          </button>
+          <button
+            form="create-ticket-form"
+            type="submit"
+            disabled={loading}
+            className="px-5 py-2.5 bg-accent text-white text-sm font-medium rounded-lg hover:bg-accent/90 disabled:opacity-50 transition-colors cursor-pointer"
+          >
+            {loading ? 'Enviando...' : 'Enviar Reporte'}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Formulario */}
-        <form onSubmit={handleSubmit} className="lg:col-span-2 space-y-6">
+        <form id="create-ticket-form" onSubmit={handleSubmit} className="lg:col-span-2 space-y-6">
           <div className="bg-surface rounded-xl p-6 shadow-sm space-y-5">
-            {/* Título */}
+            {/* Titulo */}
             <div>
               <label className="block text-sm font-medium text-text-primary mb-1">
-                Título del reporte *
+                Asunto del Reporte
               </label>
               <input
                 name="title"
                 value={form.title}
                 onChange={handleChange}
-                placeholder="Ej: Corte de luz en el local L-204"
+                placeholder="Ej: Fallo electrico en luminarias sector B"
                 className="w-full px-4 py-3 bg-background border border-border rounded-lg text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
               />
             </div>
 
-            {/* Categoría */}
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">
-                Categoría *
-              </label>
-              <select
-                name="categoryId"
-                value={form.categoryId}
-                onChange={handleChange}
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
-              >
-                <option value="">Selecciona una categoría</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name} (SLA: {cat.slaHours}h)
-                  </option>
-                ))}
-              </select>
+            {/* Categoria y Ubicacion en fila */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-text-primary mb-1">
+                  Categoria
+                </label>
+                <select
+                  name="categoryId"
+                  value={form.categoryId}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/30 cursor-pointer"
+                >
+                  <option value="">Seleccione una categoria</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-text-primary mb-1">
+                  Ubicacion Detallada
+                </label>
+                <input
+                  name="location"
+                  value={form.location}
+                  onChange={handleChange}
+                  placeholder="Ej: Planta 2, Pasillo Norte"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                />
+              </div>
             </div>
 
-            {/* Ubicación */}
+            {/* Descripcion */}
             <div>
               <label className="block text-sm font-medium text-text-primary mb-1">
-                Ubicación *
+                Descripcion Detallada
               </label>
-              <input
-                name="location"
-                value={form.location}
+              <textarea
+                name="description"
+                value={form.description}
                 onChange={handleChange}
-                placeholder="Ej: Local L-204, Nivel 2"
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                rows={4}
+                placeholder="Describa el incidente con el mayor detalle posible..."
+                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors resize-none"
               />
             </div>
 
             {/* Prioridad */}
             <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">
-                Nivel de Impacto *
+              <label className="block text-sm font-medium text-text-primary mb-2">
+                Nivel de Impacto
               </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {PRIORITY_OPTIONS.map((opt) => (
                   <label
                     key={opt.value}
-                    className={`flex flex-col p-3 rounded-lg border-2 cursor-pointer transition-colors ${
+                    className={`flex flex-col p-3 rounded-lg border-2 cursor-pointer transition-all text-center ${
                       form.priority === opt.value
                         ? 'border-accent bg-accent-light'
                         : 'border-border hover:border-accent/30'
@@ -162,78 +193,70 @@ export default function CreateTicket() {
                       onChange={handleChange}
                       className="sr-only"
                     />
-                    <span className="text-sm font-medium text-text-primary">{opt.label}</span>
-                    <span className="text-xs text-text-secondary">{opt.description}</span>
+                    <span className={`text-sm font-semibold ${
+                      form.priority === opt.value ? 'text-accent' : 'text-text-primary'
+                    }`}>{opt.label}</span>
+                    <span className="text-[11px] text-text-secondary mt-1 leading-tight">{opt.description}</span>
                   </label>
                 ))}
               </div>
             </div>
-
-            {/* Descripción */}
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">
-                Descripción detallada *
-              </label>
-              <textarea
-                name="description"
-                value={form.description}
-                onChange={handleChange}
-                rows={4}
-                placeholder="Describe el problema con la mayor cantidad de detalles posible..."
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors resize-none"
-              />
-            </div>
-          </div>
-
-          {/* Botones */}
-          <div className="flex items-center gap-4">
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-6 py-3 bg-accent text-white font-medium rounded-lg hover:bg-accent/90 disabled:opacity-50 transition-colors cursor-pointer"
-            >
-              {loading ? 'Enviando...' : '📤 Enviar Reporte'}
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/requester/dashboard')}
-              className="px-6 py-3 border border-border text-text-secondary font-medium rounded-lg hover:bg-background transition-colors cursor-pointer"
-            >
-              Cancelar
-            </button>
           </div>
         </form>
 
-        {/* Panel lateral — Info SLA */}
+        {/* Panel lateral */}
         <div className="space-y-4">
           {selectedCategory && (
             <div className="bg-surface rounded-xl p-6 shadow-sm">
-              <h3 className="text-sm font-semibold text-text-primary mb-3 font-display">
-                📋 Información SLA
-              </h3>
+              <div className="flex items-center gap-2 mb-3">
+                <svg className="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h3 className="text-sm font-semibold text-text-primary font-display">
+                  Compromiso SLA
+                </h3>
+              </div>
               <div className="space-y-3">
                 <div>
-                  <p className="text-xs text-text-secondary">Categoría</p>
-                  <p className="text-sm font-medium text-text-primary">{selectedCategory.name}</p>
+                  <p className="text-xs text-text-secondary uppercase tracking-wider">Tiempo de Respuesta</p>
+                  <p className="text-2xl font-bold text-text-primary mt-1">{selectedCategory.slaHours} Horas</p>
                 </div>
-                <div>
-                  <p className="text-xs text-text-secondary">Tiempo máximo de resolución</p>
-                  <p className="text-lg font-bold text-accent">{selectedCategory.slaHours} horas</p>
-                </div>
+                <p className="text-xs text-text-secondary leading-relaxed">
+                  Para la categoria seleccionada, nuestro equipo tecnico garantiza una intervencion en sitio en plazo de {selectedCategory.slaHours} horas habiles.
+                </p>
               </div>
             </div>
           )}
 
           <div className="bg-surface rounded-xl p-6 shadow-sm">
-            <h3 className="text-sm font-semibold text-text-primary mb-3 font-display">
-              ℹ️ ¿Cómo funciona?
-            </h3>
-            <ol className="space-y-2 text-xs text-text-secondary">
-              <li>1. Envías tu reporte</li>
-              <li>2. Se asigna automáticamente una prioridad SLA</li>
-              <li>3. Un técnico es asignado al caso</li>
-              <li>4. Seguí el progreso en tu dashboard</li>
-            </ol>
+            <div className="flex items-center gap-2 mb-3">
+              <svg className="w-5 h-5 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0 3.75h.008v.008H12v-.008zm9.303-3.376c-.866 1.5.217 3.374 1.948 3.374h-14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
+              </svg>
+              <h3 className="text-sm font-semibold text-text-primary font-display">
+                Consejos de Seguridad
+              </h3>
+            </div>
+            <ul className="space-y-2 text-xs text-text-secondary">
+              <li className="flex items-start gap-2">
+                <svg className="w-3.5 h-3.5 text-success mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                No manipule cables o tableros electricos sin proteccion.
+              </li>
+              <li className="flex items-start gap-2">
+                <svg className="w-3.5 h-3.5 text-success mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                Aleje equipos electronicos de zonas con humedad o filtraciones.
+              </li>
+              <li className="flex items-start gap-2">
+                <svg className="w-3.5 h-3.5 text-success mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                Senalice el area afectada para prevenir accidentes.
+              </li>
+            </ul>
           </div>
         </div>
       </div>

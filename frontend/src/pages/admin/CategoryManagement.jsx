@@ -10,7 +10,7 @@ export default function CategoryManagement() {
   async function loadCategories() {
     try {
       const data = await categoriesApi.getAll()
-      setCategories(data.data || data || [])
+      setCategories(Array.isArray(data) ? data : [])
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
   }

@@ -4,7 +4,6 @@ import { Department } from '../../generated/prisma/enums.js';
 
 async function findAll() {
   const users = await prisma.user.findMany({
-    where: { isActive: true },
     include: { role: true },
     orderBy: { createdAt: 'desc' },
   });

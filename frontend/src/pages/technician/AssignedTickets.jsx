@@ -66,7 +66,11 @@ export default function AssignedTickets() {
           </div>
         ) : tickets.length === 0 ? (
           <div className="text-center py-16 text-text-secondary">
-            <span className="text-4xl mb-3 block">🎉</span>
+            <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-3">
+              <svg className="w-6 h-6 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
             <p className="font-medium">No tienes tickets asignados</p>
           </div>
         ) : (
@@ -85,9 +89,9 @@ export default function AssignedTickets() {
                     </div>
                     <h3 className="text-base font-medium text-text-primary mt-1">{ticket.title}</h3>
                     <div className="flex items-center gap-4 mt-2 text-xs text-text-secondary">
-                      <span>📍 {ticket.location}</span>
-                      <span>📁 {ticket.category?.name}</span>
-                      <span>👤 {ticket.creator?.firstName} {ticket.creator?.lastName}</span>
+                      <span>{ticket.location}</span>
+                      <span>{ticket.category?.name}</span>
+                      <span>{ticket.creator?.firstName} {ticket.creator?.lastName}</span>
                     </div>
                   </div>
 
@@ -98,7 +102,7 @@ export default function AssignedTickets() {
                         onClick={() => handleStatusChange(ticket.id, 'IN_PROGRESS')}
                         className="px-3 py-1 text-xs bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors cursor-pointer"
                       >
-                        ▶ Iniciar
+                        Iniciar
                       </button>
                     )}
                     {ticket.status === 'IN_PROGRESS' && (
@@ -107,13 +111,13 @@ export default function AssignedTickets() {
                           onClick={() => handleStatusChange(ticket.id, 'RESOLVED')}
                           className="px-3 py-1 text-xs bg-success text-white rounded-lg hover:bg-success/90 transition-colors cursor-pointer"
                         >
-                          ✓ Resolver
+                          Resolver
                         </button>
                         <button
                           onClick={() => handleStatusChange(ticket.id, 'ON_HOLD')}
                           className="px-3 py-1 text-xs border border-border text-text-secondary rounded-lg hover:bg-background transition-colors cursor-pointer"
                         >
-                          ⏸ Pausar
+                          Pausar
                         </button>
                       </>
                     )}
@@ -122,7 +126,7 @@ export default function AssignedTickets() {
                         onClick={() => handleStatusChange(ticket.id, 'IN_PROGRESS')}
                         className="px-3 py-1 text-xs bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors cursor-pointer"
                       >
-                        ▶ Reanudar
+                        Reanudar
                       </button>
                     )}
                   </div>

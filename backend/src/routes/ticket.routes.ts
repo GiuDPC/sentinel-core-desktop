@@ -23,7 +23,7 @@ router.post(
 // GET /api/tickets — Todos los autenticados pueden listar
 router.get('/', ticketController.findAll);
 
-// ⚠️ IMPORTANTE: rutas estáticas ANTES que rutas con :id
+// Rutas estáticas ANTES que rutas con :id
 // GET /api/tickets/technicians/workload — Ver carga de técnicos (Admin)
 router.get(
   '/technicians/workload',
@@ -62,6 +62,20 @@ router.post(
   roleGuard('ADMIN'),
   validate(assignTechnicianSchema),
   ticketController.assignTechnician
+);
+
+// POST /api/tickets/:id/resolve — Técnico envía formulario de cierre
+router.post(
+  '/:id/resolve',
+  roleGuard('TECHNICIAN'),
+  ticketController.resolveWithNote
+);
+
+// POST /api/tickets/:id/confirm — Solicitante confirma o reabre
+router.post(
+  '/:id/confirm',
+  roleGuard('REQUESTER'),
+  ticketController.confirmTicket
 );
 
 // Montar sub-rutas de comentarios

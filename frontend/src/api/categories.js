@@ -1,8 +1,9 @@
 import { apiClient } from './client'
 
 export const categoriesApi = {
-  getAll() {
-    return apiClient.get('/categories')
+  async getAll() {
+    const data = await apiClient.get('/categories')
+    return data.categories || data.data || data || []
   },
 
   getById(id) {

@@ -44,10 +44,10 @@ export default function AdminDashboard() {
     <div className="space-y-8">
       <div>
         <h2 className="text-2xl font-bold text-text-primary font-display">
-          Panel de Administración
+          Panel de Administracion
         </h2>
         <p className="text-sm text-text-secondary mt-1">
-          Visión general del centro comercial
+          Vision general del centro comercial
         </p>
       </div>
 
@@ -57,37 +57,32 @@ export default function AdminDashboard() {
           title="Total Tickets"
           value={summary.totalTickets || 0}
           subtitle={`${summary.ticketsThisMonth || 0} este mes`}
-          icon="🎫"
           color="blue"
         />
         <KPICard
           title="Tickets Abiertos"
           value={summary.openTickets || 0}
-          icon="📋"
           color="yellow"
         />
         <KPICard
           title="SLA Vencidos"
           value={summary.slaBreached || 0}
           subtitle={`${summary.slaAtRisk || 0} en riesgo`}
-          icon="⚠️"
           color={summary.slaBreached > 0 ? 'red' : 'green'}
         />
         <KPICard
           title="Tiempo Promedio"
           value={`${summary.avgResolutionHours || 0}h`}
-          subtitle="Resolución promedio"
-          icon="⏱️"
+          subtitle="Resolucion promedio"
           color="blue"
         />
       </div>
 
-      {/* Estadísticas por categoría y prioridad */}
+      {/* Estadisticas por categoria y estado */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Por categoría */}
         <div className="bg-surface rounded-xl p-6 shadow-sm">
           <h3 className="text-sm font-semibold text-text-primary mb-4 font-display">
-            Tickets por Categoría
+            Tickets por Categoria
           </h3>
           <div className="space-y-3">
             {(metrics?.ticketsByCategory || []).map((item) => (
@@ -114,7 +109,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Por estado */}
         <div className="bg-surface rounded-xl p-6 shadow-sm">
           <h3 className="text-sm font-semibold text-text-primary mb-4 font-display">
             Tickets por Estado
@@ -165,7 +159,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Actividad Reciente */}
       <RecentActivity
         tickets={recentTickets}
         onViewAll={() => navigate('/admin/tickets')}

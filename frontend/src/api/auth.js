@@ -1,108 +1,37 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+import { apiClient } from './client'
 
+/**
+ * API de autenticacion basada en cookies httpOnly.
+ * El backend setea la cookie al hacer login — el frontend no maneja tokens.
+ */
 export const authApi = {
-  async login({ email, password, rememberMe }) {
-    const response = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Error al iniciar sesión')
-    }
-
-    // Guardar token si rememberMe es true
-    if (rememberMe && data.token) {
-      localStorage.setItem('token', data.token)
-    } else {
-      sessionStorage.setItem('token', data.token)
-    }
-
+  async login({ email, password }) {
+    const data = await apiClient.post('/auth/login', { email, password })
     return data
   },
 
   async register({ firstName, lastName, email, password, phone }) {
-    const response = await fetch(`${API_URL}/auth/register-public`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        firstName,
-        lastName,
-        email,
-        password,
-        confirmPassword: password, // El backend valida que coincidan
-        phone: phone || undefined,
-      }),
+    const data = await apiClient.post('/auth/register-public', {
+      firstName,
+      lastName,
+      email,
+      password,
+      confirmPassword: password,
+      phone: phone || undefined,
     })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Error al registrar')
-    }
-
-    // Auto-login después de registrar
-    if (data.token) {
-      sessionStorage.setItem('token', data.token)
-    }
-
     return data
   },
 
   async logout() {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token')
-    
-    if (token) {
-      try {
-        await fetch(`${API_URL}/auth/logout`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        })
-      } catch {
-        // Ignorar errores en logout
-      }
+    try {
+      await apiClient.post('/auth/logout')
+    } catch {
+      // Ignorar errores en logout
     }
-
-    localStorage.removeItem('token')
-    sessionStorage.removeItem('token')
   },
 
   async getCurrentUser() {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token')
-    
-    if (!token) {
-      throw new Error('No hay sesión activa')
-    }
-
-    const response = await fetch(`${API_URL}/auth/me`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Error al obtener usuario')
-    }
-
+    const data = await apiClient.get('/auth/me')
     return data
-  },
-
-  getToken() {
-    return localStorage.getItem('token') || sessionStorage.getItem('token')
-  },
-
-  isAuthenticated() {
-    return !!(localStorage.getItem('token') || sessionStorage.getItem('token'))
   },
 }

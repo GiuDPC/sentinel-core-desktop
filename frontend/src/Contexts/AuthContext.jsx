@@ -1,9 +1,22 @@
-import { createContext, useState, useEffect } from 'react'
+import { createContext, useState, useEffect, useContext } from 'react'
 import { authApi } from '../api/auth'
-import { useAuth } from '../hooks/useAuth'
 
-export { useAuth }
 export const AuthContext = createContext(null)
+
+export const useAuth = () => {
+  const context = useContext(AuthContext)
+  if (!context) {
+    throw new Error('useAuth debe ser usado dentro de un AuthProvider')
+  }
+  return context
+}
+
+/** Mapa de redireccion por rol despues del login */
+const ROLE_DASHBOARD_MAP = {
+  ADMIN: '/admin/dashboard',
+  TECHNICIAN: '/technician/dashboard',
+  REQUESTER: '/requester/dashboard',
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
@@ -16,10 +29,8 @@ export function AuthProvider({ children }) {
 
   async function checkAuth() {
     try {
-      if (authApi.isAuthenticated()) {
-        const userData = await authApi.getCurrentUser()
-        setUser(userData)
-      }
+      const data = await authApi.getCurrentUser()
+      setUser(data.user || data)
     } catch {
       setUser(null)
     } finally {
@@ -42,9 +53,7 @@ export function AuthProvider({ children }) {
   async function register(userData) {
     setError(null)
     try {
-      // Registrar usuario
       await authApi.register(userData)
-      // Auto-login después de registro exitoso
       const loginData = await authApi.login({
         email: userData.email,
         password: userData.password,
@@ -65,6 +74,17 @@ export function AuthProvider({ children }) {
     }
   }
 
+  function hasRole(roles) {
+    if (!user) return false
+    const allowed = Array.isArray(roles) ? roles : [roles]
+    return allowed.includes(user.role)
+  }
+
+  function getDashboardPath() {
+    if (!user) return '/login'
+    return ROLE_DASHBOARD_MAP[user.role] || '/login'
+  }
+
   const value = {
     user,
     loading,
@@ -73,6 +93,8 @@ export function AuthProvider({ children }) {
     login,
     register,
     logout,
+    hasRole,
+    getDashboardPath,
     clearError: () => setError(null),
   }
 

@@ -24,7 +24,7 @@ app.use(cookieParser());
 
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 500,
   message: { error: 'Demasiadas peticiones, intentá en 15 minutos' },
 }));
 

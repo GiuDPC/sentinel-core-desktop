@@ -20,6 +20,7 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
     const result = await ticketService.findAll({
       status: req.query.status as string | undefined,
       priority: req.query.priority as string | undefined,
+      search: req.query.search as string | undefined,
       categoryId: req.query.categoryId
         ? parseInt(req.query.categoryId as string, 10)
         : undefined,
@@ -70,6 +71,7 @@ async function assignTechnician(req: Request, res: Response, next: NextFunction)
     next(error);
   }
 }
+
 async function getTechniciansWorkload(req: Request, res: Response, next: NextFunction) {
   try {
     const department = req.query.department as string | undefined;
@@ -80,7 +82,62 @@ async function getTechniciansWorkload(req: Request, res: Response, next: NextFun
   }
 }
 
+async function findMyTickets(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await ticketService.findByCreator(req.user!.id, {
+      status: req.query.status as string | undefined,
+      page: req.query.page ? parseInt(req.query.page as string, 10) : undefined,
+    });
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function findAssigned(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await ticketService.findAssigned(req.user!.id, {
+      status: req.query.status as string | undefined,
+    });
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function resolveWithNote(req: Request, res: Response, next: NextFunction) {
+  try {
+    const ticket = await ticketService.resolveWithNote(
+      String(req.params.id),
+      { resolutionNote: req.body.resolutionNote },
+      req.user!.id
+    );
+    res.json({ ticket });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function confirmTicket(req: Request, res: Response, next: NextFunction) {
+  try {
+    const ticket = await ticketService.confirmTicket(
+      String(req.params.id),
+      {
+        confirmed: req.body.confirmed,
+        rating: req.body.rating,
+        ratingComment: req.body.ratingComment,
+      },
+      req.user!.id
+    );
+    res.json({ ticket });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export const ticketController = {
   create, findAll, findById, updateStatus,
   assignTechnician, getTechniciansWorkload,
+  findMyTickets, findAssigned,
+  resolveWithNote, confirmTicket,
 };

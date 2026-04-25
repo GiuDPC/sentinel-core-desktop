@@ -13,6 +13,7 @@ enum TicketStatus {
   IN_PROGRESS
   ON_HOLD
   RESOLVED
+  AWAITING_CONFIRMATION
   CLOSED
 }
 
@@ -24,13 +25,11 @@ enum TicketPriority {
 }
 
 enum Department {
-  ELECTRICIDAD
-  AGUAS_Y_SANEAMIENTO
-  INFRAESTRUCTURA_VIAL
-  ASEO_URBANO
-  PROTECCION_CIVIL
-  TELECOMUNICACIONES
-  SALUD_PUBLICA
+  MANTENIMIENTO_ELECTRICO
+  PLOMERIA
+  SEGURIDAD
+  INFRAESTRUCTURA
+  REDES_Y_TELECOMUNICACIONES
   ADMINISTRACION
   OTROS
 }
@@ -91,11 +90,15 @@ model Ticket {
   title       String
   description String
   location    String
-  status      TicketStatus   @default(OPEN)
-  priority    TicketPriority
-  dueDate     DateTime?      @map("due_date")
-  createdAt   DateTime       @default(now()) @map("created_at")
-  updatedAt   DateTime       @updatedAt @map("updated_at")
+  status         TicketStatus   @default(OPEN)
+  priority       TicketPriority
+  dueDate        DateTime?      @map("due_date")
+  resolutionNote String?        @map("resolution_note")
+  resolvedAt     DateTime?      @map("resolved_at")
+  rating         Int?
+  ratingComment  String?        @map("rating_comment")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
 
   creator     User         @relation("TicketCreator", fields: [creatorId], references: [id])
   category    Category     @relation(fields: [categoryId], references: [id])

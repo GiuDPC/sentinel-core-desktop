@@ -137,4 +137,112 @@ async function getSlaBreachedTickets() {
   });
 }
 
-export const metricsService = { getDashboard, getSlaBreachedTickets };
+export const metricsService = { getDashboard, getSlaBreachedTickets, getRequesterMetrics, getTechnicianMetrics };
+
+/**
+ * Métricas específicas del solicitante.
+ */
+async function getRequesterMetrics(userId: string) {
+  const now = new Date();
+
+  const [total, open, inProgress, resolved, slaBreached] = await Promise.all([
+    prisma.ticket.count({ where: { creatorId: userId } }),
+    prisma.ticket.count({ where: { creatorId: userId, status: 'OPEN' } }),
+    prisma.ticket.count({ where: { creatorId: userId, status: 'IN_PROGRESS' } }),
+    prisma.ticket.count({ where: { creatorId: userId, status: { in: ['RESOLVED', 'CLOSED'] } } }),
+    prisma.ticket.count({
+      where: {
+        creatorId: userId,
+        status: { notIn: ['RESOLVED', 'CLOSED'] },
+        dueDate: { lt: now },
+      },
+    }),
+  ]);
+
+  // Promedio de resolución de tickets del solicitante
+  const resolvedTickets = await prisma.ticket.findMany({
+    where: { creatorId: userId, status: { in: ['RESOLVED', 'CLOSED'] } },
+    select: { createdAt: true, updatedAt: true },
+  });
+
+  let avgResolutionHours = 0;
+  if (resolvedTickets.length > 0) {
+    const totalHours = resolvedTickets.reduce((sum, t) => {
+      return sum + (t.updatedAt.getTime() - t.createdAt.getTime()) / (1000 * 60 * 60);
+    }, 0);
+    avgResolutionHours = Math.round((totalHours / resolvedTickets.length) * 10) / 10;
+  }
+
+  const slaCompliance = total > 0
+    ? Math.round(((total - slaBreached) / total) * 100)
+    : 100;
+
+  return {
+    totalTickets: total,
+    openTickets: open,
+    inProgressTickets: inProgress,
+    resolvedTickets: resolved,
+    slaBreached,
+    slaCompliance,
+    avgResolutionHours,
+  };
+}
+
+/**
+ * Métricas específicas del técnico.
+ */
+async function getTechnicianMetrics(userId: string) {
+  const now = new Date();
+
+  const assignedTicketIds = await prisma.assignment.findMany({
+    where: { technicianId: userId },
+    select: { ticketId: true },
+  });
+  const ticketIds = assignedTicketIds.map((a) => a.ticketId);
+
+  if (ticketIds.length === 0) {
+    return {
+      totalAssigned: 0,
+      inProgress: 0,
+      resolved: 0,
+      slaBreached: 0,
+      avgResolutionHours: 0,
+    };
+  }
+
+  const [totalAssigned, inProgress, resolved, slaBreached] = await Promise.all([
+    prisma.ticket.count({ where: { id: { in: ticketIds } } }),
+    prisma.ticket.count({ where: { id: { in: ticketIds }, status: 'IN_PROGRESS' } }),
+    prisma.ticket.count({ where: { id: { in: ticketIds }, status: { in: ['RESOLVED', 'CLOSED'] } } }),
+    prisma.ticket.count({
+      where: {
+        id: { in: ticketIds },
+        status: { notIn: ['RESOLVED', 'CLOSED'] },
+        dueDate: { lt: now },
+      },
+    }),
+  ]);
+
+  // Promedio de resolución
+  const resolvedTickets = await prisma.ticket.findMany({
+    where: { id: { in: ticketIds }, status: { in: ['RESOLVED', 'CLOSED'] } },
+    select: { createdAt: true, updatedAt: true },
+  });
+
+  let avgResolutionHours = 0;
+  if (resolvedTickets.length > 0) {
+    const totalHours = resolvedTickets.reduce((sum, t) => {
+      return sum + (t.updatedAt.getTime() - t.createdAt.getTime()) / (1000 * 60 * 60);
+    }, 0);
+    avgResolutionHours = Math.round((totalHours / resolvedTickets.length) * 10) / 10;
+  }
+
+  return {
+    totalAssigned,
+    inProgress,
+    resolved,
+    slaBreached,
+    avgResolutionHours,
+  };
+}
+

@@ -10,17 +10,20 @@ export default function LoginPage() {
   const [showRegister, setShowRegister] = useState(false)
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
-  const { login, register } = useAuth()
+  const { login, register, getDashboardPath } = useAuth()
 
   async function handleLogin(formData) {
     setLoading(true)
     try {
-      await login(formData)
-      notifications.success('¡Bienvenido de vuelta!', 'Sesión iniciada')
-      navigate('/')
+      const data = await login(formData)
+      notifications.success('Bienvenido de vuelta', 'Sesion iniciada')
+      // Usar el rol del response directamente porque getDashboardPath() lee state viejo
+      const role = data.user?.role || data.role
+      const dashPaths = { ADMIN: '/admin/dashboard', TECHNICIAN: '/technician/dashboard', REQUESTER: '/requester/dashboard' }
+      navigate(dashPaths[role] || '/login')
     } catch (error) {
       console.error('Login:', error)
-      notifications.error(error.message || 'Credenciales inválidas', 'Error de autenticación')
+      notifications.error(error.message || 'Credenciales invalidas', 'Error de autenticacion')
     } finally {
       setLoading(false)
     }
@@ -31,7 +34,8 @@ export default function LoginPage() {
     try {
       await register(formData)
       notifications.success('Tu cuenta ha sido creada exitosamente', '¡Bienvenido!')
-      navigate('/')
+      // Requester por defecto — redirige a su dashboard
+      navigate(getDashboardPath())
     } catch (error) {
       console.error('Registro:', error)
       notifications.error(error.message || 'No se pudo crear la cuenta', 'Error de registro')
@@ -48,7 +52,7 @@ export default function LoginPage() {
   return (
     <AuthLayout>
       <div className="w-full flex flex-col items-center">
-        <h1 className="font-display text-3xl font-bold text-center text-[#001b52] mb-6">
+        <h1 className="font-display text-3xl font-bold text-center text-primary mb-6">
           SentinelCore
         </h1>
         

@@ -1,7 +1,7 @@
 import { apiClient } from './client'
 
 /**
- * API de autenticación basada en cookies httpOnly.
+ * API de autenticacion basada en cookies httpOnly.
  * El backend setea la cookie al hacer login — el frontend no maneja tokens.
  */
 export const authApi = {

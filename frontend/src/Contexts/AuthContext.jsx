@@ -11,7 +11,7 @@ export const useAuth = () => {
   return context
 }
 
-/** Mapa de redirección por rol después del login */
+/** Mapa de redireccion por rol despues del login */
 const ROLE_DASHBOARD_MAP = {
   ADMIN: '/admin/dashboard',
   TECHNICIAN: '/technician/dashboard',
@@ -54,7 +54,6 @@ export function AuthProvider({ children }) {
     setError(null)
     try {
       await authApi.register(userData)
-      // Auto-login después de registro exitoso
       const loginData = await authApi.login({
         email: userData.email,
         password: userData.password,
@@ -75,19 +74,12 @@ export function AuthProvider({ children }) {
     }
   }
 
-  /**
-   * Verifica si el usuario tiene uno de los roles permitidos.
-   * @param {string|string[]} roles — Un rol o array de roles permitidos
-   */
   function hasRole(roles) {
     if (!user) return false
     const allowed = Array.isArray(roles) ? roles : [roles]
     return allowed.includes(user.role)
   }
 
-  /**
-   * Obtiene la ruta del dashboard correspondiente al rol del usuario.
-   */
   function getDashboardPath() {
     if (!user) return '/login'
     return ROLE_DASHBOARD_MAP[user.role] || '/login'

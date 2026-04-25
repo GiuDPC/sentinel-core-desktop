@@ -22,16 +22,19 @@ export function SigninForm({ onSubmit, onSwitchToLogin, loading: externalLoading
   }
 
   function formatPhone(value) {
-    const digits = value.replace(/\D/g, '').slice(0, 10)
+    // Formato venezolano: 04XX-XXX-XXXX (11 dígitos)
+    const digits = value.replace(/\D/g, '').slice(0, 11)
     if (digits.length <= 4) return digits
-    return `${digits.slice(0, 4)}-${digits.slice(4)}`
+    if (digits.length <= 7) return `${digits.slice(0, 4)}-${digits.slice(4)}`
+    return `${digits.slice(0, 4)}-${digits.slice(4, 7)}-${digits.slice(7)}`
   }
 
   function validatePhone(phone) {
-    if (!phone) return true
+    // Venezuela: 11 dígitos, prefijos válidos
     const cleanPhone = phone.replace(/\D/g, '')
-    if (cleanPhone.length !== 10) return false
-    const validPrefixes = ['0412', '0414', '0424', '0426', '0416', '0425']
+    if (cleanPhone.length !== 11) return false
+    // Códigos: Digitel (0412), Movistar (0414, 0424), Movilnet (0416, 0426)
+    const validPrefixes = ['0412', '0414', '0416', '0424', '0426']
     const prefix = cleanPhone.slice(0, 4)
     return validPrefixes.includes(prefix)
   }
@@ -71,8 +74,10 @@ export function SigninForm({ onSubmit, onSwitchToLogin, loading: externalLoading
       newErrors.confirmPassword = 'Las contraseñas no coinciden'
     }
     
-    if (formData.phone && !validatePhone(formData.phone)) {
-      newErrors.phone = 'Formato venezolano inválido (0412-xxx-xxxx)'
+    if (!formData.phone) {
+      newErrors.phone = 'El teléfono es requerido'
+    } else if (!validatePhone(formData.phone)) {
+      newErrors.phone = 'Formato venezolano inválido (04XX-XXX-XXXX)'
     }
     
     if (Object.keys(newErrors).length > 0) {
@@ -126,7 +131,7 @@ export function SigninForm({ onSubmit, onSwitchToLogin, loading: externalLoading
           type="tel"
           name="phone"
           label="Teléfono"
-          placeholder="0412-xxx-xxxx"
+          placeholder="0412-123-4567"
           value={formData.phone}
           onChange={(value) => handleChange('phone', formatPhone(value))}
           error={errors.phone}

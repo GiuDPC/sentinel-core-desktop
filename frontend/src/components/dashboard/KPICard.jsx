@@ -11,7 +11,6 @@ export default function KPICard({ title, value, subtitle, trend, trendValue, col
   }
 
   const trendColors = { up: 'text-success', down: 'text-danger', neutral: 'text-text-secondary' }
-  const trendArrows = { up: '+', down: '-', neutral: '' }
 
   const c = colorMap[color] || colorMap.blue
 
@@ -25,9 +24,20 @@ export default function KPICard({ title, value, subtitle, trend, trendValue, col
             <p className="text-xs text-text-secondary mt-2">{subtitle}</p>
           )}
           {trend && trendValue && (
-            <p className={`text-xs mt-1 font-medium ${trendColors[trend]}`}>
-              {trendArrows[trend]}{trendValue}
-            </p>
+            <div className={`flex items-center gap-1 mt-1 ${trendColors[trend]}`}>
+              {trend === 'up' && (
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25m0-11.25h-11.25" />
+                </svg>
+              )}
+              {trend === 'down' && (
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 4.5l15 15m0 0V8.25m0 11.25h-11.25" />
+                </svg>
+              )}
+              <span className="text-xs font-bold">{trendValue}</span>
+              <span className="text-xs">vs mes anterior</span>
+            </div>
           )}
         </div>
         <div className={`w-3 h-3 rounded-full ${c.dot} ring-4 ${c.ring} mt-1`} />

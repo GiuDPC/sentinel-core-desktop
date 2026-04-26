@@ -3,7 +3,7 @@ import { ticketController } from '../controllers/ticket.controller.js';
 import { validate } from '../middlewares/validate.middleware.js';
 import { authMiddleware } from '../middlewares/auth.middleware.js';
 import { roleGuard } from '../middlewares/role.middleware.js';
-import { createTicketSchema, updateStatusSchema } from '../schemas/ticket.schema.js';
+import { createTicketSchema, updateStatusSchema, resolveTicketSchema, confirmTicketSchema } from '../schemas/ticket.schema.js';
 import { assignTechnicianSchema } from '../schemas/assignment.schema.js';
 import commentRoutes from './comment.routes.js';
 
@@ -64,10 +64,19 @@ router.post(
   ticketController.assignTechnician
 );
 
+// POST /api/tickets/:id/reassign — Reasignar técnico (Admin)
+router.post(
+  '/:id/reassign',
+  roleGuard('ADMIN'),
+  validate(assignTechnicianSchema),
+  ticketController.reassignTechnician
+);
+
 // POST /api/tickets/:id/resolve — Técnico envía formulario de cierre
 router.post(
   '/:id/resolve',
   roleGuard('TECHNICIAN'),
+  validate(resolveTicketSchema),
   ticketController.resolveWithNote
 );
 
@@ -75,6 +84,7 @@ router.post(
 router.post(
   '/:id/confirm',
   roleGuard('REQUESTER'),
+  validate(confirmTicketSchema),
   ticketController.confirmTicket
 );
 

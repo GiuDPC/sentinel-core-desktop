@@ -40,7 +40,8 @@ export default function CreateTicket() {
   async function loadCategories() {
     try {
       const data = await categoriesApi.getAll()
-      setCategories(data.data || data || [])
+      const list = Array.isArray(data) ? data : (data.data || data.categories || [])
+      setCategories(list)
     } catch (error) {
       console.error('Error cargando categorias:', error)
     }

@@ -104,4 +104,46 @@ async function registerPublic(data) {
         role: user.role.name,
     };
 }
-export const authService = { login, register, registerPublic };
+export const authService = { login, register, registerPublic, getProfile, changePassword };
+async function getProfile(userId) {
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: { role: true },
+    });
+    if (!user || !user.isActive) {
+        throw new AppError(401, 'Usuario no encontrado o inactivo');
+    }
+    return {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role.name,
+        department: user.department,
+        phone: user.phone,
+    };
+}
+/**
+ * Cambiar contraseña del usuario actual.
+ * Valida la contraseña actual antes de cambiar.
+ */
+async function changePassword(userId, currentPassword, newPassword) {
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+    });
+    if (!user || !user.isActive) {
+        throw new AppError(401, 'Usuario no encontrado o inactivo');
+    }
+    // Verificar contraseña actual
+    const valid = await argon2.verify(user.passwordHash, currentPassword);
+    if (!valid) {
+        throw new AppError(401, 'La contraseña actual es incorrecta');
+    }
+    // Hashear nueva contraseña
+    const newHash = await argon2.hash(newPassword);
+    await prisma.user.update({
+        where: { id: userId },
+        data: { passwordHash: newHash },
+    });
+    return { message: 'Contraseña actualizada correctamente' };
+}

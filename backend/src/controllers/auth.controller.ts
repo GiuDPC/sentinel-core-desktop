@@ -51,4 +51,14 @@ async function registerPublic(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-export const authController = { login, register, logout, me, registerPublic };
+async function changePassword(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const result = await authService.changePassword(req.user!.id, currentPassword, newPassword);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export const authController = { login, register, logout, me, registerPublic, changePassword };

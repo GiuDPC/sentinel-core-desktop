@@ -96,6 +96,7 @@ export function AuthProvider({ children }) {
     hasRole,
     getDashboardPath,
     clearError: () => setError(null),
+    updateUser: (userData) => setUser(userData),
   }
 
   return (

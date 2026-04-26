@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { registerSchema, loginSchema } from '../schemas/auth.schema.js';
+import { registerSchema, loginSchema, registerPublicSchema } from '../schemas/auth.schema.js';
 describe('Auth Schema Validation', () => {
-    describe('registerSchema', () => {
+    describe('registerSchema (Admin)', () => {
         it('should accept valid Venezuelan phone numbers', () => {
             const validPhones = [
                 '0412-123-4567', // Digitel
@@ -62,6 +62,66 @@ describe('Auth Schema Validation', () => {
             expect(result.success).toBe(false);
         });
     });
+    describe('registerPublicSchema (Locatario)', () => {
+        it('should accept registration without phone (optional)', () => {
+            const result = registerPublicSchema.safeParse({
+                firstName: 'Maria',
+                lastName: 'Garcia',
+                email: 'maria@test.com',
+                password: 'password123',
+                confirmPassword: 'password123',
+            });
+            expect(result.success).toBe(true);
+        });
+        it('should accept registration with empty phone string', () => {
+            const result = registerPublicSchema.safeParse({
+                firstName: 'Maria',
+                lastName: 'Garcia',
+                email: 'maria@test.com',
+                password: 'password123',
+                confirmPassword: 'password123',
+                phone: '',
+            });
+            expect(result.success).toBe(true);
+        });
+        it('should accept registration with valid phone', () => {
+            const result = registerPublicSchema.safeParse({
+                firstName: 'Maria',
+                lastName: 'Garcia',
+                email: 'maria@test.com',
+                password: 'password123',
+                confirmPassword: 'password123',
+                phone: '0412-123-4567',
+            });
+            expect(result.success).toBe(true);
+        });
+        it('should reject registration with invalid phone format', () => {
+            const result = registerPublicSchema.safeParse({
+                firstName: 'Maria',
+                lastName: 'Garcia',
+                email: 'maria@test.com',
+                password: 'password123',
+                confirmPassword: 'password123',
+                phone: '1234567890',
+            });
+            expect(result.success).toBe(false);
+        });
+        it('should not accept roleId (public registration = REQUESTER only)', () => {
+            const result = registerPublicSchema.safeParse({
+                firstName: 'Maria',
+                lastName: 'Garcia',
+                email: 'maria@test.com',
+                password: 'password123',
+                confirmPassword: 'password123',
+                roleId: 1,
+            });
+            // roleId is not in the schema, so it should be stripped but not cause failure
+            expect(result.success).toBe(true);
+            if (result.success) {
+                expect(result.data).not.toHaveProperty('roleId');
+            }
+        });
+    });
     describe('loginSchema', () => {
         it('should validate correct credentials', () => {
             const result = loginSchema.safeParse({
@@ -74,6 +134,13 @@ describe('Auth Schema Validation', () => {
             const result = loginSchema.safeParse({
                 email: 'not-an-email',
                 password: 'password123',
+            });
+            expect(result.success).toBe(false);
+        });
+        it('should reject short password', () => {
+            const result = loginSchema.safeParse({
+                email: 'juan@test.com',
+                password: '123',
             });
             expect(result.success).toBe(false);
         });

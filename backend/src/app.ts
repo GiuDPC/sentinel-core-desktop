@@ -6,6 +6,7 @@ import swaggerUi from 'swagger-ui-express';
 import { generateOpenApiConfig } from './docs/swagger.js';
 import routes from './routes/index.js';
 import { errorHandler } from './middlewares/error.middleware.js';
+import { env } from './config/env.js';
 
 const app = express();
 
@@ -14,11 +15,11 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Middlewares Globales
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: env.CORS_ORIGIN,
   credentials: true,
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 app.use(cookieParser());
 

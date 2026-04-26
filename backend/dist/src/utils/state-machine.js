@@ -3,7 +3,8 @@ const VALID_TRANSITIONS = {
     ASSIGNED: ['IN_PROGRESS'],
     IN_PROGRESS: ['ON_HOLD', 'RESOLVED'],
     ON_HOLD: ['IN_PROGRESS'],
-    RESOLVED: ['CLOSED', 'IN_PROGRESS'],
+    RESOLVED: ['AWAITING_CONFIRMATION'],
+    AWAITING_CONFIRMATION: ['CLOSED', 'IN_PROGRESS'],
     CLOSED: [],
 };
 export function isValidTransition(currentStatus, newStatus) {

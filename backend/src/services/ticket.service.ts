@@ -4,6 +4,71 @@ import { generateTicketCode } from '../utils/ticket-code.js';
 import { AppError } from '../utils/app-error.js';
 import { auditService } from './audit.service.js';
 import { isValidTransition } from '../utils/state-machine.js';
+import { sanitizeTicketInput } from '../utils/sanitize.js';
+
+/**
+ * Auto-asigna un técnico basado en la categoría del ticket.
+ * Selecciona el técnico con menor carga de trabajo del departamento correspondiente.
+ * Si no hay técnicos disponibles, el ticket queda en OPEN.
+ */
+async function autoAssign(
+  ticketId: string,
+  categoryDepartment: string | null,
+  creatorId: string,
+  tx: any
+) {
+  // Construir where clause dinámicamente
+  const whereClause: any = {
+    role: { name: 'TECHNICIAN' },
+    isActive: true,
+  };
+  if (categoryDepartment) {
+    whereClause.department = categoryDepartment;
+  }
+
+  // Buscar técnicos activos del departamento con menor carga
+  const technicians = await tx.user.findMany({
+    where: whereClause,
+    include: {
+      assignments: {
+        where: {
+          ticket: {
+            status: { notIn: ['RESOLVED', 'CLOSED'] },
+          },
+        },
+      },
+    },
+  });
+
+  if (technicians.length === 0) return null;
+
+  // Ordenar por menor carga de trabajo (least connections)
+  const sorted = technicians
+    .map((tech: any) => ({
+      id: tech.id,
+      activeTickets: tech.assignments.length,
+    }))
+    .sort((a: any, b: any) => a.activeTickets - b.activeTickets);
+
+  const bestTechId = sorted[0].id;
+
+  // Crear asignación
+  await tx.assignment.create({
+    data: { ticketId, technicianId: bestTechId },
+  });
+
+  // Cambiar a ASSIGNED
+  await tx.ticket.update({
+    where: { id: ticketId },
+    data: { status: 'ASSIGNED' },
+  });
+
+  // Audit logs
+  await auditService.logAction(ticketId, creatorId, 'STATUS_CHANGE', 'OPEN', 'ASSIGNED', tx);
+  await auditService.logAction(ticketId, creatorId, 'ASSIGNMENT', null, bestTechId, tx);
+
+  return bestTechId;
+}
 
 async function create(data: {
   title: string;
@@ -13,9 +78,16 @@ async function create(data: {
   priority: string;
   creatorId: string;
 }) {
+  // Sanitizar input para prevenir XSS
+  const sanitized = sanitizeTicketInput(data);
+  
+  // Validar que priority sea un valor válido
+  const validPriorities = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+  const priority = validPriorities.includes(sanitized.priority) ? sanitized.priority : 'MEDIUM';
+  
   return prisma.$transaction(async (tx) => {
     const category = await tx.category.findUnique({
-      where: { id: data.categoryId },
+      where: { id: sanitized.categoryId },
     });
     if (!category || !category.isActive) {
       throw new AppError(404, 'Categoría no encontrada');
@@ -28,12 +100,12 @@ async function create(data: {
     const ticket = await tx.ticket.create({
       data: {
         ticketCode,
-        title: data.title,
-        description: data.description,
-        location: data.location,
-        categoryId: data.categoryId,
-        priority: data.priority as any,
-        creatorId: data.creatorId,
+        title: sanitized.title,
+        description: sanitized.description,
+        location: sanitized.location,
+        categoryId: sanitized.categoryId,
+        priority: priority,
+        creatorId: sanitized.creatorId,
         dueDate,
       },
       include: {
@@ -54,7 +126,33 @@ async function create(data: {
       },
     });
 
-    return ticket;
+    // Auto-asignación inteligente basada en departamento de la categoría
+    const assignedTechId = await autoAssign(
+      ticket.id,
+      category.department,
+      sanitized.creatorId,
+      tx
+    );
+
+    // Re-fetch con la asignación incluida
+    const finalTicket = await tx.ticket.findUnique({
+      where: { id: ticket.id },
+      include: {
+        category: true,
+        creator: {
+          select: { id: true, firstName: true, lastName: true, email: true },
+        },
+        assignments: {
+          include: {
+            technician: {
+              select: { id: true, firstName: true, lastName: true, department: true },
+            },
+          },
+        },
+      },
+    });
+
+    return { ...finalTicket, autoAssigned: !!assignedTechId };
   });
 }
 
@@ -99,7 +197,7 @@ async function findAll(filters: {
         assignments: {
           include: {
             technician: {
-              select: { id: true, firstName: true, lastName: true },
+              select: { id: true, firstName: true, lastName: true, department: true },
             },
           },
         },
@@ -160,23 +258,49 @@ async function findById(id: string) {
   return ticket;
 }
 
+/**
+ * Cambio de estado genérico.
+ * Si el usuario es TECHNICIAN, verifica que el ticket esté asignado a él.
+ */
 async function updateStatus(
   ticketId: string,
   newStatus: string,
-  userId: string
+  userId: string,
+  userRole: string
 ) {
+  // Validar que el status sea un valor válido del enum
+  const validStatuses = ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'AWAITING_CONFIRMATION', 'CLOSED'];
+  if (!validStatuses.includes(newStatus)) {
+    throw new AppError(400, 'Estado inválido');
+  }
+
+  if (newStatus === 'RESOLVED') {
+    throw new AppError(400, 'Para resolver un ticket, debés usar el endpoint específico de resolución con nota');
+  }
+
   const ticket = await prisma.ticket.findUnique({
     where: { id: ticketId },
+    include: { assignments: true },
   });
   if (!ticket) {
     throw new AppError(404, 'Ticket no encontrado');
   }
+
+  // Verificar ownership para técnicos
+  if (userRole === 'TECHNICIAN') {
+    const isAssigned = ticket.assignments.some((a) => a.technicianId === userId);
+    if (!isAssigned) {
+      throw new AppError(403, 'Solo podés cambiar el estado de tickets asignados a vos');
+    }
+  }
+
   if (!isValidTransition(ticket.status, newStatus)) {
     throw new AppError(
       422,
       `Transición inválida: no se puede cambiar de ${ticket.status} a ${newStatus}`
     );
   }
+
   return prisma.$transaction(async (tx) => {
     const updated = await tx.ticket.update({
       where: { id: ticketId },
@@ -202,15 +326,24 @@ async function updateStatus(
 
 /**
  * Técnico resuelve con nota obligatoria.
- * IN_PROGRESS → RESOLVED → AWAITING_CONFIRMATION (automático)
+ * IN_PROGRESS → AWAITING_CONFIRMATION (el técnico debe estar asignado).
  */
 async function resolveWithNote(
   ticketId: string,
   data: { resolutionNote: string },
   userId: string
 ) {
-  const ticket = await prisma.ticket.findUnique({ where: { id: ticketId } });
+  const ticket = await prisma.ticket.findUnique({
+    where: { id: ticketId },
+    include: { assignments: true },
+  });
   if (!ticket) throw new AppError(404, 'Ticket no encontrado');
+
+  // Verificar que el técnico está asignado a este ticket
+  const isAssigned = ticket.assignments.some((a) => a.technicianId === userId);
+  if (!isAssigned) {
+    throw new AppError(403, 'Solo podés resolver tickets asignados a vos');
+  }
 
   if (!isValidTransition(ticket.status, 'RESOLVED')) {
     throw new AppError(422, `No se puede resolver un ticket en estado ${ticket.status}`);
@@ -221,7 +354,6 @@ async function resolveWithNote(
   }
 
   return prisma.$transaction(async (tx) => {
-    // Primero marcar como RESOLVED, luego automáticamente AWAITING_CONFIRMATION
     const updated = await tx.ticket.update({
       where: { id: ticketId },
       data: {
@@ -248,10 +380,11 @@ async function resolveWithNote(
 /**
  * Solicitante confirma o reabre el ticket.
  * AWAITING_CONFIRMATION → CLOSED (confirma) o AWAITING_CONFIRMATION → IN_PROGRESS (reabre)
+ * Rating/estrellas eliminado — solo confirmación y comentario opcional.
  */
 async function confirmTicket(
   ticketId: string,
-  data: { confirmed: boolean; rating?: number; ratingComment?: string },
+  data: { confirmed: boolean; ratingComment?: string },
   userId: string
 ) {
   const ticket = await prisma.ticket.findUnique({ where: { id: ticketId } });
@@ -267,16 +400,11 @@ async function confirmTicket(
 
   return prisma.$transaction(async (tx) => {
     if (data.confirmed) {
-      // Confirmar → CLOSED con rating
-      if (data.rating && (data.rating < 1 || data.rating > 5)) {
-        throw new AppError(400, 'La calificación debe ser entre 1 y 5');
-      }
-
+      // Confirmar → CLOSED (sin rating)
       const updated = await tx.ticket.update({
         where: { id: ticketId },
         data: {
           status: 'CLOSED',
-          rating: data.rating || null,
           ratingComment: data.ratingComment || null,
         },
         include: {
@@ -286,9 +414,7 @@ async function confirmTicket(
       });
 
       await auditService.logAction(ticketId, userId, 'STATUS_CHANGE', 'AWAITING_CONFIRMATION', 'CLOSED', tx);
-      if (data.rating) {
-        await auditService.logAction(ticketId, userId, 'RATING', null, `${data.rating}/5`, tx);
-      }
+      await auditService.logAction(ticketId, userId, 'TICKET_CONFIRMED', null, 'Confirmado por el solicitante', tx);
 
       return updated;
     } else {

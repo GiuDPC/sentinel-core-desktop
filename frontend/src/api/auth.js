@@ -34,4 +34,13 @@ export const authApi = {
     const data = await apiClient.get('/auth/me')
     return data
   },
+
+  async changePassword({ currentPassword, newPassword }) {
+    const data = await apiClient.post('/auth/change-password', {
+      currentPassword,
+      newPassword,
+      confirmPassword: newPassword,
+    })
+    return data
+  },
 }

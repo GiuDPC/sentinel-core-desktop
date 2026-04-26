@@ -8,3 +8,9 @@ export const updateUserSchema = z.object({
     roleId: z.number().int().positive().optional(),
     isActive: z.boolean().optional(),
 });
+// Schema para actualizar perfil propio (campos más limitados)
+export const updateProfileSchema = z.object({
+    firstName: z.string().min(2, 'Nombre muy corto').optional(),
+    lastName: z.string().min(2, 'Apellido muy corto').optional(),
+    phone: z.string().optional(),
+});

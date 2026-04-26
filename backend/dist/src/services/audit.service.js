@@ -24,4 +24,36 @@ async function findByTicketId(ticketId) {
         orderBy: { createdAt: 'asc' },
     });
 }
-export const auditService = { logAction, findByTicketId };
+/**
+ * Obtiene todos los logs de auditoria con paginacion.
+ */
+async function findAll(filters) {
+    const page = filters.page || 1;
+    const limit = filters.limit || 30;
+    const skip = (page - 1) * limit;
+    const where = {};
+    if (filters.action)
+        where.action = filters.action;
+    const [logs, total] = await Promise.all([
+        prisma.auditLog.findMany({
+            where,
+            skip,
+            take: limit,
+            orderBy: { createdAt: 'desc' },
+            include: {
+                user: {
+                    select: { id: true, firstName: true, lastName: true },
+                },
+                ticket: {
+                    select: { id: true, ticketCode: true, title: true },
+                },
+            },
+        }),
+        prisma.auditLog.count({ where }),
+    ]);
+    return {
+        data: logs,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+}
+export const auditService = { logAction, findByTicketId, findAll };

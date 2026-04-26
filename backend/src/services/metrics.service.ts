@@ -67,26 +67,33 @@ async function getDashboard() {
     { status: 'CLOSED', count: closedTickets },
   ];
 
-  // ── Promedio de resolución horas
-  const resolvedOrClosed = await prisma.ticket.findMany({
-    where: { status: { in: ['RESOLVED', 'CLOSED'] } },
-    select: { createdAt: true, updatedAt: true },
-  });
-
-  let avgResolutionHours = 0;
-  if (resolvedOrClosed.length > 0) {
-    const totalHours = resolvedOrClosed.reduce((sum, ticket) => {
-      const diff = ticket.updatedAt.getTime() - ticket.createdAt.getTime();
-      return sum + diff / (1000 * 60 * 60); // ms → horas
-    }, 0);
-    avgResolutionHours = Math.round((totalHours / resolvedOrClosed.length) * 10) / 10;
-  }
+  // ── Promedio de resolución horas (Optimizado con SQL nativo)
+  const result: any = await prisma.$queryRaw`
+    SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (updated_at - created_at)) / 3600), 0) as avg
+    FROM tickets
+    WHERE status IN ('RESOLVED', 'CLOSED')
+  `;
+  const avgResolutionHours = Math.round(Number(result[0]?.avg || 0) * 10) / 10;
 
   // ── Tickets creados este mes
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const ticketsThisMonth = await prisma.ticket.count({
     where: { createdAt: { gte: startOfMonth } },
   });
+
+  // ── Tickets creados el mes anterior (para tendencias)
+  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+  const ticketsLastMonth = await prisma.ticket.count({
+    where: {
+      createdAt: { gte: startOfLastMonth, lte: endOfLastMonth },
+    },
+  });
+
+  // Calcular tendencia: % vs mes anterior
+  const trendPercentage = ticketsLastMonth > 0
+    ? Math.round(((ticketsThisMonth - ticketsLastMonth) / ticketsLastMonth) * 100)
+    : 0;
 
   // ── Tickets con SLA próximo a vencer (< 2 horas) ──
   const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
@@ -108,6 +115,8 @@ async function getDashboard() {
       slaAtRisk,
       avgResolutionHours,
       ticketsThisMonth,
+      ticketsLastMonth,
+      trendPercentage,
     },
     ticketsByCategory: ticketsByCategoryNamed,
     ticketsByPriority: ticketsByPriorityFormatted,
@@ -145,7 +154,7 @@ export const metricsService = { getDashboard, getSlaBreachedTickets, getRequeste
 async function getRequesterMetrics(userId: string) {
   const now = new Date();
 
-  const [total, open, inProgress, resolved, slaBreached] = await Promise.all([
+  const [total, open, inProgress, resolved, slaBreached, slaAtRisk] = await Promise.all([
     prisma.ticket.count({ where: { creatorId: userId } }),
     prisma.ticket.count({ where: { creatorId: userId, status: 'OPEN' } }),
     prisma.ticket.count({ where: { creatorId: userId, status: 'IN_PROGRESS' } }),
@@ -157,21 +166,22 @@ async function getRequesterMetrics(userId: string) {
         dueDate: { lt: now },
       },
     }),
+    prisma.ticket.count({
+      where: {
+        creatorId: userId,
+        status: { notIn: ['RESOLVED', 'CLOSED'] },
+        dueDate: { gt: now, lt: new Date(now.getTime() + 2 * 60 * 60 * 1000) },
+      },
+    }),
   ]);
 
-  // Promedio de resolución de tickets del solicitante
-  const resolvedTickets = await prisma.ticket.findMany({
-    where: { creatorId: userId, status: { in: ['RESOLVED', 'CLOSED'] } },
-    select: { createdAt: true, updatedAt: true },
-  });
-
-  let avgResolutionHours = 0;
-  if (resolvedTickets.length > 0) {
-    const totalHours = resolvedTickets.reduce((sum, t) => {
-      return sum + (t.updatedAt.getTime() - t.createdAt.getTime()) / (1000 * 60 * 60);
-    }, 0);
-    avgResolutionHours = Math.round((totalHours / resolvedTickets.length) * 10) / 10;
-  }
+  // Promedio de resolución de tickets del solicitante (Optimizado con SQL nativo)
+  const reqResult: any = await prisma.$queryRaw`
+    SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (updated_at - created_at)) / 3600), 0) as avg
+    FROM tickets
+    WHERE status IN ('RESOLVED', 'CLOSED') AND creator_id = ${userId}
+  `;
+  const avgResolutionHours = Math.round(Number(reqResult[0]?.avg || 0) * 10) / 10;
 
   const slaCompliance = total > 0
     ? Math.round(((total - slaBreached) / total) * 100)
@@ -183,6 +193,7 @@ async function getRequesterMetrics(userId: string) {
     inProgressTickets: inProgress,
     resolvedTickets: resolved,
     slaBreached,
+    slaAtRisk,
     slaCompliance,
     avgResolutionHours,
   };
@@ -206,11 +217,12 @@ async function getTechnicianMetrics(userId: string) {
       inProgress: 0,
       resolved: 0,
       slaBreached: 0,
+      slaAtRisk: 0,
       avgResolutionHours: 0,
     };
   }
 
-  const [totalAssigned, inProgress, resolved, slaBreached] = await Promise.all([
+  const [totalAssigned, inProgress, resolved, slaBreached, slaAtRisk] = await Promise.all([
     prisma.ticket.count({ where: { id: { in: ticketIds } } }),
     prisma.ticket.count({ where: { id: { in: ticketIds }, status: 'IN_PROGRESS' } }),
     prisma.ticket.count({ where: { id: { in: ticketIds }, status: { in: ['RESOLVED', 'CLOSED'] } } }),
@@ -221,27 +233,30 @@ async function getTechnicianMetrics(userId: string) {
         dueDate: { lt: now },
       },
     }),
+    prisma.ticket.count({
+      where: {
+        id: { in: ticketIds },
+        status: { notIn: ['RESOLVED', 'CLOSED'] },
+        dueDate: { gt: now, lt: new Date(now.getTime() + 2 * 60 * 60 * 1000) },
+      },
+    }),
   ]);
 
-  // Promedio de resolución
-  const resolvedTickets = await prisma.ticket.findMany({
-    where: { id: { in: ticketIds }, status: { in: ['RESOLVED', 'CLOSED'] } },
-    select: { createdAt: true, updatedAt: true },
-  });
-
-  let avgResolutionHours = 0;
-  if (resolvedTickets.length > 0) {
-    const totalHours = resolvedTickets.reduce((sum, t) => {
-      return sum + (t.updatedAt.getTime() - t.createdAt.getTime()) / (1000 * 60 * 60);
-    }, 0);
-    avgResolutionHours = Math.round((totalHours / resolvedTickets.length) * 10) / 10;
-  }
+  // Promedio de resolución (Optimizado con SQL nativo)
+  const techResult: any = await prisma.$queryRaw`
+    SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (t.updated_at - t.created_at)) / 3600), 0) as avg
+    FROM tickets t
+    INNER JOIN assignments a ON t.id = a.ticket_id
+    WHERE t.status IN ('RESOLVED', 'CLOSED') AND a.technician_id = ${userId}
+  `;
+  const avgResolutionHours = Math.round(Number(techResult[0]?.avg || 0) * 10) / 10;
 
   return {
     totalAssigned,
     inProgress,
     resolved,
     slaBreached,
+    slaAtRisk,
     avgResolutionHours,
   };
 }

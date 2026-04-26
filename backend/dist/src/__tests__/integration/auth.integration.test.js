@@ -9,6 +9,12 @@ vi.mock('../../services/auth.service', () => ({
         logout: vi.fn(),
     }
 }));
+vi.mock('jsonwebtoken', () => ({
+    default: {
+        verify: vi.fn(() => ({ id: 1, email: 'test@test.com', role: 'REQUESTER' })),
+        sign: vi.fn(() => 'fake-token')
+    }
+}));
 describe('Auth Integration Tests', () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -32,7 +38,8 @@ describe('Auth Integration Tests', () => {
                 .post('/api/auth/login')
                 .send({ email: 'no-es-correo', password: 'password123' })
                 .expect(400);
-            expect(response.body.errors).toBeDefined();
+            expect(response.body.error).toBeDefined();
+            expect(response.body.details).toBeDefined();
         });
     });
     describe('POST /api/auth/logout', () => {

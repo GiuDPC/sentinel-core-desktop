@@ -57,6 +57,8 @@ export default function AdminDashboard() {
           title="Total Tickets"
           value={summary.totalTickets || 0}
           subtitle={`${summary.ticketsThisMonth || 0} este mes`}
+          trend={summary.trendPercentage > 0 ? 'up' : summary.trendPercentage < 0 ? 'down' : 'neutral'}
+          trendValue={`${Math.abs(summary.trendPercentage) || 0}%`}
           color="blue"
         />
         <KPICard
@@ -65,15 +67,15 @@ export default function AdminDashboard() {
           color="yellow"
         />
         <KPICard
-          title="SLA Vencidos"
+          title="Tiempo Vencido"
           value={summary.slaBreached || 0}
-          subtitle={`${summary.slaAtRisk || 0} en riesgo`}
+          subtitle={`${summary.slaAtRisk || 0} por vencer`}
           color={summary.slaBreached > 0 ? 'red' : 'green'}
         />
         <KPICard
           title="Tiempo Promedio"
           value={`${summary.avgResolutionHours || 0}h`}
-          subtitle="Resolucion promedio"
+          subtitle="para resolver"
           color="blue"
         />
       </div>

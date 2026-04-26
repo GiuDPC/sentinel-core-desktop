@@ -1,15 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ticketsApi } from '../../api/tickets'
+import { PRIORITY_LABELS, PRIORITY_COLORS, AUDIT_ACTION_LABELS } from '../../constants/ticket'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import AnimatedModal from '../../components/ui/AnimatedModal'
 import notifications from '../../components/ui/Notifications'
-
-const PRIORITY_LABELS = { LOW: 'Baja', MEDIUM: 'Media', HIGH: 'Alta', CRITICAL: 'Critica' }
-const PRIORITY_COLORS = {
-  LOW: 'text-text-secondary', MEDIUM: 'text-warning',
-  HIGH: 'text-orange-500', CRITICAL: 'text-danger',
-}
 
 export default function TicketList() {
   const [tickets, setTickets] = useState([])
@@ -18,15 +13,22 @@ export default function TicketList() {
   const [loading, setLoading] = useState(true)
   const [searchParams] = useSearchParams()
 
-  // Modal de asignacion inteligente
+  // Modal de asignacion/reasignacion inteligente
   const [assignModal, setAssignModal] = useState(false)
   const [assignTicketId, setAssignTicketId] = useState(null)
+  const [isReassign, setIsReassign] = useState(false)
   const [technicians, setTechnicians] = useState([])
   const [suggested, setSuggested] = useState(null)
   const [loadingTechs, setLoadingTechs] = useState(false)
 
-  // Debounced search
+  // Panel detalle de ticket
+  const [detailModal, setDetailModal] = useState(false)
+  const [detailTicket, setDetailTicket] = useState(null)
+  const [loadingDetail, setLoadingDetail] = useState(false)
+
+  // Debounced search — single ref to avoid double fetch
   const searchTimerRef = useRef(null)
+  const isInitialMount = useRef(true)
 
   // Leer search de URL al montar
   useEffect(() => {
@@ -34,14 +36,20 @@ export default function TicketList() {
     if (urlSearch) {
       setFilters(f => ({ ...f, search: urlSearch }))
     }
+    // Carga inicial explícita
+    loadTickets()
+    isInitialMount.current = false
   }, [])
 
+  // Solo se dispara por cambios en filtros de select (no search, no mount)
   useEffect(() => {
+    if (isInitialMount.current) return
     loadTickets()
   }, [filters.status, filters.priority, pagination.page])
 
-  // Debounce search 400ms
+  // Debounce search 400ms — separado de los otros filtros
   useEffect(() => {
+    if (isInitialMount.current) return
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current)
     searchTimerRef.current = setTimeout(() => {
       loadTickets()
@@ -68,8 +76,9 @@ export default function TicketList() {
     }
   }
 
-  async function openAssignModal(ticketId) {
+  async function openAssignModal(ticketId, reassign = false) {
     setAssignTicketId(ticketId)
+    setIsReassign(reassign)
     setAssignModal(true)
     setLoadingTechs(true)
     try {
@@ -85,8 +94,13 @@ export default function TicketList() {
 
   async function handleAssign(techId) {
     try {
-      await ticketsApi.assignTechnician(assignTicketId, techId)
-      notifications.success('Tecnico asignado correctamente', 'Asignacion exitosa')
+      if (isReassign) {
+        await ticketsApi.reassignTechnician(assignTicketId, techId)
+        notifications.success('Tecnico reasignado correctamente', 'Reasignacion exitosa')
+      } else {
+        await ticketsApi.assignTechnician(assignTicketId, techId)
+        notifications.success('Tecnico asignado correctamente', 'Asignacion exitosa')
+      }
       setAssignModal(false)
       loadTickets()
     } catch (error) {
@@ -94,10 +108,29 @@ export default function TicketList() {
     }
   }
 
+  async function openDetailModal(ticketId) {
+    setDetailModal(true)
+    setLoadingDetail(true)
+    try {
+      const data = await ticketsApi.getById(ticketId)
+      setDetailTicket(data.ticket || data)
+    } catch {
+      notifications.error('Error cargando detalle', 'Error')
+      setDetailModal(false)
+    } finally {
+      setLoadingDetail(false)
+    }
+  }
+
   const handleSearchChange = useCallback((e) => {
     setFilters(f => ({ ...f, search: e.target.value }))
     setPagination(p => ({ ...p, page: 1 }))
   }, [])
+
+  // Determina si un ticket puede ser reasignado (tiene asignación y no está cerrado)
+  function canReassign(ticket) {
+    return ticket.assignments?.length > 0 && ticket.status !== 'CLOSED'
+  }
 
   return (
     <div className="space-y-6">
@@ -113,7 +146,7 @@ export default function TicketList() {
         </div>
 
         <div className="flex gap-3">
-          {/* Busqueda con icono + placeholder descriptivo */}
+          {/* Busqueda */}
           <div className="relative">
             <input
               type="text"
@@ -189,16 +222,32 @@ export default function TicketList() {
                 <th className="px-6 py-4 font-medium">Ubicacion</th>
                 <th className="px-6 py-4 font-medium">Prioridad</th>
                 <th className="px-6 py-4 font-medium">Estado</th>
+                <th className="px-6 py-4 font-medium">SLA</th>
                 <th className="px-6 py-4 font-medium">Tecnico</th>
                 <th className="px-6 py-4 font-medium">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {tickets.map((ticket) => (
+              {tickets.map((ticket) => {
+                const isSlaBreached = ticket.dueDate && new Date(ticket.dueDate) < new Date() && !['RESOLVED', 'CLOSED'].includes(ticket.status);
+                const isSlaAtRisk = ticket.dueDate && !isSlaBreached && new Date(ticket.dueDate) < new Date(Date.now() + 2 * 60 * 60 * 1000);
+                return (
                 <tr key={ticket.id} className="hover:bg-background/30 transition-colors group">
-                  <td className="px-6 py-4 font-mono text-xs text-accent font-bold">{ticket.ticketCode}</td>
+                  <td className="px-6 py-4 font-mono text-xs text-accent font-bold">
+                    <button
+                      onClick={() => openDetailModal(ticket.id)}
+                      className="hover:underline cursor-pointer"
+                    >
+                      {ticket.ticketCode}
+                    </button>
+                  </td>
                   <td className="px-6 py-4 text-text-primary font-medium max-w-48 truncate" title={ticket.title}>
-                    {ticket.title}
+                    <button
+                      onClick={() => openDetailModal(ticket.id)}
+                      className="hover:text-accent cursor-pointer text-left transition-colors"
+                    >
+                      {ticket.title}
+                    </button>
                   </td>
                   <td className="px-6 py-4 text-text-secondary text-xs">
                     {ticket.creator?.firstName} {ticket.creator?.lastName}
@@ -212,23 +261,45 @@ export default function TicketList() {
                     </span>
                   </td>
                   <td className="px-6 py-4"><StatusBadge status={ticket.status} /></td>
+                  <td className="px-6 py-4">
+                    {ticket.dueDate && !['RESOLVED', 'CLOSED'].includes(ticket.status) ? (
+                      <span className={`flex items-center gap-1 text-xs ${isSlaBreached ? 'text-danger font-semibold' : isSlaAtRisk ? 'text-warning font-medium' : 'text-text-secondary'}`}>
+                        {isSlaBreached && (
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                          </svg>
+                        )}
+                        {new Date(ticket.dueDate).toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    ) : '\u2014'}
+                  </td>
                   <td className="px-6 py-4 text-text-secondary text-xs">
                     {ticket.assignments?.[0]?.technician
                       ? `${ticket.assignments[0].technician.firstName} ${ticket.assignments[0].technician.lastName}`
                       : '\u2014'}
                   </td>
                   <td className="px-6 py-4">
-                    {ticket.status === 'OPEN' && (
-                      <button
-                        onClick={() => openAssignModal(ticket.id)}
-                        className="px-3 py-1.5 text-xs bg-accent text-white rounded-lg hover:bg-accent/90 transition-all hover:shadow-md cursor-pointer"
-                      >
-                        Asignar
-                      </button>
-                    )}
+                    <div className="flex gap-2">
+                      {ticket.status === 'OPEN' && (
+                        <button
+                          onClick={() => openAssignModal(ticket.id, false)}
+                          className="px-3 py-1.5 text-xs bg-accent text-white rounded-lg hover:bg-accent/90 transition-all hover:shadow-md cursor-pointer"
+                        >
+                          Asignar
+                        </button>
+                      )}
+                      {canReassign(ticket) && (
+                        <button
+                          onClick={() => openAssignModal(ticket.id, true)}
+                          className="px-3 py-1.5 text-xs border border-accent/30 text-accent rounded-lg hover:bg-accent/10 transition-all cursor-pointer"
+                        >
+                          Reasignar
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         )}
@@ -256,11 +327,13 @@ export default function TicketList() {
         )}
       </div>
 
-      {/* Modal Asignacion Inteligente con animacion */}
+      {/* Modal Asignacion/Reasignacion Inteligente */}
       <AnimatedModal show={assignModal} onClose={() => setAssignModal(false)}>
         <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
           <div className="px-6 py-4 border-b border-border">
-            <h3 className="text-lg font-bold text-text-primary font-display">Asignar Tecnico</h3>
+            <h3 className="text-lg font-bold text-text-primary font-display">
+              {isReassign ? 'Reasignar Tecnico' : 'Asignar Tecnico'}
+            </h3>
             <p className="text-xs text-text-secondary mt-1">Selecciona el tecnico con menor carga de trabajo</p>
           </div>
 
@@ -324,6 +397,153 @@ export default function TicketList() {
               Cancelar
             </button>
           </div>
+        </div>
+      </AnimatedModal>
+
+      {/* Modal Detalle de Ticket (Admin) */}
+      <AnimatedModal show={detailModal} onClose={() => setDetailModal(false)}>
+        <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden max-h-[85vh] overflow-y-auto">
+          {loadingDetail ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="w-8 h-8 border-4 border-accent/30 border-t-accent rounded-full animate-spin" />
+            </div>
+          ) : detailTicket ? (
+            <>
+              <div className="px-6 py-4 border-b border-border sticky top-0 bg-surface z-10">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-lg font-bold text-text-primary font-display">{detailTicket.ticketCode}</h3>
+                    <StatusBadge status={detailTicket.status} />
+                  </div>
+                  <button
+                    onClick={() => setDetailModal(false)}
+                    className="text-text-secondary hover:text-text-primary cursor-pointer p-1"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <p className="text-sm text-text-primary mt-1">{detailTicket.title}</p>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Info general */}
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-text-secondary text-xs block">Solicitante</span>
+                    <span className="text-text-primary font-medium">
+                      {detailTicket.creator?.firstName} {detailTicket.creator?.lastName}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-text-secondary text-xs block">Categoria</span>
+                    <span className="text-text-primary font-medium">{detailTicket.category?.name}</span>
+                  </div>
+                  <div>
+                    <span className="text-text-secondary text-xs block">Ubicacion</span>
+                    <span className="text-text-primary font-medium">{detailTicket.location}</span>
+                  </div>
+                  <div>
+                    <span className="text-text-secondary text-xs block">Prioridad</span>
+                    <span className={`font-semibold ${PRIORITY_COLORS[detailTicket.priority]}`}>
+                      {PRIORITY_LABELS[detailTicket.priority]}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-text-secondary text-xs block">Tecnico Asignado</span>
+                    <span className="text-text-primary font-medium">
+                      {detailTicket.assignments?.[0]?.technician
+                        ? `${detailTicket.assignments[0].technician.firstName} ${detailTicket.assignments[0].technician.lastName}`
+                        : 'Sin asignar'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-text-secondary text-xs block">Creado</span>
+                    <span className="text-text-primary font-medium">
+                      {new Date(detailTicket.createdAt).toLocaleString('es-VE')}
+                    </span>
+                  </div>
+                  {detailTicket.dueDate && (
+                    <div>
+                      <span className="text-text-secondary text-xs block">SLA Vencimiento</span>
+                      <span className={`font-medium ${new Date(detailTicket.dueDate) < new Date() ? 'text-danger' : 'text-success'}`}>
+                        {new Date(detailTicket.dueDate).toLocaleString('es-VE')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Descripcion */}
+                <div>
+                  <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Descripcion</h4>
+                  <p className="text-sm text-text-primary leading-relaxed bg-background/50 p-3 rounded-lg">{detailTicket.description}</p>
+                </div>
+
+                {/* Nota de resolucion */}
+                {detailTicket.resolutionNote && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Nota de Resolucion</h4>
+                    <p className="text-sm text-text-primary leading-relaxed bg-success/5 p-3 rounded-lg border border-success/20">{detailTicket.resolutionNote}</p>
+                  </div>
+                )}
+
+                {/* Historial */}
+                {detailTicket.auditLogs?.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">Historial</h4>
+                    <div className="space-y-2">
+                      {detailTicket.auditLogs.map((log) => (
+                        <div key={log.id} className="flex items-start gap-3 text-xs">
+                          <span className="text-text-secondary w-32 shrink-0">
+                            {new Date(log.createdAt).toLocaleString('es-VE')}
+                          </span>
+                          <span className="text-text-primary">
+                            <strong>{log.user?.firstName} {log.user?.lastName}</strong>
+                            {' — '}
+                            {AUDIT_ACTION_LABELS[log.action] || log.action}
+                            {log.oldValue && log.newValue && (
+                              <span className="text-text-secondary"> ({log.oldValue} → {log.newValue})</span>
+                            )}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Comentarios */}
+                {detailTicket.comments?.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">Comentarios</h4>
+                    <div className="space-y-3">
+                      {detailTicket.comments.map((comment) => (
+                        <div key={comment.id} className="flex gap-3">
+                          <div className="w-7 h-7 rounded-full bg-accent/10 text-accent flex items-center justify-center text-[10px] font-bold shrink-0">
+                            {comment.user?.firstName?.[0]}{comment.user?.lastName?.[0]}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-medium text-text-primary">
+                                {comment.user?.firstName} {comment.user?.lastName}
+                              </span>
+                              <span className="text-[10px] text-text-secondary">
+                                {new Date(comment.createdAt).toLocaleString('es-VE')}
+                              </span>
+                              {comment.isInternal && (
+                                <span className="text-[10px] bg-warning/10 text-warning px-1.5 py-0.5 rounded-full">Interno</span>
+                              )}
+                            </div>
+                            <p className="text-xs text-text-secondary mt-0.5">{comment.content}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : null}
         </div>
       </AnimatedModal>
     </div>

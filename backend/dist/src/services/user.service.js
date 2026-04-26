@@ -2,7 +2,6 @@ import { prisma } from '../config/prisma.js';
 import { AppError } from '../utils/app-error.js';
 async function findAll() {
     const users = await prisma.user.findMany({
-        where: { isActive: true },
         include: { role: true },
         orderBy: { createdAt: 'desc' },
     });
@@ -56,4 +55,25 @@ async function softDelete(id) {
     });
     return { message: 'Usuario desactivado' };
 }
-export const userService = { findAll, findById, update, softDelete };
+/**
+ * Actualizar perfil del usuario actual.
+ * Cualquier usuario puede actualizar su nombre, teléfono.
+ */
+async function updateProfile(id, data) {
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) {
+        throw new AppError(404, 'Usuario no encontrado');
+    }
+    const updated = await prisma.user.update({
+        where: { id },
+        data: {
+            firstName: data.firstName ?? user.firstName,
+            lastName: data.lastName ?? user.lastName,
+            phone: data.phone ?? user.phone,
+        },
+        include: { role: true },
+    });
+    const { passwordHash, ...safeUser } = updated;
+    return safeUser;
+}
+export const userService = { findAll, findById, update, softDelete, updateProfile };

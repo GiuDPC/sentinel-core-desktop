@@ -51,7 +51,8 @@ async function updateStatus(req: Request, res: Response, next: NextFunction) {
     const ticket = await ticketService.updateStatus(
       String(req.params.id),
       req.body.status,
-      req.user!.id
+      req.user!.id,
+      req.user!.role
     );
     res.json({ ticket });
   } catch (error) {
@@ -62,6 +63,19 @@ async function updateStatus(req: Request, res: Response, next: NextFunction) {
 async function assignTechnician(req: Request, res: Response, next: NextFunction) {
   try {
     const ticket = await assignmentService.assignTechnician(
+      String(req.params.id),
+      req.body.technicianId,
+      req.user!.id
+    );
+    res.json({ ticket });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function reassignTechnician(req: Request, res: Response, next: NextFunction) {
+  try {
+    const ticket = await assignmentService.reassignTechnician(
       String(req.params.id),
       req.body.technicianId,
       req.user!.id
@@ -124,7 +138,6 @@ async function confirmTicket(req: Request, res: Response, next: NextFunction) {
       String(req.params.id),
       {
         confirmed: req.body.confirmed,
-        rating: req.body.rating,
         ratingComment: req.body.ratingComment,
       },
       req.user!.id
@@ -137,7 +150,7 @@ async function confirmTicket(req: Request, res: Response, next: NextFunction) {
 
 export const ticketController = {
   create, findAll, findById, updateStatus,
-  assignTechnician, getTechniciansWorkload,
+  assignTechnician, reassignTechnician, getTechniciansWorkload,
   findMyTickets, findAssigned,
   resolveWithNote, confirmTicket,
 };

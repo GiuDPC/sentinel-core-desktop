@@ -9,6 +9,13 @@ export const createTicketSchema = z.object({
 export const updateStatusSchema = z.object({
     status: z.enum([
         'OPEN', 'ASSIGNED', 'IN_PROGRESS',
-        'ON_HOLD', 'RESOLVED', 'CLOSED',
+        'ON_HOLD', 'RESOLVED', 'AWAITING_CONFIRMATION', 'CLOSED',
     ]),
+});
+export const resolveTicketSchema = z.object({
+    resolutionNote: z.string().min(10, 'La nota de resolución debe tener al menos 10 caracteres'),
+});
+export const confirmTicketSchema = z.object({
+    confirmed: z.boolean(),
+    ratingComment: z.string().optional(),
 });

@@ -61,7 +61,7 @@ export default function TechDashboard() {
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
-          title="Tickets Asignados"
+          title="Mis Tickets"
           value={metrics?.totalAssigned || 0}
           color="blue"
         />
@@ -76,9 +76,19 @@ export default function TechDashboard() {
           color="green"
         />
         <KPICard
+          title="Tiempo Vencido"
+          value={metrics?.slaBreached || 0}
+          subtitle={`${metrics?.slaAtRisk || 0} por vencer`}
+          color={metrics?.slaBreached > 0 ? 'red' : 'green'}
+        />
+      </div>
+
+      {/* Tiempo promedio */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <KPICard
           title="Tiempo Promedio"
           value={`${metrics?.avgResolutionHours || 0}h`}
-          subtitle="Tiempo de resolucion"
+          subtitle="para resolver"
           color="blue"
         />
       </div>
@@ -89,7 +99,6 @@ export default function TechDashboard() {
           ticketCode={activeTicket.ticketCode}
           title={activeTicket.title}
           currentStatus={activeTicket.status}
-          technicianName={`${activeTicket.creator?.firstName} ${activeTicket.creator?.lastName}`}
           eta={activeTicket.dueDate ? new Date(activeTicket.dueDate).toLocaleString('es-VE') : null}
         />
       )}

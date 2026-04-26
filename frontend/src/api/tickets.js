@@ -44,6 +44,10 @@ export const ticketsApi = {
     return apiClient.post(`/tickets/${ticketId}/assign`, { technicianId })
   },
 
+  reassignTechnician(ticketId, technicianId) {
+    return apiClient.post(`/tickets/${ticketId}/reassign`, { technicianId })
+  },
+
   getTechniciansWorkload(department) {
     const query = department ? `?department=${department}` : ''
     return apiClient.get(`/tickets/technicians/workload${query}`)
@@ -53,7 +57,7 @@ export const ticketsApi = {
     return apiClient.post(`/tickets/${ticketId}/resolve`, { resolutionNote })
   },
 
-  confirmTicket(ticketId, { confirmed, rating, ratingComment }) {
-    return apiClient.post(`/tickets/${ticketId}/confirm`, { confirmed, rating, ratingComment })
+  confirmTicket(ticketId, { confirmed, ratingComment }) {
+    return apiClient.post(`/tickets/${ticketId}/confirm`, { confirmed, ratingComment })
   },
 }

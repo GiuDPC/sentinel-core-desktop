@@ -1,0 +1,71 @@
+/**
+ * Utilidad para sanitizar input de usuario y prevenir XSS.
+ * Escapa caracteres HTMLproblemáticos.
+ */
+// Caracteres a escapar para prevenir XSS
+const ESCAPE_MAP = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#x27;',
+    '/': '&#x2F;',
+};
+/**
+ * Sana un string para prevenir XSS.
+ * Convierte caracteres problemáticos en sus entidades HTML equivalents.
+ */
+export function sanitizeString(input) {
+    if (!input || typeof input !== 'string')
+        return '';
+    return input.replace(/[&<>"'/]/g, (char) => ESCAPE_MAP[char] || char);
+}
+/**
+ * Sana un objeto recursivamente.
+ * Útil para sanitizar todo el body de una request.
+ */
+export function sanitizeObject(obj) {
+    if (!obj || typeof obj !== 'object')
+        return obj;
+    const result = Array.isArray(obj) ? [] : {};
+    for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            const value = obj[key];
+            if (typeof value === 'string') {
+                result[key] = sanitizeString(value);
+            }
+            else if (Array.isArray(value)) {
+                result[key] = value.map((item) => typeof item === 'string' ? sanitizeString(item) : item);
+            }
+            else if (typeof value === 'object' && value !== null) {
+                result[key] = sanitizeObject(value);
+            }
+            else {
+                result[key] = value;
+            }
+        }
+    }
+    return result;
+}
+/**
+ * Campos que deben ser sanitizados en tickets.
+ */
+export const TICKET_SANITIZE_FIELDS = [
+    'title',
+    'description',
+    'location',
+    'resolutionNote',
+    'ratingComment',
+];
+/**
+ * Sana los campos relevantes de un ticket.
+ */
+export function sanitizeTicketInput(input) {
+    const sanitized = { ...input };
+    for (const field of TICKET_SANITIZE_FIELDS) {
+        if (sanitized[field] && typeof sanitized[field] === 'string') {
+            sanitized[field] = sanitizeString(sanitized[field]);
+        }
+    }
+    return sanitized;
+}

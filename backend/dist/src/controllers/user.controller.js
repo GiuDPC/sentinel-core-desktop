@@ -35,4 +35,13 @@ async function softDelete(req, res, next) {
         next(error);
     }
 }
-export const userController = { findAll, findById, update, softDelete };
+async function updateProfile(req, res, next) {
+    try {
+        const user = await userService.updateProfile(req.user.id, req.body);
+        res.json({ user });
+    }
+    catch (error) {
+        next(error);
+    }
+}
+export const userController = { findAll, findById, update, softDelete, updateProfile };

@@ -28,6 +28,9 @@ const CategoryManagement = lazy(() => import('../pages/admin/CategoryManagement'
 const Reports = lazy(() => import('../pages/admin/Reports'))
 const AuditLogs = lazy(() => import('../pages/admin/AuditLogs'))
 
+// Profile page
+const ProfilePage = lazy(() => import('../pages/ProfilePage'))
+
 function LazyPage({ children }) {
   return <Suspense fallback={<LoadingSpinner />}>{children}</Suspense>
 }
@@ -148,6 +151,16 @@ export function AppRouter() {
               element={
                 <ProtectedRoute allowedRoles={['ADMIN']}>
                   <LazyPage><AuditLogs /></LazyPage>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* ── Profile (todos los roles) ── */}
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'TECHNICIAN', 'REQUESTER']}>
+                  <LazyPage><ProfilePage /></LazyPage>
                 </ProtectedRoute>
               }
             />

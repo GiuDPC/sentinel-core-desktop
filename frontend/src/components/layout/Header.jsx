@@ -15,6 +15,10 @@ export default function Header() {
     }
   }
 
+  function handleUserClick() {
+    navigate('/profile')
+  }
+
   return (
     <header className="h-16 bg-surface border-b border-border flex items-center justify-between px-8">
       <div>
@@ -41,9 +45,14 @@ export default function Header() {
           </svg>
         </div>
 
-        <div className="w-9 h-9 rounded-full bg-accent text-white flex items-center justify-center text-sm font-bold">
+        {/* Botón de perfil - lleva a /profile */}
+        <button
+          onClick={handleUserClick}
+          className="w-9 h-9 rounded-full bg-accent text-white flex items-center justify-center text-sm font-bold hover:bg-accent/90 transition-colors cursor-pointer"
+          title="Mi Perfil"
+        >
           {user?.firstName?.[0]}{user?.lastName?.[0]}
-        </div>
+        </button>
       </div>
     </header>
   )

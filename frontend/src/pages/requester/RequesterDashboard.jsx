@@ -60,7 +60,7 @@ export default function RequesterDashboard() {
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
-          title="Tickets Totales"
+          title="Mis Reportes"
           value={metrics?.totalTickets || 0}
           color="blue"
         />
@@ -75,10 +75,26 @@ export default function RequesterDashboard() {
           color="green"
         />
         <KPICard
-          title="Cumplimiento SLA"
+          title="Tiempo Vencido"
+          value={metrics?.slaBreached || 0}
+          subtitle={`${metrics?.slaAtRisk || 0} por vencer`}
+          color={metrics?.slaBreached > 0 ? 'red' : 'green'}
+        />
+      </div>
+
+      {/* Cumplimiento + Tiempo promedio */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <KPICard
+          title="Cumplimiento"
           value={`${metrics?.slaCompliance || 100}%`}
-          subtitle={`Tiempo promedio: ${metrics?.avgResolutionHours || 0}h`}
+          subtitle="de tiempo"
           color={metrics?.slaCompliance >= 80 ? 'green' : 'red'}
+        />
+        <KPICard
+          title="Tiempo Promedio"
+          value={`${metrics?.avgResolutionHours || 0}h`}
+          subtitle="para resolver"
+          color="blue"
         />
       </div>
 

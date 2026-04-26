@@ -17,4 +17,9 @@ export const usersApi = {
   deactivate(id) {
     return apiClient.delete(`/users/${id}`)
   },
+
+  // Actualizar perfil propio
+  updateProfile(data) {
+    return apiClient.patch('/users/profile', data)
+  },
 }

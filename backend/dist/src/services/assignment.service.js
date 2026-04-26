@@ -7,12 +7,15 @@ import { auditService } from './audit.service.js';
  * El primero de la lista es el sugerido (Least Connections).
  */
 async function getTechniciansByWorkload(department) {
+    const whereClause = {
+        role: { name: 'TECHNICIAN' },
+        isActive: true,
+    };
+    if (department) {
+        whereClause.department = department;
+    }
     const technicians = await prisma.user.findMany({
-        where: {
-            role: { name: 'TECHNICIAN' },
-            isActive: true,
-            ...(department ? { department: department } : {}),
-        },
+        where: whereClause,
         include: {
             assignments: {
                 where: {
@@ -98,4 +101,65 @@ async function assignTechnician(ticketId, technicianId, assignedBy) {
         });
     });
 }
-export const assignmentService = { getTechniciansByWorkload, assignTechnician };
+/**
+ * Reasigna un ticket a un nuevo técnico.
+ * Remueve todas las asignaciones anteriores y crea una nueva.
+ * Mantiene el estado actual del ticket (no lo resetea).
+ */
+async function reassignTechnician(ticketId, newTechnicianId, reassignedBy) {
+    return prisma.$transaction(async (tx) => {
+        const ticket = await tx.ticket.findUnique({
+            where: { id: ticketId },
+            include: { assignments: true },
+        });
+        if (!ticket)
+            throw new AppError(404, 'Ticket no encontrado');
+        if (ticket.status === 'CLOSED') {
+            throw new AppError(422, 'No se puede reasignar un ticket cerrado');
+        }
+        // Verificar que el nuevo técnico existe y es técnico
+        const technician = await tx.user.findUnique({
+            where: { id: newTechnicianId },
+            include: { role: true },
+        });
+        if (!technician || !technician.isActive) {
+            throw new AppError(404, 'Técnico no encontrado');
+        }
+        if (technician.role.name !== 'TECHNICIAN') {
+            throw new AppError(400, 'El usuario seleccionado no es un técnico');
+        }
+        // Guardar ID del técnico anterior para audit
+        const previousTechId = ticket.assignments[0]?.technicianId || null;
+        // Remover todas las asignaciones anteriores
+        await tx.assignment.deleteMany({
+            where: { ticketId },
+        });
+        // Crear nueva asignación
+        await tx.assignment.create({
+            data: { ticketId, technicianId: newTechnicianId },
+        });
+        // Si estaba en OPEN, pasarlo a ASSIGNED
+        if (ticket.status === 'OPEN') {
+            await tx.ticket.update({
+                where: { id: ticketId },
+                data: { status: 'ASSIGNED' },
+            });
+            await auditService.logAction(ticketId, reassignedBy, 'STATUS_CHANGE', 'OPEN', 'ASSIGNED', tx);
+        }
+        // Audit log de reasignación
+        await auditService.logAction(ticketId, reassignedBy, 'REASSIGNMENT', previousTechId, newTechnicianId, tx);
+        return tx.ticket.findUnique({
+            where: { id: ticketId },
+            include: {
+                category: true,
+                creator: { select: { id: true, firstName: true, lastName: true } },
+                assignments: {
+                    include: {
+                        technician: { select: { id: true, firstName: true, lastName: true, department: true } },
+                    },
+                },
+            },
+        });
+    });
+}
+export const assignmentService = { getTechniciansByWorkload, assignTechnician, reassignTechnician };

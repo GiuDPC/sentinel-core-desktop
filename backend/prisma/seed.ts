@@ -34,47 +34,47 @@ async function main() {
     prisma.category.upsert({
       where: { name: 'Falla de Alumbrado Público' },
       update: {},
-      create: { name: 'Falla de Alumbrado Público', department: 'ELECTRICIDAD', slaHours: 48 },
+      create: { name: 'Falla de Alumbrado Público', department: 'MANTENIMIENTO_ELECTRICO', slaHours: 48 },
     }),
     prisma.category.upsert({
       where: { name: 'Transformador Quemado / Guayas' },
       update: {},
-      create: { name: 'Transformador Quemado / Guayas', department: 'ELECTRICIDAD', slaHours: 12 },
+      create: { name: 'Transformador Quemado / Guayas', department: 'MANTENIMIENTO_ELECTRICO', slaHours: 12 },
     }),
     prisma.category.upsert({
       where: { name: 'Bote de Aguas Blancas' },
       update: {},
-      create: { name: 'Bote de Aguas Blancas', department: 'AGUAS_Y_SANEAMIENTO', slaHours: 24 },
+      create: { name: 'Bote de Aguas Blancas', department: 'PLOMERIA', slaHours: 24 },
     }),
     prisma.category.upsert({
       where: { name: 'Desborde de Cloacas' },
       update: {},
-      create: { name: 'Desborde de Cloacas', department: 'AGUAS_Y_SANEAMIENTO', slaHours: 24 },
+      create: { name: 'Desborde de Cloacas', department: 'PLOMERIA', slaHours: 24 },
     }),
     prisma.category.upsert({
       where: { name: 'Hueco en la Vía / Asfalto' },
       update: {},
-      create: { name: 'Hueco en la Vía / Asfalto', department: 'INFRAESTRUCTURA_VIAL', slaHours: 72 },
+      create: { name: 'Hueco en la Vía / Asfalto', department: 'INFRAESTRUCTURA', slaHours: 72 },
     }),
     prisma.category.upsert({
       where: { name: 'Falta de Recolección de Basura' },
       update: {},
-      create: { name: 'Falta de Recolección de Basura', department: 'ASEO_URBANO', slaHours: 24 },
+      create: { name: 'Falta de Recolección de Basura', department: 'OTROS', slaHours: 24 },
     }),
     prisma.category.upsert({
       where: { name: 'Árbol a punto de Caer / Riesgo' },
       update: {},
-      create: { name: 'Árbol a punto de Caer / Riesgo', department: 'PROTECCION_CIVIL', slaHours: 6 },
+      create: { name: 'Árbol a punto de Caer / Riesgo', department: 'SEGURIDAD', slaHours: 6 },
     }),
     prisma.category.upsert({
       where: { name: 'Cables Caídos / Sin Internet' },
       update: {},
-      create: { name: 'Cables Caídos / Sin Internet', department: 'TELECOMUNICACIONES', slaHours: 48 },
+      create: { name: 'Cables Caídos / Sin Internet', department: 'REDES_Y_TELECOMUNICACIONES', slaHours: 48 },
     }),
     prisma.category.upsert({
       where: { name: 'Falta de Insumos en Ambulatorio' },
       update: {},
-      create: { name: 'Falta de Insumos en Ambulatorio', department: 'SALUD_PUBLICA', slaHours: 24 },
+      create: { name: 'Falta de Insumos en Ambulatorio', department: 'OTROS', slaHours: 24 },
     }),
   ]);
   console.log(`${categories.length} categorías creadas`);
@@ -110,7 +110,7 @@ async function main() {
       email: 'carlos.perez@sentinel.local',
       passwordHash: techPassword,
       roleId: techRole.id,
-      department: 'TELECOMUNICACIONES',
+      department: 'REDES_Y_TELECOMUNICACIONES',
       phone: '0412-1234567',
     },
   });
@@ -124,7 +124,7 @@ async function main() {
       email: 'maria.lopez@sentinel.local',
       passwordHash: techPassword,
       roleId: techRole.id,
-      department: 'INFRAESTRUCTURA_VIAL',
+      department: 'INFRAESTRUCTURA',
       phone: '0414-7654321',
     },
   });

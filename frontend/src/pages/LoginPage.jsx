@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../Contexts/AuthContext'
+import { useAuth } from '../Contexts/AuthContextObject.js'
 import { AuthLayout } from '../components/auth/AuthLayout'
 import LoginForm from '../components/auth/LoginForm'
 import SigninForm from '../components/auth/SigninForm'

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useAuth } from './AuthContext.jsx'
+import { useAuth } from './AuthContextObject.js'
 import { NotificationContext } from './NotificationContextObject.js'
 
 export function NotificationProvider({ children }) {

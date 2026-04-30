@@ -93,7 +93,7 @@ export default function RequesterDashboard() {
       </div>
 
       {/* Live Tracker - Full Width */}
-      <div className="w-full">
+      <div className="w-full bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
         {activeTicket ? (
           <LiveTracker
             ticketCode={activeTicket.ticketCode}
@@ -110,7 +110,7 @@ export default function RequesterDashboard() {
             eta={activeTicket.eta || '2h 45m'}
           />
         ) : (
-          <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center h-full min-h-[200px]">
+          <div className="flex flex-col items-center justify-center text-center h-full min-h-[200px]">
             <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mb-4">
               <svg className="w-6 h-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -125,9 +125,11 @@ export default function RequesterDashboard() {
       </div>
 
       {/* Quick Actions & Recent Activity Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-        <QuickActions />
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden h-full">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
+        <div className="lg:col-span-1">
+          <QuickActions />
+        </div>
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col min-h-[300px]">
           <RecentActivity
             tickets={recentTickets}
             onViewAll={() => navigate('/requester/my-tickets')}

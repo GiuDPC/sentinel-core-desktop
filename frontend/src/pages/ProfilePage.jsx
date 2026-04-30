@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Eye, EyeOff, ShieldCheck } from 'lucide-react'
-import { useAuth } from '../Contexts/AuthContext'
+import { useAuth } from '../Contexts/AuthContextObject.js'
 import { usersApi } from '../api/users'
 import { authApi } from '../api/auth'
 import notifications from '../components/ui/Notifications'

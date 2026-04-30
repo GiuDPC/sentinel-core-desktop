@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../Contexts/AuthContext'
+import { useAuth } from '../../Contexts/AuthContextObject.js'
 import { useNotifications } from '../../Contexts/NotificationContextObject.js'
 import { Bell, Search } from 'lucide-react'
 

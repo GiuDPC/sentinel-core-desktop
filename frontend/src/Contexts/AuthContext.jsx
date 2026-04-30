@@ -1,15 +1,6 @@
-import { createContext, useState, useEffect, useContext } from 'react'
+import { useState, useEffect } from 'react'
 import { authApi } from '../api/auth'
-
-export const AuthContext = createContext(null)
-
-export const useAuth = () => {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth debe ser usado dentro de un AuthProvider')
-  }
-  return context
-}
+import { AuthContext } from './AuthContextObject.js'
 
 /** Mapa de redireccion por rol despues del login */
 const ROLE_DASHBOARD_MAP = {

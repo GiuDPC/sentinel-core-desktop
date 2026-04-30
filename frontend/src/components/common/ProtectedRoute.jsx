@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '../../Contexts/AuthContext'
+import { useAuth } from '../../Contexts/AuthContextObject.js'
 import LoadingSpinner from './LoadingSpinner'
 
 /**

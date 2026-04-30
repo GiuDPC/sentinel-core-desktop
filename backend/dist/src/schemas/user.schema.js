@@ -1,4 +1,6 @@
 import { z } from 'zod';
+// Regex solo letras (incluye ñ, acentos, espacios)
+const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
 export const updateUserSchema = z.object({
     firstName: z.string().min(2).optional(),
     lastName: z.string().min(2).optional(),
@@ -8,9 +10,18 @@ export const updateUserSchema = z.object({
     roleId: z.number().int().positive().optional(),
     isActive: z.boolean().optional(),
 });
-// Schema para actualizar perfil propio (campos más limitados)
+// Schema para actualizar perfil propio
+// Valida: solo letras para nombre/apellido
 export const updateProfileSchema = z.object({
-    firstName: z.string().min(2, 'Nombre muy corto').optional(),
-    lastName: z.string().min(2, 'Apellido muy corto').optional(),
+    firstName: z
+        .string()
+        .min(2, 'Mínimo 2 caracteres')
+        .refine(val => nameRegex.test(val), { message: 'Solo letras permitidas' })
+        .optional(),
+    lastName: z
+        .string()
+        .min(2, 'Mínimo 2 caracteres')
+        .refine(val => nameRegex.test(val), { message: 'Solo letras permitidas' })
+        .optional(),
     phone: z.string().optional(),
 });

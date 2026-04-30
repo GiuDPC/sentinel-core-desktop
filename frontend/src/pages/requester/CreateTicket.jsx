@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../../Contexts/AuthContext'
+import { useAuth } from '../../Contexts/AuthContextObject.js'
 import { ticketsApi } from '../../api/tickets'
 import { categoriesApi } from '../../api/categories'
 import notifications from '../../components/ui/Notifications'

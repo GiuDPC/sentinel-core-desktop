@@ -73,7 +73,14 @@ async function updateProfile(id, data) {
         },
         include: { role: true },
     });
-    const { passwordHash, ...safeUser } = updated;
-    return safeUser;
+    return {
+        id: updated.id,
+        firstName: updated.firstName,
+        lastName: updated.lastName,
+        email: updated.email,
+        role: updated.role.name,
+        department: updated.department,
+        phone: updated.phone,
+    };
 }
 export const userService = { findAll, findById, update, softDelete, updateProfile };

@@ -1,6 +1,6 @@
 import logoDashboard from '../../assets/Logo_Claro-fOscuro.jpg'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../Contexts/AuthContext'
+import { useAuth } from '../../Contexts/AuthContextObject.js'
 
 /** Configuracion de navegacion por rol */
 const NAV_ITEMS = [

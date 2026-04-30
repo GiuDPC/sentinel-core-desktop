@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ticketsApi } from '../../api/tickets'
 import { STATUS_OPTIONS, PRIORITY_LABELS, PRIORITY_COLORS } from '../../constants/ticket'
 import StatusBadge from '../../components/dashboard/StatusBadge'
@@ -17,9 +17,7 @@ export default function MyTickets() {
   const [confirmComment, setConfirmComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  useEffect(() => { loadTickets() }, [statusFilter, pagination.page])
-
-  async function loadTickets() {
+  const loadTickets = useCallback(async () => {
     setLoading(true)
     try {
       const data = await ticketsApi.getMyTickets({
@@ -33,7 +31,9 @@ export default function MyTickets() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [statusFilter, pagination.page])
+
+  useEffect(() => { loadTickets() }, [loadTickets])
 
   function openConfirmModal(ticket) {
     setSelectedTicket(ticket)
@@ -61,7 +61,13 @@ export default function MyTickets() {
   async function handleReopen(ticket) {
     const { isConfirmed, value } = await notifications.confirm({
       title: 'Reabrir ticket',
-      text: 'Describe por que la solucion no fue satisfactoria:',
+      text: 'Describe por qué la solución no fue satisfactoria:',
+      input: 'textarea',
+      inputPlaceholder: 'Escribe aquí el motivo...',
+      inputValidator: (value) => {
+        if (!value) return 'Debes ingresar un motivo'
+        if (value.length < 10) return 'El motivo debe tener al menos 10 caracteres'
+      },
       confirmText: 'Reabrir',
       cancelText: 'Cancelar',
       type: 'warning',

@@ -55,6 +55,7 @@ export const notifications = {
     const { title = '¿Estás seguro?', text, confirmText = 'Sí', cancelText = 'Cancelar', type = 'question' } = options;
     
     return Swal.fire({
+      ...options,
       title,
       text,
       icon: type,

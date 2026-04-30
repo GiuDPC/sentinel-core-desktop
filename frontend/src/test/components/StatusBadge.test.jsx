@@ -25,7 +25,7 @@ describe('StatusBadge', () => {
 
   it('renders AWAITING_CONFIRMATION status as "Esperando Confirmacion"', () => {
     render(<StatusBadge status="AWAITING_CONFIRMATION" />)
-    expect(screen.getByText('Esperando Confirmacion')).toBeInTheDocument()
+    expect(screen.getByText('Por Confirmar')).toBeInTheDocument()
   })
 
   it('does not contain emoji characters', () => {

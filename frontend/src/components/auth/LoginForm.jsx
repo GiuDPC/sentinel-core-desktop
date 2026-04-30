@@ -1,8 +1,9 @@
 import { useState } from 'react'
+import { LogIn } from 'lucide-react'
 import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
 
-export function LoginForm({ onSubmit, onSwitchToRegister, loading }) {
+export default function LoginForm({ onSubmit, onSwitchToRegister, loading }) {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -78,21 +79,22 @@ export function LoginForm({ onSubmit, onSwitchToRegister, loading }) {
             name="rememberMe"
             checked={formData.rememberMe}
             onChange={(e) => handleChange('rememberMe', e.target.checked)}
-            className="w-4 h-4 text-[#003091] border-gray-300 border rounded focus:ring-[#003091]/20"
+            className="w-4 h-4 text-[#002570] border-gray-300 border rounded focus:ring-[#003091]/20"
           />
           <span className="font-body text-sm text-gray-600">Recordarme</span>
         </label>
         
         <button 
           type="button" 
-          className="font-body text-sm text-[#003091] hover:underline focus:outline-none focus:ring-2 focus:ring-[#003091]/20 rounded"
+          className="font-body text-sm text-blue-950 hover:underline focus:outline-none focus:ring-2 focus:ring-[#003091]/20 rounded"
         >
           ¿Olvidaste tu contraseña?
         </button>
       </div>
 
-      <Button type="submit" loading={loading} className="mt-3">
-        Iniciar Sesión
+      <Button type="submit" loading={loading} className="mt-3 flex items-center justify-center gap-2">
+        <LogIn size={20} className="stroke-white" />
+        <span>Iniciar Sesión</span>
       </Button>
 
       <div className="text-center font-body text-sm text-gray-500 mt-2">
@@ -100,7 +102,7 @@ export function LoginForm({ onSubmit, onSwitchToRegister, loading }) {
         <button 
           type="button"
           onClick={handleSwitch}
-          className="text-[#003091] font-semibold hover:underline focus:outline-none focus:ring-2 focus:ring-[#003091]/20 rounded"
+          className="text-[#001c53] font-semibold hover:underline focus:outline-none focus:ring-2 focus:ring-[#003091]/20 rounded"
         >
           Regístrate
         </button>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react'
 import KPICard from '../../components/dashboard/KPICard'
 import LiveTracker from '../../components/dashboard/LiveTracker'
 import QuickActions from '../../components/dashboard/QuickActions'
@@ -47,59 +48,52 @@ export default function RequesterDashboard() {
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="text-2xl font-bold text-text-primary font-display">
-          Mi Panel de Control
-        </h2>
-        <p className="text-sm text-text-secondary mt-1">
-          Resumen de tus incidencias y reportes
-        </p>
+    <div className="max-w-7xl mx-auto space-y-6 py-4">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-bold text-blue-950 tracking-tight font-display">
+            Mi Panel de Control
+          </h2>
+          <p className="text-sm text-slate-500 mt-1">
+            Resumen en tiempo real de tus incidencias y reportes
+          </p>
+        </div>
       </div>
 
-      {/* KPIs */}
+      {/* KPIs Principal Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
           title="Mis Reportes"
           value={metrics?.totalTickets || 0}
           color="blue"
+          icon={FileText}
+          trend="up"
+          trendValue="12%"
         />
         <KPICard
           title="En Proceso"
           value={metrics?.inProgressTickets || 0}
           color="yellow"
+          icon={Clock}
         />
         <KPICard
           title="Resueltos"
           value={metrics?.resolvedTickets || 0}
           color="green"
+          icon={CheckCircle}
         />
         <KPICard
           title="Tiempo Vencido"
           value={metrics?.slaBreached || 0}
           subtitle={`${metrics?.slaAtRisk || 0} por vencer`}
           color={metrics?.slaBreached > 0 ? 'red' : 'green'}
+          icon={AlertCircle}
         />
       </div>
 
-      {/* Cumplimiento + Tiempo promedio */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <KPICard
-          title="Cumplimiento"
-          value={`${metrics?.slaCompliance || 100}%`}
-          subtitle="de tiempo"
-          color={metrics?.slaCompliance >= 80 ? 'green' : 'red'}
-        />
-        <KPICard
-          title="Tiempo Promedio"
-          value={`${metrics?.avgResolutionHours || 0}h`}
-          subtitle="para resolver"
-          color="blue"
-        />
-      </div>
-
-      {/* Live Tracker + Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Live Tracker - Full Width */}
+      <div className="w-full">
         {activeTicket ? (
           <LiveTracker
             ticketCode={activeTicket.ticketCode}
@@ -113,27 +107,33 @@ export default function RequesterDashboard() {
                 ? `${activeTicket.assignments[0].technician.firstName} ${activeTicket.assignments[0].technician.lastName}`
                 : null
             }
+            eta={activeTicket.eta || '2h 45m'}
           />
         ) : (
-          <div className="bg-surface rounded-xl p-6 shadow-sm flex flex-col items-center justify-center text-center">
-            <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mb-3">
-              <svg className="w-6 h-6 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center h-full min-h-[200px]">
+            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mb-4">
+              <svg className="w-6 h-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <p className="text-text-primary font-medium">Sin incidencias activas</p>
-            <p className="text-sm text-text-secondary mt-1">
-              Todos tus reportes han sido atendidos
+            <h4 className="text-lg font-bold text-slate-900">Sin incidencias activas</h4>
+            <p className="text-sm text-slate-500 mt-1">
+              Excelente. Todos tus reportes han sido resueltos o están bajo control.
             </p>
           </div>
         )}
-        <QuickActions />
       </div>
 
-      <RecentActivity
-        tickets={recentTickets}
-        onViewAll={() => navigate('/requester/my-tickets')}
-      />
+      {/* Quick Actions & Recent Activity Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        <QuickActions />
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden h-full">
+          <RecentActivity
+            tickets={recentTickets}
+            onViewAll={() => navigate('/requester/my-tickets')}
+          />
+        </div>
+      </div>
     </div>
   )
 }

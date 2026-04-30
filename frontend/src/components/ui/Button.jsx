@@ -6,10 +6,10 @@ export function Button({ type = 'submit', children, loading, disabled, className
       disabled={disabled || loading}
       className={`
         w-full py-3 px-4 
-        bg-[#04215c] text-white font-semibold font-body
+        bg-[#000e2b] text-white font-semibold font-body
         rounded-lg
         transition-all duration-200
-        hover:bg-[#04215c]/90 hover:shadow-lg hover:shadow-[#04215c]/30
+        hover:bg-[#00153f]/90 hover:shadow-lg hover:shadow-[#00153f]/30
         active:scale-[0.98]
         disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none
         ${loading ? 'cursor-wait' : ''}

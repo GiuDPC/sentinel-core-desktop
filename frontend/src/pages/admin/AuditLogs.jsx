@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { auditApi } from '../../api/audit'
 
 const ACTION_LABELS = {
@@ -18,9 +18,9 @@ export default function AuditLogs() {
 
   useEffect(() => {
     loadLogs()
-  }, [pagination.page, filterAction])
+  }, [loadLogs])
 
-  async function loadLogs() {
+  const loadLogs = useCallback(async () => {
     setLoading(true)
     try {
       const data = await auditApi.getAll({
@@ -35,7 +35,7 @@ export default function AuditLogs() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [pagination.page, filterAction])
 
   return (
     <div className="space-y-6">

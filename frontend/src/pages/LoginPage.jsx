@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../Contexts/AuthContext'
 import { AuthLayout } from '../components/auth/AuthLayout'
-import { LoginForm } from '../components/auth/LoginForm'
-import { SigninForm } from '../components/auth/SigninForm'
+import LoginForm from '../components/auth/LoginForm'
+import SigninForm from '../components/auth/SigninForm'
 import notifications from '../components/ui/Notifications'
 
 export default function LoginPage() {
@@ -52,7 +52,7 @@ export default function LoginPage() {
   return (
     <AuthLayout>
       <div className="w-full flex flex-col items-center">
-        <h1 className="font-display text-3xl font-bold text-center text-primary mb-6">
+        <h1 className="font-display text-3xl font-bold text-center text-blue-950 mb-6">
           SentinelCore
         </h1>
         

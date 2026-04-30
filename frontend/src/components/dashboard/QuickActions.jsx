@@ -11,7 +11,7 @@ const QUICK_ACTION_ITEMS = [
   },
   {
     label: 'Incendio',
-    description: 'Presencia de Fuego o humo',
+    description: 'Emergencias de fuego o humo',
     category: 'Incendio / Emergencia',
     color: 'bg-red-50 border-red-200 hover:border-red-300',
     iconBg: 'bg-red-100',
@@ -27,7 +27,7 @@ const QUICK_ACTION_ITEMS = [
   },
   {
     label: 'Falla de Red',
-    description: 'Internet o telecomunicaciones',
+    description: 'Problemas de internet o WiFi',
     category: 'Falla de Red / Internet',
     color: 'bg-blue-50 border-blue-200 hover:border-blue-300',
     iconBg: 'bg-blue-100',
@@ -55,8 +55,9 @@ export default function QuickActions() {
             className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer ${item.color}`}
           >
             <div className={`w-10 h-10 rounded-lg ${item.iconBg} flex items-center justify-center`}>
+              {/* Puedes reemplazar por el verdadero SVG segun tu diseño, aquí solo un placeholder estándar */}
               <svg className={`w-5 h-5 ${item.iconColor}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                <circle cx="12" cy="12" r="10" />
               </svg>
             </div>
             <div className="text-left">

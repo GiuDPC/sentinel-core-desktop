@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ticketsApi } from '../../api/tickets'
 import StatusBadge from '../../components/dashboard/StatusBadge'
@@ -9,11 +9,7 @@ export default function AssignedTickets() {
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
-  useEffect(() => {
-    loadTickets()
-  }, [statusFilter])
-
-  async function loadTickets() {
+  const loadTickets = useCallback(async () => {
     setLoading(true)
     try {
       const data = await ticketsApi.getAssigned({
@@ -25,7 +21,11 @@ export default function AssignedTickets() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [statusFilter])
+
+  useEffect(() => {
+    loadTickets()
+  }, [loadTickets])
 
   async function handleStatusChange(ticketId, newStatus) {
     try {
@@ -107,12 +107,6 @@ export default function AssignedTickets() {
                     )}
                     {ticket.status === 'IN_PROGRESS' && (
                       <>
-                        <button
-                          onClick={() => handleStatusChange(ticket.id, 'RESOLVED')}
-                          className="px-3 py-1 text-xs bg-success text-white rounded-lg hover:bg-success/90 transition-colors cursor-pointer"
-                        >
-                          Resolver
-                        </button>
                         <button
                           onClick={() => handleStatusChange(ticket.id, 'ON_HOLD')}
                           className="px-3 py-1 text-xs border border-border text-text-secondary rounded-lg hover:bg-background transition-colors cursor-pointer"

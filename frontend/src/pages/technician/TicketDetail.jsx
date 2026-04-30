@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ticketsApi } from '../../api/tickets'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import LiveTracker from '../../components/dashboard/LiveTracker'
 import notifications from '../../components/ui/Notifications'
+import { PRIORITY_LABELS } from '../../constants/ticket'
 
 export default function TicketDetail() {
   const { id } = useParams()
@@ -11,11 +12,7 @@ export default function TicketDetail() {
   const [ticket, setTicket] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadTicket()
-  }, [id])
-
-  async function loadTicket() {
+  const loadTicket = useCallback(async () => {
     try {
       const data = await ticketsApi.getById(id)
       setTicket(data.ticket || data)
@@ -25,7 +22,11 @@ export default function TicketDetail() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [id])
+
+  useEffect(() => {
+    loadTicket()
+  }, [loadTicket])
 
   async function handleStatusChange(newStatus) {
     try {
@@ -190,7 +191,7 @@ export default function TicketDetail() {
             </div>
             <div className="flex justify-between">
               <span className="text-text-secondary">Prioridad</span>
-              <span className="text-text-primary font-medium">{ticket.priority}</span>
+              <span className="text-text-primary font-medium">{PRIORITY_LABELS[ticket.priority] || ticket.priority}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-text-secondary">Reportado por</span>

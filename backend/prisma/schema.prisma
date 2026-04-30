@@ -104,7 +104,6 @@ model Ticket {
   category    Category     @relation(fields: [categoryId], references: [id])
   assignments Assignment[]
   comments    Comment[]
-  attachments Attachment[]
   auditLogs   AuditLog[]
 
   @@map("tickets")
@@ -137,20 +136,6 @@ model Comment {
   @@map("comments")
 }
 
-model Attachment {
-  id        String   @id @default(uuid())
-  ticketId  String   @map("ticket_id")
-  fileUrl   String   @map("file_url")
-  fileName  String   @map("file_name")
-  fileSize  Int      @map("file_size")
-  fileType  String   @map("file_type")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  ticket Ticket @relation(fields: [ticketId], references: [id])
-
-  @@map("attachments")
-}
 
 model AuditLog {
   id        String   @id @default(uuid())

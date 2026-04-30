@@ -1,5 +1,6 @@
 import { prisma } from '../config/prisma.js';
 import { AppError } from '../utils/app-error.js';
+import { notificationService } from './notification.service.js';
 
 async function create(data: {
   ticketId: string;
@@ -28,6 +29,37 @@ async function create(data: {
       },
     },
   });
+
+  // Notificaciones post-comentario
+  const ticketInfo = await prisma.ticket.findUnique({
+    where: { id: data.ticketId },
+    include: { assignments: true }
+  });
+
+  if (ticketInfo) {
+    // 1. Si el locatario comenta, avisar al técnico
+    if (data.userId === ticketInfo.creatorId) {
+      for (const assignment of ticketInfo.assignments) {
+        await notificationService.createNotification({
+          userId: assignment.technicianId,
+          title: 'Nuevo Comentario de Locatario',
+          message: `El locatario ha comentado en el ticket #${ticketInfo.ticketCode}`,
+          type: 'COMMENT',
+          link: `/technician/ticket/${data.ticketId}`
+        });
+      }
+    } 
+    // 2. Si es un técnico/admin y el comentario NO es interno, avisar al locatario
+    else if (!data.isInternal) {
+      await notificationService.createNotification({
+        userId: ticketInfo.creatorId,
+        title: 'Nuevo Comentario Técnico',
+        message: `Hay una nueva respuesta en tu ticket #${ticketInfo.ticketCode}`,
+        type: 'COMMENT',
+        link: `/requester/my-tickets`
+      });
+    }
+  }
 
   return comment;
 }

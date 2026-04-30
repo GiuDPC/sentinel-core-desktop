@@ -21,7 +21,7 @@ const STATUS_CONFIG = {
   },
   RESOLVED: { 
     label: 'Resuelto', 
-    color: 'text-emerald-600 border-emerald-300',
+    color: 'text-blue-900 border-blue-200',
     icon: (cls) => <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
   },
   AWAITING_CONFIRMATION: { 

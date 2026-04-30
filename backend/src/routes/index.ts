@@ -5,6 +5,7 @@ import ticketRoutes from './ticket.routes.js';
 import userRoutes from './user.routes.js';
 import metricsRoutes from './metrics.routes.js';
 import auditRoutes from './audit.routes.js';
+import notificationRoutes from './notification.routes.js';
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use('/tickets', ticketRoutes);
 router.use('/users', userRoutes);
 router.use('/metrics', metricsRoutes);
 router.use('/audit-logs', auditRoutes);
+router.use('/notifications', notificationRoutes);
 
 export default router;

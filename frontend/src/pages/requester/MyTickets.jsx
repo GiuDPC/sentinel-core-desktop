@@ -559,7 +559,6 @@ export default function MyTickets() {
         </div>
       </AnimatedModal>
 
-      {/* Modal de Confirmacion — SIN estrellas */}
       <AnimatedModal show={showConfirm} onClose={() => setShowConfirm(false)}>
         <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
           <div className="px-6 py-4 border-b border-border">

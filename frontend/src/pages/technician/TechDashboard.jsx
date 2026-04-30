@@ -5,6 +5,7 @@ import LiveTracker from '../../components/dashboard/LiveTracker'
 import RecentActivity from '../../components/dashboard/RecentActivity'
 import { metricsApi } from '../../api/metrics'
 import { ticketsApi } from '../../api/tickets'
+import { Ticket, Activity, AlertCircle } from 'lucide-react'
 
 export default function TechDashboard() {
   const [metrics, setMetrics] = useState(null)
@@ -24,13 +25,17 @@ export default function TechDashboard() {
         ticketsApi.getAssigned(),
       ])
       setMetrics(metricsData)
-      setAssignedTickets(ticketsData.data || [])
+      const sortedTickets = (ticketsData.data || []).sort((a, b) => {
+        const priorityMap = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 }
+        if (a.status === 'IN_PROGRESS' && b.status !== 'IN_PROGRESS') return -1
+        if (b.status === 'IN_PROGRESS' && a.status !== 'IN_PROGRESS') return 1
+        return (priorityMap[a.priority] || 4) - (priorityMap[b.priority] || 4)
+      })
 
-      const active = ticketsData.data?.find(
-        (t) => t.status === 'IN_PROGRESS'
-      ) || ticketsData.data?.find(
-        (t) => t.status === 'ASSIGNED'
-      )
+      setAssignedTickets(sortedTickets)
+
+      const active = sortedTickets.find((t) => t.status === 'IN_PROGRESS') || 
+                     sortedTickets.find((t) => t.status === 'ASSIGNED')
       setActiveTicket(active || null)
     } catch (error) {
       console.error('Error cargando dashboard tecnico:', error)
@@ -51,62 +56,57 @@ export default function TechDashboard() {
     <div className="space-y-8">
       <div>
         <h2 className="text-2xl font-bold text-text-primary font-display">
-          Panel del Tecnico
+          Cola de Trabajo
         </h2>
         <p className="text-sm text-text-secondary mt-1">
-          Tus tickets asignados y rendimiento
+          Tickets asignados priorizados por urgencia
         </p>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPIs Operativos */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <KPICard
-          title="Mis Tickets"
+          title="Total Asignados"
           value={metrics?.totalAssigned || 0}
           color="blue"
+          icon={Ticket}
         />
         <KPICard
           title="En Proceso"
           value={metrics?.inProgress || 0}
           color="yellow"
+          icon={Activity}
         />
         <KPICard
-          title="Resueltos"
-          value={metrics?.resolved || 0}
-          color="green"
-        />
-        <KPICard
-          title="Tiempo Vencido"
+          title="Urgentes / Vencidos"
           value={metrics?.slaBreached || 0}
-          subtitle={`${metrics?.slaAtRisk || 0} por vencer`}
-          color={metrics?.slaBreached > 0 ? 'red' : 'green'}
+          subtitle={`${metrics?.slaAtRisk || 0} en riesgo crítico`}
+          color={metrics?.slaBreached > 0 ? 'red' : 'orange'}
+          icon={AlertCircle}
         />
       </div>
 
-      {/* Tiempo promedio */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <KPICard
-          title="Tiempo Promedio"
-          value={`${metrics?.avgResolutionHours || 0}h`}
-          subtitle="para resolver"
-          color="blue"
-        />
-      </div>
-
-      {/* Live Tracker */}
+      {/* Acción Inmediata: Live Tracker */}
       {activeTicket && (
-        <LiveTracker
-          ticketCode={activeTicket.ticketCode}
-          title={activeTicket.title}
-          currentStatus={activeTicket.status}
-          eta={activeTicket.dueDate ? new Date(activeTicket.dueDate).toLocaleString('es-VE') : null}
-        />
+        <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm">
+          <LiveTracker 
+            ticketCode={activeTicket.ticketCode}
+            title={activeTicket.title}
+            currentStatus={activeTicket.status}
+            technicianName={`${activeTicket.assignments?.[0]?.technician?.firstName} ${activeTicket.assignments?.[0]?.technician?.lastName}`}
+            priority={activeTicket.priority}
+          />
+        </div>
       )}
 
-      <RecentActivity
-        tickets={assignedTickets}
-        onViewAll={() => navigate('/technician/assigned')}
-      />
+      {/* Contenedor de Cola de Tareas */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <RecentActivity
+          title="Listado de Tareas Pendientes"
+          tickets={assignedTickets}
+          onViewAll={() => navigate('/technician/assigned')}
+        />
+      </div>
     </div>
   )
 }

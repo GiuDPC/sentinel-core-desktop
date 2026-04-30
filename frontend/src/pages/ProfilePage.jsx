@@ -273,11 +273,15 @@ export default function ProfilePage() {
               <>
                 <div className="space-y-2 border-t border-slate-50 pt-4 md:border-t-0 md:pt-0">
                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Departamento Operativo</label>
-                  <p className="text-sm font-black text-indigo-600 py-1 uppercase">{user.department || 'Servicios Generales'}</p>
+                  <p className="text-sm font-black text-black py-1 capitalize">
+                    {(user.department || 'Servicios Generales').toLowerCase()}
+                  </p>
                 </div>
                 <div className="space-y-2 border-t border-slate-50 pt-4 md:border-t-0 md:pt-0">
                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Base de Operaciones</label>
-                  <p className="text-sm font-bold text-slate-800 py-1 uppercase">Centro de Control de Mantenimiento</p>
+                  <p className="text-sm font-bold text-black py-1 capitalize">
+                    {'Centro de Control de Mantenimiento'.toLowerCase()}
+                  </p>
                 </div>
               </>
             )}

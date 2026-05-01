@@ -19,7 +19,6 @@ describe('QuickActions', () => {
   it('renders descriptions for each action', () => {
     renderWithRouter(<QuickActions />)
     expect(screen.getByText('Fallas de luz o cortocircuitos')).toBeInTheDocument()
-    // Usar regex flexible para el texto de agua
     expect(screen.getAllByText(/filtraciones/i).length).toBeGreaterThan(0)
   })
 
@@ -32,6 +31,6 @@ describe('QuickActions', () => {
   it('uses SVG icons instead of emojis', () => {
     const { container } = renderWithRouter(<QuickActions />)
     const svgs = container.querySelectorAll('svg')
-    expect(svgs.length).toBeGreaterThan(4) // One SVG per action item
+    expect(svgs.length).toBeGreaterThan(4) // Iconos principales + flechas ArrowRight
   })
 })

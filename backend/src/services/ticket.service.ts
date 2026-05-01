@@ -5,6 +5,7 @@ import { AppError } from '../utils/app-error.js';
 import { auditService } from './audit.service.js';
 import { isValidTransition } from '../utils/state-machine.js';
 import { sanitizeTicketInput } from '../utils/sanitize.js';
+import { notificationService } from './notification.service.js';
 
 /**
  * Auto-asigna un técnico basado en la categoría del ticket.
@@ -66,6 +67,16 @@ async function autoAssign(
   // Audit logs
   await auditService.logAction(ticketId, creatorId, 'STATUS_CHANGE', 'OPEN', 'ASSIGNED', tx);
   await auditService.logAction(ticketId, creatorId, 'ASSIGNMENT', null, bestTechId, tx);
+
+  // Notificar al técnico
+  const ticketInfo = await tx.ticket.findUnique({ where: { id: ticketId } });
+  await notificationService.createNotification({
+    userId: bestTechId,
+    title: 'Nuevo Ticket Asignado',
+    message: `Se te ha asignado el ticket #${ticketInfo.ticketCode}: ${ticketInfo.title}`,
+    type: 'ASSIGNMENT',
+    link: `/technician/ticket/${ticketId}`
+  });
 
   return bestTechId;
 }
@@ -320,6 +331,16 @@ async function updateStatus(
       newStatus,
       tx
     );
+
+    // Notificar al creador del cambio de estado
+    await notificationService.createNotification({
+      userId: ticket.creatorId,
+      title: 'Actualización de Ticket',
+      message: `Tu ticket #${ticket.ticketCode} ahora está en estado: ${newStatus}`,
+      type: 'TICKET_STATUS',
+      link: `/requester/my-tickets` // O el link al detalle si existiera para locatario
+    });
+
     return updated;
   });
 }
@@ -372,6 +393,15 @@ async function resolveWithNote(
     await auditService.logAction(ticketId, userId, 'STATUS_CHANGE', ticket.status, 'RESOLVED', tx);
     await auditService.logAction(ticketId, userId, 'STATUS_CHANGE', 'RESOLVED', 'AWAITING_CONFIRMATION', tx);
     await auditService.logAction(ticketId, userId, 'RESOLUTION_NOTE', null, data.resolutionNote.trim(), tx);
+
+    // Notificar al creador que debe confirmar
+    await notificationService.createNotification({
+      userId: ticket.creatorId,
+      title: 'Ticket Resuelto',
+      message: `El técnico ha resuelto tu ticket #${ticket.ticketCode}. Por favor, verificá y confirmá la solución.`,
+      type: 'TICKET_STATUS',
+      link: `/requester/my-tickets`
+    });
 
     return updated;
   });
@@ -434,6 +464,18 @@ async function confirmTicket(
 
       await auditService.logAction(ticketId, userId, 'STATUS_CHANGE', 'AWAITING_CONFIRMATION', 'IN_PROGRESS', tx);
       await auditService.logAction(ticketId, userId, 'TICKET_REOPENED', null, data.ratingComment || 'Falla persiste', tx);
+
+      // Notificar al técnico de la reapertura
+      const assignment = await tx.assignment.findFirst({ where: { ticketId } });
+      if (assignment) {
+        await notificationService.createNotification({
+          userId: assignment.technicianId,
+          title: 'Ticket Reabierto',
+          message: `El locatario ha reabierto el ticket #${ticket.ticketCode}. Revisá los comentarios.`,
+          type: 'TICKET_STATUS',
+          link: `/technician/ticket/${ticketId}`
+        });
+      }
 
       return updated;
     }

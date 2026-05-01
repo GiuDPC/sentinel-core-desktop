@@ -25,7 +25,7 @@ describe('LiveTracker', () => {
         title="Apagon parcial"
       />
     )
-    expect(screen.getByText(/#\s*TK-0001/)).toBeInTheDocument()
+    expect(screen.getByText('#TK-0001')).toBeInTheDocument()
     expect(screen.getByText('Apagon parcial')).toBeInTheDocument()
   })
 

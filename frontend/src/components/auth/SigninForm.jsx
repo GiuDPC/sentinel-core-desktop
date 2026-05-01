@@ -1,15 +1,18 @@
 import { useState } from 'react'
+import { UserPlus } from 'lucide-react'
 import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
 
-export function SigninForm({ onSubmit, onSwitchToLogin, loading: externalLoading }) {
+export default function SigninForm({ onSubmit, loading: externalLoading, onSwitchToLogin }) {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
     confirmPassword: '',
-    phone: ''
+    phone: '',
+    storeNumber: '',
+    storeName: ''
   })
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
@@ -21,8 +24,18 @@ export function SigninForm({ onSubmit, onSwitchToLogin, loading: externalLoading
     }
   }
 
+  function handleStoreNumberChange(value) {
+    let val = value.toUpperCase()
+    if (!val.startsWith('L-')) {
+      val = 'L-' + val.replace(/\D/g, '')
+    } else {
+      const rest = val.slice(2).replace(/\D/g, '')
+      val = 'L-' + rest
+    }
+    handleChange('storeNumber', val)
+  }
+
   function formatPhone(value) {
-    // Formato venezolano: 04XX-XXX-XXXX (11 dígitos)
     const digits = value.replace(/\D/g, '').slice(0, 11)
     if (digits.length <= 4) return digits
     if (digits.length <= 7) return `${digits.slice(0, 4)}-${digits.slice(4)}`
@@ -30,10 +43,8 @@ export function SigninForm({ onSubmit, onSwitchToLogin, loading: externalLoading
   }
 
   function validatePhone(phone) {
-    // Venezuela: 11 dígitos, prefijos válidos
     const cleanPhone = phone.replace(/\D/g, '')
     if (cleanPhone.length !== 11) return false
-    // Códigos: Digitel (0412), Movistar (0414, 0424), Movilnet (0416, 0426)
     const validPrefixes = ['0412', '0414', '0416', '0424', '0426']
     const prefix = cleanPhone.slice(0, 4)
     return validPrefixes.includes(prefix)
@@ -62,6 +73,16 @@ export function SigninForm({ onSubmit, onSwitchToLogin, loading: externalLoading
       newErrors.email = 'Correo inválido'
     }
     
+    if (!formData.storeNumber.trim()) {
+      newErrors.storeNumber = 'El número de local es requerido'
+    } else if (!/^L-\d+$/.test(formData.storeNumber)) {
+      newErrors.storeNumber = 'Formato inválido (Ej: L-105)'
+    }
+
+    if (!formData.storeName.trim()) {
+      newErrors.storeName = 'El nombre del local es requerido'
+    }
+    
     if (!formData.password) {
       newErrors.password = 'La contraseña es requerida'
     } else if (formData.password.length < 8) {
@@ -86,7 +107,7 @@ export function SigninForm({ onSubmit, onSwitchToLogin, loading: externalLoading
     }
 
     setLoading(true)
-    onSubmit?.(formData)
+    onSubmit(formData)
     setLoading(false)
   }
 
@@ -128,6 +149,19 @@ export function SigninForm({ onSubmit, onSwitchToLogin, loading: externalLoading
         />
         
         <Input
+          type="text"
+          name="storeNumber"
+          label="Número de Local"
+          placeholder="Ej: L-105"
+          value={formData.storeNumber}
+          onChange={handleStoreNumberChange}
+          onFocus={() => { if(!formData.storeNumber) handleStoreNumberChange('L-') }}
+          error={errors.storeNumber}
+        />
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <Input
           type="tel"
           name="phone"
           label="Teléfono"
@@ -135,6 +169,15 @@ export function SigninForm({ onSubmit, onSwitchToLogin, loading: externalLoading
           value={formData.phone}
           onChange={(value) => handleChange('phone', formatPhone(value))}
           error={errors.phone}
+        />
+        <Input
+          type="text"
+          name="storeName"
+          label="Nombre del Local"
+          placeholder="Ej: Nike Store"
+          value={formData.storeName}
+          onChange={(value) => handleChange('storeName', value)}
+          error={errors.storeName}
         />
       </div>
       
@@ -152,26 +195,31 @@ export function SigninForm({ onSubmit, onSwitchToLogin, loading: externalLoading
         <Input
           type="password"
           name="confirmPassword"
-          label="Confirmar"
+          label="Confirmar contraseña"
           placeholder="••••••••"
           value={formData.confirmPassword}
           onChange={(value) => handleChange('confirmPassword', value)}
           error={errors.confirmPassword}
         />
       </div>
-
-      <Button type="submit" loading={isLoading} className="mt-1">
-        Crear Cuenta
+      
+      <Button
+        type="submit"
+        loading={isLoading}
+        className="mt-2 flex items-center justify-center gap-2"
+      >
+        <UserPlus size={20} className="stroke-white" />
+        <span>Registrarse</span>
       </Button>
 
-      <p className="font-body text-sm text-gray-500 text-center mt-1">
-        ¿Ya tienes cuenta?{' '}
-        <button 
+      <p className="text-center text-sm text-slate-500 mt-4">
+        ¿Ya tenés cuenta?{' '}
+        <button
           type="button"
-          onClick={() => onSwitchToLogin?.()}
-          className="font-semibold text-[#003091] hover:underline focus:outline-none focus:ring-2 focus:ring-[#003091]/20 rounded"
+          onClick={onSwitchToLogin}
+          className="text-blue-950 font-bold hover:underline cursor-pointer"
         >
-          Inicia Sesión
+          Iniciar sesión
         </button>
       </p>
     </form>

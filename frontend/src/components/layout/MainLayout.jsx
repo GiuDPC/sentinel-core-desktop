@@ -8,13 +8,15 @@ import Header from './Header'
  */
 export default function MainLayout() {
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      <div className="flex-1 flex flex-col">
-        <Header />
-        <main className="flex-1 p-8 overflow-y-auto">
-          <Outlet />
-        </main>
+      <div className="flex-1 flex flex-col ml-64 py-2 pr-2 pl-0">
+        <div className="relative flex flex-1 flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <Header />
+          <main className="flex-1 p-4 overflow-y-auto">
+            <Outlet />
+          </main>
+        </div>
       </div>
     </div>
   )

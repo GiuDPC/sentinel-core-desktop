@@ -23,7 +23,7 @@ describe('StatusBadge', () => {
     expect(screen.getByText('Cerrado')).toBeInTheDocument()
   })
 
-  it('renders AWAITING_CONFIRMATION status as "Esperando Confirmacion"', () => {
+  it('renders AWAITING_CONFIRMATION status as "Por Confirmar"', () => {
     render(<StatusBadge status="AWAITING_CONFIRMATION" />)
     expect(screen.getByText('Por Confirmar')).toBeInTheDocument()
   })

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../Contexts/AuthContext'
+import { useAuth } from '../Contexts/AuthContextObject.js'
 import { AuthLayout } from '../components/auth/AuthLayout'
-import { SigninForm } from '../components/auth/SigninForm'
+import SigninForm from '../components/auth/SigninForm'
 import notifications from '../components/ui/Notifications'
 
 export default function SigninPage() {

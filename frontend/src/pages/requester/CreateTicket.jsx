@@ -1,41 +1,57 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../../Contexts/AuthContextObject.js'
 import { ticketsApi } from '../../api/tickets'
 import { categoriesApi } from '../../api/categories'
 import notifications from '../../components/ui/Notifications'
+import { AlertCircle, Clock, MapPin, Send, X, ChevronDown, Check, Search } from 'lucide-react'
 
 const PRIORITY_OPTIONS = [
-  { value: 'LOW', label: 'Bajo', description: 'No interfiere operaciones criticas. Sin riesgo inmediato.' },
-  { value: 'MEDIUM', label: 'Medio', description: 'Interrupcion parcial, afecta productividad de un area.' },
-  { value: 'HIGH', label: 'Alto', description: 'Interrupcion significativa. Mayor de seguridad o perdida.' },
-  { value: 'CRITICAL', label: 'Critico', description: 'Cese total de actividades. Mayor de seguridad o perdida.' },
+  { value: 'LOW', label: 'Bajo', color: 'bg-slate-100 text-slate-600', desc: 'No interfiere operaciones.' },
+  { value: 'MEDIUM', label: 'Medio', color: 'bg-blue-50 text-blue-600', desc: 'Afecta productividad parcial.' },
+  { value: 'HIGH', label: 'Alto', color: 'bg-orange-50 text-orange-600', desc: 'Riesgo o pérdida significativa.' },
+  { value: 'CRITICAL', label: 'Crítico', color: 'bg-rose-50 text-rose-600', desc: 'Cese total de actividades.' },
 ]
+
+const AREA_SUGGESTIONS = ['Mostrador', 'Depósito', 'Salón Principal', 'Baños', 'Vidriera', 'Probadores', 'Entrada']
 
 export default function CreateTicket() {
   const navigate = useNavigate()
-  const location = useLocation()
+  const locationState = useLocation()
+  const { user } = useAuth()
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(false)
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false)
+  const [categorySearch, setCategorySearch] = useState('')
+  const categoryRef = useRef(null)
+  
   const [form, setForm] = useState({
     title: '',
     description: '',
-    location: '',
+    location: '', 
     categoryId: '',
     priority: 'MEDIUM',
   })
 
   useEffect(() => {
     loadCategories()
+    const handleClickOutside = (event) => {
+      if (categoryRef.current && !categoryRef.current.contains(event.target)) {
+        setIsCategoryOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   useEffect(() => {
-    if (location.state?.preselectedCategory && categories.length > 0) {
-      const cat = categories.find((c) => c.name === location.state.preselectedCategory)
+    if (locationState.state?.preselectedCategory && categories.length > 0) {
+      const cat = categories.find((c) => c.name === locationState.state.preselectedCategory)
       if (cat) {
         setForm((f) => ({ ...f, categoryId: String(cat.id) }))
       }
     }
-  }, [location.state, categories])
+  }, [locationState.state, categories])
 
   async function loadCategories() {
     try {
@@ -56,7 +72,7 @@ export default function CreateTicket() {
     e.preventDefault()
 
     if (!form.title || !form.description || !form.location || !form.categoryId) {
-      notifications.error('Todos los campos son obligatorios', 'Campos faltantes')
+      notifications.error('Por favor completa todos los campos obligatorios', 'Validación')
       return
     }
 
@@ -64,199 +80,244 @@ export default function CreateTicket() {
     try {
       await ticketsApi.create({
         ...form,
+        location: `${user?.storeNumber || 'S/L'} - ${form.location}`,
         categoryId: parseInt(form.categoryId, 10),
       })
-      notifications.success('Tu reporte ha sido creado exitosamente', 'Reporte Creado')
+      notifications.success('El reporte ha sido enviado al equipo técnico', 'Éxito')
       navigate('/requester/my-tickets')
     } catch (error) {
-      notifications.error(error.message || 'No se pudo crear el reporte', 'Error')
+      notifications.error(error.message || 'No se pudo procesar el reporte', 'Error')
     } finally {
       setLoading(false)
     }
   }
 
   const selectedCategory = categories.find((c) => String(c.id) === form.categoryId)
+  const filteredCategories = categories.filter(cat => 
+    cat.name.toLowerCase().includes(categorySearch.toLowerCase())
+  )
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+    <div className="max-w-5xl mx-auto space-y-6 py-4 px-4">
+      {/* Header y Navegación */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <nav className="text-xs text-text-secondary mb-1">
-            Inicio &gt; Mis Tickets &gt; Nuevo Reporte
+          <nav className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+            <span>Inicio</span>
+            <span className="text-slate-200">/</span>
+            <span>Nuevo Reporte</span>
           </nav>
-          <h2 className="text-2xl font-bold text-text-primary font-display">Crear Reporte de Incidencia</h2>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Crear Incidencia</h2>
         </div>
+        
         <div className="flex items-center gap-3">
           <button
-            type="button"
             onClick={() => navigate('/requester/dashboard')}
-            className="px-4 py-2 text-sm text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+            className="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-all cursor-pointer flex items-center gap-2"
           >
-            Cancelar
+            <X size={14} /> Cancelar
           </button>
           <button
-            form="create-ticket-form"
-            type="submit"
+            onClick={handleSubmit}
             disabled={loading}
-            className="px-5 py-2.5 bg-accent text-white text-sm font-medium rounded-lg hover:bg-accent/90 disabled:opacity-50 transition-colors cursor-pointer"
+            className="px-6 py-2.5 bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl hover:bg-slate-800 disabled:opacity-50 transition-all shadow-sm flex items-center gap-2 cursor-pointer"
           >
-            {loading ? 'Enviando...' : 'Enviar Reporte'}
+            {loading ? 'Procesando...' : <><Send size={14} /> Enviar Reporte</>}
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <form id="create-ticket-form" onSubmit={handleSubmit} className="lg:col-span-2 space-y-6">
-          <div className="bg-surface rounded-xl p-6 shadow-sm space-y-5">
-            {/* Titulo */}
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">
-                Asunto del Reporte
-              </label>
-              <input
-                name="title"
-                value={form.title}
-                onChange={handleChange}
-                placeholder="Ej: Fallo electrico en luminarias sector B"
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
-              />
-            </div>
+      {/* Info del Local - Fija */}
+      <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-lg flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
+            <MapPin className="text-indigo-400" size={24} />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest">Establecimiento Emisor</p>
+            <h3 className="text-lg font-bold">{user?.storeName || 'Nombre del Local'} — {user?.storeNumber || 'L-XXX'}</h3>
+          </div>
+        </div>
+        <div className="hidden md:block text-right">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ubicación Base</p>
+          <p className="text-sm font-medium text-slate-200">{user?.location || 'Planta Principal'}</p>
+        </div>
+      </div>
 
-            {/* Categoria y Ubicacion en fila */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-1">
-                  Categoria
-                </label>
-                <select
-                  name="categoryId"
-                  value={form.categoryId}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/30 cursor-pointer"
-                >
-                  <option value="">Seleccione una categoria</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-1">
-                  Ubicacion Detallada
-                </label>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-6">
+          <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Detalles de la Incidencia</h4>
+            </div>
+            
+            <div className="p-8 space-y-10">
+              {/* Asunto */}
+              <div className="space-y-2">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Asunto o Título Corto</label>
                 <input
-                  name="location"
-                  value={form.location}
+                  name="title"
+                  value={form.title}
                   onChange={handleChange}
-                  placeholder="Ej: Planta 2, Pasillo Norte"
-                  className="w-full px-4 py-3 bg-background border border-border rounded-lg text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors"
+                  placeholder="Ej: Falla en iluminación principal"
+                  className="w-full px-0 py-2 bg-transparent border-b-2 border-slate-100 text-lg font-bold text-slate-900 focus:outline-none focus:border-slate-900 transition-all placeholder:text-slate-300"
                 />
               </div>
-            </div>
 
-            {/* Descripcion */}
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">
-                Descripcion Detallada
-              </label>
-              <textarea
-                name="description"
-                value={form.description}
-                onChange={handleChange}
-                rows={4}
-                placeholder="Describa el incidente con el mayor detalle posible..."
-                className="w-full px-4 py-3 bg-background border border-border rounded-lg text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-colors resize-none"
-              />
-            </div>
+              {/* Categoría y Área */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                {/* Selector de Categoría Estilo Filtro */}
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Categoría del Problema</label>
+                  <div className="relative" ref={categoryRef}>
+                    <button
+                      type="button"
+                      onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                      className="w-full flex items-center justify-between py-2 border-b-2 border-slate-100 text-sm font-bold text-slate-900 hover:border-slate-300 transition-all text-left"
+                    >
+                      <span className={selectedCategory ? 'text-slate-900' : 'text-slate-400'}>
+                        {selectedCategory ? selectedCategory.name : 'Seleccionar categoría...'}
+                      </span>
+                      <ChevronDown size={16} className={`transition-transform ${isCategoryOpen ? 'rotate-180' : ''}`} />
+                    </button>
 
-            {/* Prioridad */}
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-2">
-                Nivel de Impacto
-              </label>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {PRIORITY_OPTIONS.map((opt) => (
-                  <label
-                    key={opt.value}
-                    className={`flex flex-col p-3 rounded-lg border-2 cursor-pointer transition-all text-center ${
-                      form.priority === opt.value
-                        ? 'border-accent bg-accent-light'
-                        : 'border-border hover:border-accent/30'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="priority"
-                      value={opt.value}
-                      checked={form.priority === opt.value}
-                      onChange={handleChange}
-                      className="sr-only"
-                    />
-                    <span className={`text-sm font-semibold ${
-                      form.priority === opt.value ? 'text-accent' : 'text-text-primary'
-                    }`}>{opt.label}</span>
-                    <span className="text-[11px] text-text-secondary mt-1 leading-tight">{opt.description}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-        </form>
-
-        {/* Panel lateral */}
-        <div className="space-y-4">
-          {selectedCategory && (
-            <div className="bg-surface rounded-xl p-6 shadow-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <svg className="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <h3 className="text-sm font-semibold text-text-primary font-display">
-                  Compromiso SLA
-                </h3>
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-xs text-text-secondary uppercase tracking-wider">Tiempo de Respuesta</p>
-                  <p className="text-2xl font-bold text-text-primary mt-1">{selectedCategory.slaHours} Horas</p>
+                    {isCategoryOpen && (
+                      <div className="absolute top-full left-0 z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
+                        <div className="p-2 border-b border-slate-100 flex items-center gap-2">
+                          <Search size={14} className="text-slate-400" />
+                          <input
+                            autoFocus
+                            placeholder="Buscar categoría..."
+                            className="w-full py-1 text-xs outline-none bg-transparent"
+                            value={categorySearch}
+                            onChange={(e) => setCategorySearch(e.target.value)}
+                          />
+                        </div>
+                        <div className="max-h-[240px] overflow-y-auto p-1">
+                          {filteredCategories.length > 0 ? filteredCategories.map((cat) => (
+                            <button
+                              key={cat.id}
+                              type="button"
+                              onClick={() => {
+                                setForm(f => ({ ...f, categoryId: String(cat.id) }))
+                                setIsCategoryOpen(false)
+                              }}
+                              className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 rounded-lg transition-colors text-left"
+                            >
+                              {cat.name}
+                              {String(cat.id) === form.categoryId && <Check size={14} className="text-indigo-600" />}
+                            </button>
+                          )) : (
+                            <p className="p-4 text-[10px] text-slate-400 text-center font-bold uppercase tracking-widest">No hay resultados</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <p className="text-xs text-text-secondary leading-relaxed">
-                  Para la categoria seleccionada, nuestro equipo tecnico garantiza una intervencion en sitio en plazo de {selectedCategory.slaHours} horas habiles.
-                </p>
+
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Área o Zona Afectada</label>
+                  <input
+                    name="location"
+                    value={form.location}
+                    onChange={handleChange}
+                    placeholder="¿Dónde está el problema?"
+                    className="w-full px-0 py-2 bg-transparent border-b-2 border-slate-100 text-sm font-bold text-slate-900 focus:outline-none focus:border-slate-900 transition-all placeholder:text-slate-300"
+                  />
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {AREA_SUGGESTIONS.map(suggestion => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => setForm(f => ({ ...f, location: suggestion }))}
+                        className="px-2 py-1 bg-slate-50 text-[9px] font-black text-slate-500 uppercase tracking-tighter border border-slate-100 rounded hover:bg-slate-100 hover:text-slate-700 transition-all"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
+
+              {/* Descripción */}
+              <div className="space-y-2">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Descripción Detallada</label>
+                <textarea
+                  name="description"
+                  value={form.description}
+                  onChange={handleChange}
+                  rows={4}
+                  placeholder="Describe el problema para que el técnico venga preparado..."
+                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/5 transition-all resize-none placeholder:text-slate-400"
+                />
+              </div>
+
+              {/* Prioridad Integrada - Agrandada */}
+              <div className="pt-8 border-t border-slate-50 space-y-6">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Nivel de Urgencia</label>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Selecciona una opción</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                  {PRIORITY_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, priority: opt.value }))}
+                      className={`flex flex-col p-5 rounded-2xl border-2 transition-all text-left space-y-3 cursor-pointer group relative overflow-hidden ${
+                        form.priority === opt.value
+                          ? 'border-slate-900 bg-slate-900 text-white shadow-xl scale-[1.02]'
+                          : 'border-slate-100 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={`text-xs font-black uppercase tracking-widest ${form.priority === opt.value ? 'text-white' : 'text-slate-900'}`}>
+                          {opt.label}
+                        </span>
+                        {form.priority === opt.value && <Check size={16} className="text-indigo-400" />}
+                      </div>
+                      <p className={`text-[10px] leading-snug font-medium ${form.priority === opt.value ? 'text-slate-400' : 'text-slate-500'}`}>
+                        {opt.desc}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div className="space-y-6">
+          {selectedCategory && (
+            <div className="bg-indigo-600 rounded-2xl p-6 text-white shadow-md animate-in zoom-in-95 duration-300">
+              <div className="flex items-center gap-2 mb-4">
+                <Clock size={18} />
+                <h3 className="text-[10px] font-black uppercase tracking-widest">SLA de Respuesta</h3>
+              </div>
+              <p className="text-4xl font-black mb-2">{selectedCategory.slaHours} Horas</p>
+              <p className="text-[11px] text-indigo-100 leading-relaxed font-medium">
+                Garantizamos una intervención técnica para <span className="font-bold text-white underline decoration-white/30">{selectedCategory.name}</span>.
+              </p>
             </div>
           )}
 
-          <div className="bg-surface rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <svg className="w-5 h-5 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0 3.75h.008v.008H12v-.008zm9.303-3.376c-.866 1.5.217 3.374 1.948 3.374h-14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
-              </svg>
-              <h3 className="text-sm font-semibold text-text-primary font-display">
-                Consejos de Seguridad
-              </h3>
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-6">
+              <AlertCircle size={18} className="text-slate-900" />
+              <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Recomendaciones</h3>
             </div>
-            <ul className="space-y-2 text-xs text-text-secondary">
-              <li className="flex items-start gap-2">
-                <svg className="w-3.5 h-3.5 text-success mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-                No manipule cables o tableros electricos sin proteccion.
-              </li>
-              <li className="flex items-start gap-2">
-                <svg className="w-3.5 h-3.5 text-success mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-                Aleje equipos electronicos de zonas con humedad o filtraciones.
-              </li>
-              <li className="flex items-start gap-2">
-                <svg className="w-3.5 h-3.5 text-success mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-                Senalice el area afectada para prevenir accidentes.
-              </li>
+            <ul className="space-y-4">
+              {[
+                'Evita manipular equipos eléctricos sin autorización.',
+                'En caso de filtración, despeja el área inmediata.',
+                'Sé detallado en la descripción para agilizar el proceso.'
+              ].map((item, idx) => (
+                <li key={idx} className="flex gap-3 text-xs text-slate-500 font-medium leading-snug">
+                  <span className="w-1.5 h-1.5 bg-slate-200 rounded-full mt-1.5 shrink-0" />
+                  {item}
+                </li>
+              ))}
             </ul>
           </div>
         </div>

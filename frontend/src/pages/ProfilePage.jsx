@@ -1,35 +1,23 @@
 import { useState, useEffect } from 'react'
-
-import { useAuth } from '../Contexts/AuthContext'
+import { Eye, EyeOff, ShieldCheck } from 'lucide-react'
+import { useAuth } from '../Contexts/AuthContextObject.js'
 import { usersApi } from '../api/users'
 import { authApi } from '../api/auth'
 import notifications from '../components/ui/Notifications'
 
-// Validación de teléfono venezolano
 const phoneRegex = /^04(12|14|16|24|26)-\d{3}-\d{4}$/
 
 export default function ProfilePage() {
   const { user, updateUser } = useAuth()
 
-  
-
-  // Sincronizar form con user cuando cambia
   const [form, setForm] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
     phone: user?.phone || '',
+    storeNumber: user?.role === 'REQUESTER' ? (user?.storeNumber || 'L-105') : '',
+    storeName: user?.role === 'REQUESTER' ? (user?.storeName || 'Establecimiento General') : '',
+    location: user?.role === 'REQUESTER' ? (user?.location || 'Planta Baja') : '',
   })
-  
-  // Sincronizar cuando user carga inicialmente o se actualiza globalmente
-  useEffect(() => {
-    if (user) {
-      setForm({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        phone: user.phone || '',
-      })
-    }
-  }, [user])
   
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
@@ -41,131 +29,93 @@ export default function ProfilePage() {
   const [isChangingPassword, setIsChangingPassword] = useState(false)
   const [savingProfile, setSavingProfile] = useState(false)
   const [savingPassword, setSavingPassword] = useState(false)
-  
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  })
   const [errors, setErrors] = useState({})
-  
-  // Filtrar solo letras para nombre/apellido
+
+  useEffect(() => {
+    if (user) {
+      setForm({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        phone: user.phone || '',
+        storeNumber: user.role === 'REQUESTER' ? (user.storeNumber || 'L-105') : '',
+        storeName: user.role === 'REQUESTER' ? (user.storeName || 'Establecimiento General') : '',
+        location: user.role === 'REQUESTER' ? (user.location || 'Planta Baja') : '',
+      })
+    }
+  }, [user])
+
   function filterLettersOnly(value) {
     return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')
   }
-  
-  function handleFirstNameChange(e) {
+
+  const handleFirstNameChange = (e) => {
     const filtered = filterLettersOnly(e.target.value)
     setForm(f => ({ ...f, firstName: filtered }))
-    // Validar en tiempo real
-    if (filtered.length > 0 && filtered.length < 2) {
-      setErrors(e => ({ ...e, firstName: 'Mínimo 2 letras' }))
-    } else if (filtered.length > 0 && !/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(filtered)) {
-      setErrors(e => ({ ...e, firstName: 'Solo letras permitidas' }))
-    } else {
-      setErrors(e => ({ ...e, firstName: null }))
-    }
+    setErrors(prev => ({ ...prev, firstName: filtered.length > 0 && filtered.length < 2 ? 'Mínimo 2 letras' : null }))
   }
-  
-  function handleLastNameChange(e) {
+
+  const handleLastNameChange = (e) => {
     const filtered = filterLettersOnly(e.target.value)
     setForm(f => ({ ...f, lastName: filtered }))
-    // Validar en tiempo real
-    if (filtered.length > 0 && filtered.length < 2) {
-      setErrors(e => ({ ...e, lastName: 'Mínimo 2 letras' }))
-    } else if (filtered.length > 0 && !/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(filtered)) {
-      setErrors(e => ({ ...e, lastName: 'Solo letras permitidas' }))
-    } else {
-      setErrors(e => ({ ...e, lastName: null }))
-    }
+    setErrors(prev => ({ ...prev, lastName: filtered.length > 0 && filtered.length < 2 ? 'Mínimo 2 letras' : null }))
   }
-  
-  // Formatear teléfono automáticamente
-  function handlePhoneChange(e) {
-    let value = e.target.value.replace(/\D/g, '') // Solo números
-    
-    // Auto-formato: 0412-123-4567
-    if (value.length > 4 && value.length <= 7) {
-      value = `${value.slice(0, 4)}-${value.slice(4)}`
-    } else if (value.length > 7) {
-      value = `${value.slice(0, 4)}-${value.slice(4, 7)}-${value.slice(7, 11)}`
-    }
-    
+
+  const handlePhoneChange = (e) => {
+    let value = e.target.value.replace(/\D/g, '')
+    if (value.length > 4 && value.length <= 7) value = `${value.slice(0, 4)}-${value.slice(4)}`
+    else if (value.length > 7) value = `${value.slice(0, 4)}-${value.slice(4, 7)}-${value.slice(7, 11)}`
     setForm(f => ({ ...f, phone: value }))
     
-    // Validar en tiempo real
-    if (value.length > 0 && value.length < 13) {
-      setErrors(e => ({ ...e, phone: 'Teléfono incompleto' }))
-    } else if (value.length === 13 && !phoneRegex.test(value)) {
-      setErrors(e => ({ ...e, phone: 'Formato: 0412-123-4567' }))
+    let error = null
+    if (value.length > 0 && value.length < 13) error = 'Teléfono incompleto'
+    else if (value.length === 13 && !phoneRegex.test(value)) error = 'Formato inválido (04XX-XXX-XXXX)'
+    
+    setErrors(prev => ({ ...prev, phone: error }))
+  }
+
+  const handleCancelEdit = () => {
+    setForm({
+      firstName: user?.firstName || '',
+      lastName: user?.lastName || '',
+      phone: user?.phone || '',
+      storeNumber: user?.role === 'REQUESTER' ? (user?.storeNumber || 'L-105') : '',
+      storeName: user?.role === 'REQUESTER' ? (user?.storeName || 'Establecimiento General') : '',
+      location: user?.role === 'REQUESTER' ? (user?.location || 'Planta Baja') : '',
+    })
+    setIsEditing(false)
+    setErrors({})
+  }
+
+  const handleStoreNumberChange = (e) => {
+    let value = e.target.value.toUpperCase()
+    if (!value.startsWith('L-')) {
+      value = 'L-' + value.replace(/\D/g, '')
     } else {
-      setErrors(e => ({ ...e, phone: null }))
+      const rest = value.slice(2).replace(/\D/g, '')
+      value = 'L-' + rest
     }
+    setForm(f => ({ ...f, storeNumber: value }))
+    setErrors(prev => ({ ...prev, storeNumber: !/^L-\d+$/.test(value) ? 'Formato inválido (L-xxx)' : null }))
   }
-  
-  // Validar formulario antes de enviar
-  function validateProfile() {
-    const newErrors = {}
-    
-    if (!form.firstName || form.firstName.trim().length < 2) {
-      newErrors.firstName = 'El nombre debe tener al menos 2 letras'
-    }
-    if (!form.lastName || form.lastName.trim().length < 2) {
-      newErrors.lastName = 'El apellido debe tener al menos 2 letras'
-    }
-    if (form.phone && !phoneRegex.test(form.phone)) {
-      newErrors.phone = 'Teléfono debe ser 0412-123-4567'
-    }
-    
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-  
-  // Validar formulario de contraseña
-  function validatePassword() {
-    const newErrors = {}
-    if (!passwordForm.currentPassword || passwordForm.currentPassword.length < 8) {
-      newErrors.currentPassword = 'Mínimo 8 caracteres'
-    }
-    if (!passwordForm.newPassword || passwordForm.newPassword.length < 8) {
-      newErrors.newPassword = 'Mínimo 8 caracteres'
-    }
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      newErrors.confirmPassword = 'Las contraseñas no coinciden'
-    }
-    if (passwordForm.currentPassword === passwordForm.newPassword) {
-      newErrors.newPassword = 'Debe ser diferente a la actual'
-    }
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-  
+
   async function handleSaveProfile() {
-    if (!validateProfile()) return
+    if (user.role === 'REQUESTER' && !/^L-\d+$/.test(form.storeNumber)) {
+      notifications.error('El número de local debe ser L- seguido de números (Ej: L-105)', 'Validación')
+      return
+    }
     
     setSavingProfile(true)
     try {
       const response = await usersApi.updateProfile(form)
-      
-      // Verificar estructura de respuesta
-      if (!response || !response.user) {
-        console.error('Invalid response:', response)
-        notifications.error('Error al guardar: respuesta inválida', 'Error')
-        return
-      }
-      
-      // Actualizar usuario en el context
-      updateUser(response.user)
-      
-
-      // Actualizar el formulario con los nuevos datos
-      setForm({
-        firstName: response.user.firstName,
-        lastName: response.user.lastName,
-        phone: response.user.phone || '',
-      })
-      
+      updateUser(response.user || response)
       setIsEditing(false)
-      setErrors({})
       notifications.success('Perfil actualizado correctamente', 'Guardado')
-      
     } catch (error) {
-      console.error('Error saving profile:', error)
       notifications.error(error.message || 'Error al guardar', 'Error')
     } finally {
       setSavingProfile(false)
@@ -173,8 +123,10 @@ export default function ProfilePage() {
   }
   
   async function handleChangePassword() {
-    if (!validatePassword()) return
-    
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      notifications.error('Las contraseñas no coinciden', 'Error')
+      return
+    }
     setSavingPassword(true)
     try {
       await authApi.changePassword({
@@ -183,286 +135,214 @@ export default function ProfilePage() {
       })
       setIsChangingPassword(false)
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
-      setErrors({})
-      notifications.success('Contraseña actualizada correctamente', 'Cambiada')
+      setShowPasswords({ current: false, new: false, confirm: false })
+      notifications.success('Contraseña actualizada', 'Seguridad')
     } catch (error) {
-      console.error('Error changing password:', error)
       notifications.error(error.message || 'Error al cambiar contraseña', 'Error')
     } finally {
       setSavingPassword(false)
     }
   }
-  
-  function handleCancelEdit() {
-    // Restaurar valores originales del user
-    setForm({
-      firstName: user?.firstName || '',
-      lastName: user?.lastName || '',
-      phone: user?.phone || '',
-    })
-    setIsEditing(false)
-    setErrors(e => {
-      const newErrors = { ...e }
-      delete newErrors.firstName
-      delete newErrors.lastName
-      delete newErrors.phone
-      return newErrors
-    })
-  }
-  
+
   const roleLabels = {
     ADMIN: 'Administrador',
-    TECHNICIAN: 'Técnico',
-    REQUESTER: 'Locatario',
+    TECHNICIAN: 'Técnico Especialista',
+    REQUESTER: 'Locatario / Encargado',
   }
-  
-  // Si no hay usuario, mostrar loading
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-text-secondary">Cargando...</div>
-      </div>
-    )
-  }
-  
+
+  const initials = `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`.toUpperCase()
+
+  if (!user) return <div className="p-12 text-center text-slate-400 font-black uppercase tracking-[0.3em] text-[10px]">Sincronizando Perfil...</div>
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-text-primary font-display">
-            Mi Perfil
-          </h2>
-          <p className="text-sm text-text-secondary mt-1">
-            {roleLabels[user?.role] || user?.role}
-          </p>
-        </div>
-      </div>
-      
-      {/* Información del perfil */}
-      <div className="bg-surface rounded-xl p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-text-primary font-display">
-            Información Personal
-          </h3>
-          {!isEditing ? (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="px-4 py-2 text-sm bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors cursor-pointer"
-            >
-              Editar
-            </button>
-          ) : (
-            <div className="flex gap-2">
-              <button
-                onClick={handleCancelEdit}
-                className="px-4 py-2 text-sm text-text-secondary border border-border rounded-lg hover:bg-background transition-colors cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleSaveProfile}
-                disabled={savingProfile}
-                className="px-4 py-2 text-sm bg-success text-white rounded-lg hover:bg-success/90 disabled:opacity-50 transition-colors cursor-pointer"
-              >
-                {savingProfile ? 'Guardando...' : 'Guardar'}
-              </button>
+    <div className="max-w-4xl mx-auto space-y-6 py-4 px-4">
+      {/* Header Minimalista */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+        <div className="flex flex-col md:flex-row items-center gap-8">
+          <div className="w-20 h-20 rounded-2xl bg-slate-900 flex items-center justify-center text-2xl font-black text-white shadow-inner">
+            {initials}
+          </div>
+          
+          <div className="flex-1 text-center md:text-left">
+            <div className="flex flex-col md:flex-row md:items-center gap-3 mb-1">
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight">{user.firstName} {user.lastName}</h2>
+              <span className="inline-flex items-center px-2.5 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-black uppercase tracking-widest rounded border border-slate-200">
+                {roleLabels[user.role]}
+              </span>
             </div>
-          )}
-        </div>
-        
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-text-primary block mb-1.5">
-              Nombre
-            </label>
-            {isEditing ? (
-              <>
-                <input
-                  type="text"
-                  value={form.firstName}
-                  onChange={handleFirstNameChange}
-                  placeholder="Solo letras"
-                  className={`w-full px-4 py-2 bg-background border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/30 ${errors.firstName ? 'border-danger' : 'border-border'}`}
-                />
-                {errors.firstName && (
-                  <p className="text-xs text-danger mt-1">{errors.firstName}</p>
-                )}
-              </>
-            ) : (
-              <p className="text-text-primary">{user.firstName}</p>
-            )}
+            <p className="text-slate-500 font-medium text-sm">{user.email}</p>
           </div>
-          
-          <div>
-            <label className="text-sm font-medium text-text-primary block mb-1.5">
-              Apellido
-            </label>
-            {isEditing ? (
-              <>
-                <input
-                  type="text"
-                  value={form.lastName}
-                  onChange={handleLastNameChange}
-                  placeholder="Solo letras"
-                  className={`w-full px-4 py-2 bg-background border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/30 ${errors.lastName ? 'border-danger' : 'border-border'}`}
-                />
-                {errors.lastName && (
-                  <p className="text-xs text-danger mt-1">{errors.lastName}</p>
-                )}
-              </>
-            ) : (
-              <p className="text-text-primary">{user.lastName}</p>
-            )}
-          </div>
-          
-          <div>
-            <label className="text-sm font-medium text-text-primary block mb-1.5">
-              Teléfono
-            </label>
-            {isEditing ? (
-              <>
-                <input
-                  type="tel"
-                  value={form.phone}
-                  onChange={handlePhoneChange}
-                  placeholder="0412-123-4567"
-                  maxLength={13}
-                  className={`w-full px-4 py-2 bg-background border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/30 ${errors.phone ? 'border-danger' : 'border-border'}`}
-                />
-                {errors.phone && (
-                  <p className="text-xs text-danger mt-1">{errors.phone}</p>
-                )}
-                <p className="text-xs text-text-secondary mt-1">Formato: 0412-123-4567</p>
-              </>
-            ) : (
-              <p className="text-text-primary">{user.phone || 'No registrado'}</p>
-            )}
-          </div>
-          
-          <div>
-            <label className="text-sm font-medium text-text-primary block mb-1.5">
-              Correo Electrónico
-            </label>
-            <p className="text-text-secondary">{user.email}</p>
+
+          <div className="flex gap-4 md:border-l border-slate-100 md:pl-8">
+            <div className="text-center md:text-left">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Miembro Desde</p>
+              <p className="text-xs font-bold text-slate-700 mt-0.5">{new Date(user.createdAt).toLocaleDateString('es-VE', { month: 'short', year: 'numeric' })}</p>
+            </div>
           </div>
         </div>
       </div>
-      
-      {/* Cambiar contraseña */}
-      <div className="bg-surface rounded-xl p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-text-primary font-display">
-            Seguridad
-          </h3>
-          {!isChangingPassword ? (
-            <button
-              onClick={() => setIsChangingPassword(true)}
-              className="px-4 py-2 text-sm border border-border text-text-secondary rounded-lg hover:bg-background transition-colors cursor-pointer"
-            >
-              Cambiar Contraseña
-            </button>
-          ) : (
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  setIsChangingPassword(false)
-                  setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
-                  setErrors(e => {
-                    const newErrors = { ...e }
-                    delete newErrors.currentPassword
-                    delete newErrors.newPassword
-                    delete newErrors.confirmPassword
-                    return newErrors
-                  })
-                }}
-                className="px-4 py-2 text-sm text-text-secondary border border-border rounded-lg hover:bg-background transition-colors cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleChangePassword}
+
+      <div className="space-y-6">
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+            <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
+              {user.role === 'TECHNICIAN' ? 'Información Técnica y Personal' : 'Información Personal y del Establecimiento'}
+            </h4>
+            {!isEditing ? (
+              <button onClick={() => setIsEditing(true)} className="px-3 py-1 bg-slate-900 text-white rounded text-[9px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all cursor-pointer">Editar</button>
+            ) : (
+              <div className="flex gap-3">
+                <button onClick={handleCancelEdit} className="text-[9px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 cursor-pointer">Cancelar</button>
+                <button onClick={handleSaveProfile} disabled={savingProfile} className="text-[9px] font-black text-emerald-600 uppercase tracking-widest hover:text-emerald-700 cursor-pointer">
+                  {savingProfile ? 'Guardando...' : 'Confirmar'}
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nombre</label>
+              {isEditing ? (
+                <input type="text" value={form.firstName} onChange={handleFirstNameChange} className="w-full px-0 py-1 bg-transparent border-b-2 border-slate-100 text-sm font-bold text-slate-900 focus:outline-none focus:border-slate-900 transition-all" />
+              ) : (
+                <p className="text-sm font-bold text-slate-800 py-1">{user.firstName}</p>
+              )}
+              {errors.firstName && <p className="text-[9px] text-rose-500 font-bold uppercase">{errors.firstName}</p>}
+            </div>
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Apellido</label>
+              {isEditing ? (
+                <input type="text" value={form.lastName} onChange={handleLastNameChange} className="w-full px-0 py-1 bg-transparent border-b-2 border-slate-100 text-sm font-bold text-slate-900 focus:outline-none focus:border-slate-900 transition-all" />
+              ) : (
+                <p className="text-sm font-bold text-slate-800 py-1">{user.lastName}</p>
+              )}
+              {errors.lastName && <p className="text-[9px] text-rose-500 font-bold uppercase">{errors.lastName}</p>}
+            </div>
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Teléfono de Contacto</label>
+              {isEditing ? (
+                <input type="tel" value={form.phone} onChange={handlePhoneChange} className="w-full px-0 py-1 bg-transparent border-b-2 border-slate-100 text-sm font-bold text-slate-900 focus:outline-none focus:border-slate-900 transition-all" />
+              ) : (
+                <p className="text-sm font-bold text-slate-800 py-1">{user.phone || 'No registrado'}</p>
+              )}
+              {errors.phone && <p className="text-[9px] text-rose-500 font-bold uppercase">{errors.phone}</p>}
+            </div>
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Email Corporativo</label>
+              <p className="text-sm font-bold text-slate-400 py-1">{user.email}</p>
+            </div>
+
+            {user.role === 'REQUESTER' && (
+              <>
+                <div className="space-y-2 border-t border-slate-50 pt-4 md:border-t-0 md:pt-0">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nombre del Local / Establecimiento</label>
+                  {isEditing ? (
+                    <input type="text" value={form.storeName} onChange={(e) => setForm(f => ({ ...f, storeName: e.target.value }))} className="w-full px-0 py-1 bg-transparent border-b-2 border-slate-100 text-sm font-bold text-slate-900 focus:outline-none focus:border-slate-900 transition-all" />
+                  ) : (
+                    <p className="text-sm font-bold text-slate-800 py-1">{form.storeName}</p>
+                  )}
+                </div>
+                <div className="space-y-2 border-t border-slate-50 pt-4 md:border-t-0 md:pt-0">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nº de Local y Ubicación</label>
+                  {isEditing ? (
+                    <div className="space-y-1">
+                      <div className="flex gap-4">
+                        <input 
+                          type="text" 
+                          value={form.storeNumber} 
+                          onChange={handleStoreNumberChange} 
+                          onFocus={() => {
+                            if (!form.storeNumber) setForm(f => ({ ...f, storeNumber: 'L-' }))
+                          }}
+                          className="w-24 px-0 py-1 bg-transparent border-b-2 border-slate-100 text-sm font-bold text-slate-900 focus:outline-none focus:border-slate-900 transition-all" 
+                          placeholder="Local" 
+                        />
+                        <input type="text" value={form.location} onChange={(e) => setForm(f => ({ ...f, location: e.target.value }))} className="flex-1 px-0 py-1 bg-transparent border-b-2 border-slate-100 text-sm font-bold text-slate-900 focus:outline-none focus:border-slate-900 transition-all" placeholder="Piso / Ala" />
+                      </div>
+                      {errors.storeNumber && <p className="text-[9px] text-rose-500 font-bold uppercase">{errors.storeNumber}</p>}
+                    </div>
+                  ) : (
+                    <p className="text-sm font-bold text-slate-800 py-1">{form.storeNumber} — {form.location}</p>
+                  )}
+                </div>
+              </>
+            )}
+            
+            {user.role === 'TECHNICIAN' && (
+              <>
+                <div className="space-y-2 border-t border-slate-50 pt-4 md:border-t-0 md:pt-0">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Departamento Operativo</label>
+                  <p className="text-sm font-black text-black py-1 capitalize">
+                    {(user.department || 'Servicios Generales').toLowerCase()}
+                  </p>
+                </div>
+                <div className="space-y-2 border-t border-slate-50 pt-4 md:border-t-0 md:pt-0">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Base de Operaciones</label>
+                  <p className="text-sm font-bold text-black py-1 capitalize">
+                    {'Centro de Control de Mantenimiento'.toLowerCase()}
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+        </section>
+
+        {/* Seguridad */}
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+            <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Seguridad de Acceso</h4>
+            {!isChangingPassword ? (
+              <button onClick={() => setIsChangingPassword(true)} className="text-[9px] font-black text-indigo-600 uppercase tracking-widest hover:text-indigo-700 transition-all cursor-pointer">Cambiar Contraseña</button>
+            ) : (
+              <button onClick={() => setIsChangingPassword(false)} className="text-[9px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 cursor-pointer">Cancelar</button>
+            )}
+          </div>
+
+          {isChangingPassword ? (
+            <div className="p-8 space-y-6 max-w-xl">
+              <div className="grid grid-cols-1 gap-4">
+                {[
+                  { key: 'current', field: 'currentPassword', placeholder: 'Contraseña Actual' },
+                  { key: 'new', field: 'newPassword', placeholder: 'Nueva Contraseña' },
+                  { key: 'confirm', field: 'confirmPassword', placeholder: 'Confirmar Nueva Contraseña' },
+                ].map((item) => (
+                  <div key={item.key} className="relative group">
+                    <input 
+                      type={showPasswords[item.key] ? 'text' : 'password'} 
+                      placeholder={item.placeholder}
+                      value={passwordForm[item.field]}
+                      onChange={(e) => setPasswordForm(p => ({ ...p, [item.field]: e.target.value }))}
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-slate-900/5 transition-all pr-12"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords(s => ({ ...s, [item.key]: !s[item.key] }))}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500 transition-colors cursor-pointer"
+                    >
+                      {showPasswords[item.key] ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button 
+                onClick={handleChangePassword} 
                 disabled={savingPassword}
-                className="px-4 py-2 text-sm bg-success text-white rounded-lg hover:bg-success/90 disabled:opacity-50 transition-colors cursor-pointer"
+                className="w-full py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-slate-800 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
               >
-                {savingPassword ? 'Guardando...' : 'Guardar'}
+                <ShieldCheck size={14} />
+                {savingPassword ? 'Procesando...' : 'Actualizar Credenciales'}
               </button>
             </div>
-          )}
-        </div>
-        
-        {isChangingPassword && (
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-text-primary block mb-1.5">
-                Contraseña Actual
-              </label>
-              <input
-                type="password"
-                value={passwordForm.currentPassword}
-                onChange={(e) => setPasswordForm(p => ({ ...p, currentPassword: e.target.value }))}
-                className={`w-full px-4 py-2 bg-background border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/30 ${errors.currentPassword ? 'border-danger' : 'border-border'}`}
-              />
-              {errors.currentPassword && (
-                <p className="text-xs text-danger mt-1">{errors.currentPassword}</p>
-              )}
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium text-text-primary block mb-1.5">
-                Nueva Contraseña
-              </label>
-              <input
-                type="password"
-                value={passwordForm.newPassword}
-                onChange={(e) => setPasswordForm(p => ({ ...p, newPassword: e.target.value }))}
-                className={`w-full px-4 py-2 bg-background border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/30 ${errors.newPassword ? 'border-danger' : 'border-border'}`}
-              />
-              {errors.newPassword && (
-                <p className="text-xs text-danger mt-1">{errors.newPassword}</p>
-              )}
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium text-text-primary block mb-1.5">
-                Confirmar Nueva Contraseña
-              </label>
-              <input
-                type="password"
-                value={passwordForm.confirmPassword}
-                onChange={(e) => setPasswordForm(p => ({ ...p, confirmPassword: e.target.value }))}
-                className={`w-full px-4 py-2 bg-background border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/30 ${errors.confirmPassword ? 'border-danger' : 'border-border'}`}
-              />
-              {errors.confirmPassword && (
-                <p className="text-xs text-danger mt-1">{errors.confirmPassword}</p>
-              )}
-            </div>
-          </div>
-        )}
-        
-        {!isChangingPassword && (
-          <p className="text-sm text-text-secondary">
-            Cambia tu contraseña regularmente para mantener tu cuenta segura.
-          </p>
-        )}
-      </div>
-      
-      {/* Información adicional */}
-      <div className="bg-surface rounded-xl p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-text-primary font-display mb-4">
-          Información de la Cuenta
-        </h3>
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between">
-            <span className="text-text-secondary">Rol</span>
-            <span className="text-text-primary font-medium">{roleLabels[user?.role] || user?.role}</span>
-          </div>
-          {user?.department && (
-            <div className="flex justify-between">
-              <span className="text-text-secondary">Departamento</span>
-              <span className="text-text-primary font-medium">{user.department}</span>
+          ) : (
+            <div className="p-8">
+              <p className="text-xs text-slate-500 font-medium flex items-center gap-2">
+                <svg className="w-4 h-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                Tus datos de acceso están protegidos con encriptación industrial.
+              </p>
             </div>
           )}
-        </div>
+        </section>
       </div>
     </div>
   )

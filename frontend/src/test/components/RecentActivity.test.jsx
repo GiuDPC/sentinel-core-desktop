@@ -5,7 +5,7 @@ import RecentActivity from '../../components/dashboard/RecentActivity'
 describe('RecentActivity', () => {
   it('renders empty state when no tickets', () => {
     render(<RecentActivity tickets={[]} />)
-    expect(screen.getByText('No hay tickets recientes')).toBeInTheDocument()
+    expect(screen.getByText('Sin actividad reciente')).toBeInTheDocument()
   })
 
   it('renders tickets in table format', () => {
@@ -13,6 +13,7 @@ describe('RecentActivity', () => {
       {
         id: 1,
         ticketCode: 'TK-0001',
+        title: 'Falla eléctrica',
         category: { name: 'Corte Electrico' },
         status: 'OPEN',
         priority: 'HIGH',
@@ -21,7 +22,7 @@ describe('RecentActivity', () => {
     ]
     render(<RecentActivity tickets={tickets} />)
     expect(screen.getByText('TK-0001')).toBeInTheDocument()
-    expect(screen.getByText('Corte Electrico')).toBeInTheDocument()
+    expect(screen.getByText('Falla eléctrica')).toBeInTheDocument()
   })
 
   it('renders table headers', () => {

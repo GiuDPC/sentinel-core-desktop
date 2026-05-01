@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { metricsApi } from '../../api/metrics'
-import { ticketsApi } from '../../api/tickets'
 import * as XLSX from 'xlsx'
 
 const DATE_RANGES = [

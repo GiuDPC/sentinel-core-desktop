@@ -9,10 +9,24 @@ export default function MyTickets() {
   const [tickets, setTickets] = useState([])
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1 })
   const [statusFilter, setStatusFilter] = useState('')
+  const [priorityFilter, setPriorityFilter] = useState('')
+  const [searchFilter, setSearchFilter] = useState('')
+  const [openFilter, setOpenFilter] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [visibleColumns, setVisibleColumns] = useState({
+    code: true,
+    title: true,
+    category: true,
+    status: true,
+    priority: true,
+    technician: true,
+    date: true,
+    actions: true
+  })
 
   // Modal confirmacion
   const [showConfirm, setShowConfirm] = useState(false)
+  const [showDetails, setShowDetails] = useState(false)
   const [selectedTicket, setSelectedTicket] = useState(null)
   const [confirmComment, setConfirmComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -22,6 +36,8 @@ export default function MyTickets() {
     try {
       const data = await ticketsApi.getMyTickets({
         status: statusFilter || undefined,
+        priority: priorityFilter || undefined,
+        search: searchFilter || undefined,
         page: pagination.page,
       })
       setTickets(data.data || [])
@@ -31,14 +47,22 @@ export default function MyTickets() {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter, pagination.page])
+  }, [statusFilter, priorityFilter, searchFilter, pagination.page])
 
-  useEffect(() => { loadTickets() }, [loadTickets])
+  useEffect(() => {
+    loadTickets()
+  }, [loadTickets])
 
-  function openConfirmModal(ticket) {
+  function openConfirmModal(e, ticket) {
+    e.stopPropagation()
     setSelectedTicket(ticket)
     setConfirmComment('')
     setShowConfirm(true)
+  }
+
+  function openDetailsModal(ticket) {
+    setSelectedTicket(ticket)
+    setShowDetails(true)
   }
 
   async function handleConfirm() {
@@ -88,122 +112,453 @@ export default function MyTickets() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-text-primary font-display">Mis Tickets</h2>
-          <p className="text-sm text-text-secondary mt-1">
-            Historial completo de tus reportes de incidencias
-          </p>
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight font-display">Mis Tickets</h2>
+            <p className="text-sm text-slate-500 mt-1">
+              Gestiona y monitorea el estado de tus reportes de incidencia.
+            </p>
+          </div>
         </div>
 
-        <select
-          value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value); setPagination(p => ({ ...p, page: 1 })) }}
-          className="px-4 py-2 bg-surface border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/30"
-        >
-          {STATUS_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
-      </div>
+        <div className='flex items-center justify-between'>
+          <div className='flex flex-1 flex-col-reverse items-start gap-y-2 sm:flex-row sm:items-center sm:space-x-2'>
+            {/* Input de búsqueda */}
+            <div className='relative h-8 w-37.5 lg:w-62.5'>
+              <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input 
+                value={searchFilter}
+                onChange={(e) => { setSearchFilter(e.target.value); setPagination(p => ({ ...p, page: 1 })) }}
+                placeholder='Buscar por código o título...' 
+                className='h-8 w-full bg-white border border-slate-200 rounded-md pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all shadow-sm' 
+              />
+            </div>
 
-      <div className="bg-surface rounded-xl shadow-sm overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="w-8 h-8 border-4 border-accent/30 border-t-accent rounded-full animate-spin" />
-          </div>
-        ) : tickets.length === 0 ? (
-          <div className="text-center py-16 text-text-secondary">
-            <svg className="w-12 h-12 text-text-secondary/30 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
-            </svg>
-            <p className="font-medium">No tienes tickets aun</p>
-            <p className="text-sm mt-1">Crea un nuevo reporte desde el menu lateral</p>
-          </div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-text-secondary text-xs border-b border-border bg-background/50">
-                <th className="px-6 py-4 font-medium">Codigo</th>
-                <th className="px-6 py-4 font-medium">Titulo</th>
-                <th className="px-6 py-4 font-medium">Categoria</th>
-                <th className="px-6 py-4 font-medium">Ubicacion</th>
-                <th className="px-6 py-4 font-medium">Estado</th>
-                <th className="px-6 py-4 font-medium">Prioridad</th>
-                <th className="px-6 py-4 font-medium">Tecnico</th>
-                <th className="px-6 py-4 font-medium">Fecha</th>
-                <th className="px-6 py-4 font-medium">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {tickets.map((ticket) => (
-                <tr key={ticket.id} className="hover:bg-background/30 transition-colors">
-                  <td className="px-6 py-4 font-mono text-xs text-accent font-bold">{ticket.ticketCode}</td>
-                  <td className="px-6 py-4 text-text-primary font-medium max-w-44 truncate" title={ticket.title}>{ticket.title}</td>
-                  <td className="px-6 py-4 text-text-secondary text-xs">{ticket.category?.name || '\u2014'}</td>
-                  <td className="px-6 py-4 text-text-secondary text-xs max-w-28 truncate" title={ticket.location}>{ticket.location || '\u2014'}</td>
-                  <td className="px-6 py-4"><StatusBadge status={ticket.status} /></td>
-                  <td className="px-6 py-4">
-                    <span className={`text-xs font-semibold ${PRIORITY_COLORS[ticket.priority] || 'text-text-secondary'}`}>
-                      {PRIORITY_LABELS[ticket.priority] || ticket.priority}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-text-secondary text-xs">
-                    {ticket.assignments?.[0]?.technician
-                      ? `${ticket.assignments[0].technician.firstName} ${ticket.assignments[0].technician.lastName}`
-                      : '\u2014'}
-                  </td>
-                  <td className="px-6 py-4 text-text-secondary text-xs">
-                    {new Date(ticket.createdAt).toLocaleDateString('es-VE')}
-                  </td>
-                  <td className="px-6 py-4">
-                    {ticket.status === 'AWAITING_CONFIRMATION' && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => openConfirmModal(ticket)}
-                          className="px-3 py-1.5 text-xs bg-success text-white rounded-lg hover:bg-success/90 transition-all hover:shadow-md cursor-pointer"
+            {/* Contenedor de botones de filtro */}
+            <div className='flex gap-x-2'>
+              {/* Filtro de Estado */}
+              <div className="relative">
+                <button 
+                  onClick={() => setOpenFilter(openFilter === 'status' ? null : 'status')}
+                  className='inline-flex items-center justify-center rounded-md text-xs font-medium h-8 px-3 border border-dashed border-slate-300 bg-white hover:bg-slate-50 text-slate-700'
+                >
+                  <svg className='mr-2 h-4 w-4' fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                  Estado
+                  {statusFilter && (
+                    <>
+                      <div className='mx-2 h-4 w-px bg-slate-200' />
+                      <span className='rounded-sm bg-slate-100 px-1 text-[10px] font-normal text-blue-950 uppercase'>
+                        {STATUS_OPTIONS.find(o => o.value === statusFilter)?.label || statusFilter}
+                      </span>
+                    </>
+                  )}
+                </button>
+
+                {openFilter === 'status' && (
+                  <div className='absolute left-0 mt-2 z-50 w-52 p-0 border border-slate-200 rounded-md shadow-lg bg-white overflow-hidden'>
+                    <div className='flex flex-col'>
+                      <div className='flex items-center border-b border-slate-100 px-3'>
+                        <input 
+                          placeholder='Filtrar estado...' 
+                          className='h-9 w-full bg-transparent py-3 text-xs outline-none' 
+                          autoFocus
+                        />
+                      </div>
+                      <div className='max-h-[300px] overflow-y-auto p-1'>
+                        {STATUS_OPTIONS.map((opt) => (
+                          <div 
+                            key={opt.value}
+                            onClick={() => { setStatusFilter(opt.value); setOpenFilter(null); setPagination(p => ({ ...p, page: 1 })) }}
+                            className='relative flex items-center rounded-sm px-2 py-1.5 text-xs hover:bg-slate-50 cursor-pointer text-slate-700'
+                          >
+                            <div className={`mr-2 flex h-3.5 w-3.5 items-center justify-center rounded-sm border ${statusFilter === opt.value ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
+                              {statusFilter === opt.value && (
+                                <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" /></svg>
+                              )}
+                            </div>
+                            <span>{opt.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className='border-t border-slate-100 p-1'>
+                        <button 
+                          onClick={() => { setStatusFilter(''); setOpenFilter(null); setPagination(p => ({ ...p, page: 1 })) }}
+                          className='w-full py-1.5 text-xs text-center hover:bg-slate-50 rounded-sm text-slate-500'
                         >
-                          Confirmar
-                        </button>
-                        <button
-                          onClick={() => handleReopen(ticket)}
-                          className="px-3 py-1.5 text-xs border border-danger/30 text-danger rounded-lg hover:bg-danger/10 transition-all cursor-pointer"
-                        >
-                          Reabrir
+                          Limpiar filtro
                         </button>
                       </div>
-                    )}
-                  </td>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Filtro de Prioridad */}
+              <div className="relative">
+                <button 
+                  onClick={() => setOpenFilter(openFilter === 'priority' ? null : 'priority')}
+                  className='inline-flex items-center justify-center rounded-md text-xs font-medium h-8 px-3 border border-dashed border-slate-300 bg-white hover:bg-slate-50 text-slate-700'
+                >
+                  <svg className='mr-2 h-4 w-4' fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                  Prioridad
+                  {priorityFilter && (
+                    <>
+                      <div className='mx-2 h-4 w-px bg-slate-200' />
+                      <span className='rounded-sm bg-slate-100 px-1 text-[10px] font-normal text-blue-950 uppercase'>
+                        {priorityFilter}
+                      </span>
+                    </>
+                  )}
+                </button>
+
+                {openFilter === 'priority' && (
+                  <div className='absolute left-0 mt-2 z-50 w-52 p-0 border border-slate-200 rounded-md shadow-lg bg-white overflow-hidden'>
+                    <div className='flex flex-col'>
+                      <div className='flex items-center border-b border-slate-100 px-3'>
+                        <input 
+                          placeholder='Filtrar prioridad...' 
+                          className='h-9 w-full bg-transparent py-3 text-xs outline-none' 
+                          autoFocus
+                        />
+                      </div>
+                      <div className='max-h-[300px] overflow-y-auto p-1'>
+                        {['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map((prio) => (
+                          <div 
+                            key={prio}
+                            onClick={() => { setPriorityFilter(prio); setOpenFilter(null); setPagination(p => ({ ...p, page: 1 })) }}
+                            className='relative flex items-center rounded-sm px-2 py-1.5 text-xs hover:bg-slate-50 cursor-pointer text-slate-700'
+                          >
+                            <div className={`mr-2 flex h-3.5 w-3.5 items-center justify-center rounded-sm border ${priorityFilter === prio ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
+                              {priorityFilter === prio && (
+                                <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" /></svg>
+                              )}
+                            </div>
+                            <span>{PRIORITY_LABELS[prio] || prio}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className='border-t border-slate-100 p-1'>
+                        <button 
+                          onClick={() => { setPriorityFilter(''); setOpenFilter(null); setPagination(p => ({ ...p, page: 1 })) }}
+                          className='w-full py-1.5 text-xs text-center hover:bg-slate-50 rounded-sm text-slate-500'
+                        >
+                          Limpiar filtro
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Botón de reset */}
+            {(statusFilter || priorityFilter || searchFilter) && (
+              <button 
+                onClick={() => { setStatusFilter(''); setPriorityFilter(''); setSearchFilter(''); setPagination(p => ({ ...p, page: 1 })) }}
+                className='h-8 px-2 lg:px-3 flex items-center text-xs font-medium hover:bg-slate-100 rounded-md text-slate-600'
+              >
+                Reset
+                <svg className='ms-2 h-4 w-4' fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            )}
+          </div>
+
+          {/* Opciones de vista */}
+          <div className='ml-auto relative'>
+            <button 
+              onClick={() => setOpenFilter(openFilter === 'view' ? null : 'view')}
+              className='h-8 px-3 border border-slate-200 rounded-md flex items-center gap-2 text-xs font-medium hover:bg-slate-50 text-slate-600 transition-all shadow-sm'
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 6h18M3 14h18M3 18h18" /></svg>
+              Ver
+            </button>
+
+            {openFilter === 'view' && (
+              <div className='absolute right-0 mt-2 z-50 w-48 p-2 border border-slate-200 rounded-md shadow-lg bg-white overflow-hidden'>
+                <p className='px-2 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50 mb-1'>Columnas visibles</p>
+                <div className='flex flex-col gap-1'>
+                  {Object.entries({
+                    code: 'Código',
+                    title: 'Título',
+                    category: 'Categoría',
+                    status: 'Estado',
+                    priority: 'Prioridad',
+                    technician: 'Técnico',
+                    date: 'Fecha',
+                    actions: 'Acciones'
+                  }).map(([key, label]) => (
+                    <div 
+                      key={key}
+                      onClick={() => setVisibleColumns(prev => ({ ...prev, [key]: !prev[key] }))}
+                      className='flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-slate-50 cursor-pointer text-xs text-slate-600 font-medium'
+                    >
+                      <div className={`h-3.5 w-3.5 rounded border flex items-center justify-center transition-colors ${visibleColumns[key] ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
+                        {visibleColumns[key] && <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" /></svg>}
+                      </div>
+                      {label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-600 rounded-full animate-spin" />
+          </div>
+        ) : tickets.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
+              </svg>
+            </div>
+            <p className="text-sm font-bold text-slate-900">No se encontraron resultados</p>
+            <p className="text-xs text-slate-500 mt-1">Prueba ajustando los filtros o creando un nuevo ticket.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="bg-slate-50/50 border-b border-slate-200">
+                  {visibleColumns.code && <th className="px-4 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Código</th>}
+                  {visibleColumns.title && <th className="px-4 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Título</th>}
+                  {visibleColumns.category && <th className="px-4 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Categoría</th>}
+                  {visibleColumns.status && <th className="px-4 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Estado</th>}
+                  {visibleColumns.priority && <th className="px-4 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Prioridad</th>}
+                  {visibleColumns.technician && <th className="px-4 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Técnico</th>}
+                  {visibleColumns.date && <th className="px-4 py-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Fecha</th>}
+                  {visibleColumns.actions && <th className="px-4 py-3 text-right text-[11px] font-bold text-slate-400 uppercase tracking-widest">Acciones</th>}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {tickets.map((ticket) => (
+                <tr 
+                  key={ticket.id} 
+                  onClick={() => openDetailsModal(ticket)}
+                  className="hover:bg-slate-50/80 transition-all group cursor-pointer border-b border-slate-100 last:border-0"
+                >
+                    {visibleColumns.code && (
+                      <td className="px-4 py-3">
+                        <span className="font-mono text-[10px] font-bold text-indigo-950 bg-indigo-50/50 px-2 py-1 rounded-md border border-indigo-100 shadow-xs">
+                          {ticket.ticketCode}
+                        </span>
+                      </td>
+                    )}
+                    {visibleColumns.title && (
+                      <td className="px-4 py-3  text-xs font-bold text-slate-800 max-w-[200px] truncate" title={ticket.title}>
+                        {ticket.title}
+                      </td>
+                    )}
+                    {visibleColumns.category && (
+                      <td className="px-4 py-3">
+                        <span className="text-slate-900 text-xs font-bold">
+                          {ticket.category?.name || 'General'}
+                        </span>
+                      </td>
+                    )}
+                    {visibleColumns.status && (
+                      <td className="px-4 py-3">
+                        <StatusBadge status={ticket.status} size="sm" />
+                      </td>
+                    )}
+                    {visibleColumns.priority && (
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          ticket.priority === 'LOW' ? 'bg-slate-100 text-slate-600' :
+                          ticket.priority === 'MEDIUM' ? 'bg-warning/10 text-warning' :
+                          ticket.priority === 'HIGH' ? 'bg-orange-100 text-orange-700' :
+                          ticket.priority === 'CRITICAL' ? 'bg-danger/10 text-danger' :
+                          'bg-slate-100 text-slate-600'
+                        }`}>
+                          {{
+                            LOW: 'Baja',
+                            MEDIUM: 'Media',
+                            HIGH: 'Alta',
+                            CRITICAL: 'Crítica',
+                          }[ticket.priority] || ticket.priority}
+                        </span>
+                      </td>
+                    )}
+                    {visibleColumns.technician && (
+                      <td className="px-4 py-3 text-slate-500 text-xs font-medium">
+                        {ticket.assignments?.[0]?.technician
+                          ? `${ticket.assignments[0].technician.firstName} ${ticket.assignments[0].technician.lastName}`
+                          : <span className="text-slate-300 italic">No asignado</span>}
+                      </td>
+                    )}
+                    {visibleColumns.date && (
+                      <td className="px-4 py-3 text-slate-400 text-[11px] font-medium">
+                        {new Date(ticket.createdAt).toLocaleDateString('es-VE', { day: '2-digit', month: 'short' })}
+                      </td>
+                    )}
+                    {visibleColumns.actions && (
+                      <td className="px-4 py-3 text-right">
+                        {ticket.status === 'AWAITING_CONFIRMATION' && (
+                          <div className="flex justify-end gap-1.5">
+                            <button
+                              onClick={(e) => openConfirmModal(e, ticket)}
+                              className="h-7 px-3 text-[10px] bg-slate-900  text-white rounded-md shadow-sm transition-all hover:bg-slate-600 font-bold uppercase tracking-wider cursor-pointer"
+                            >
+                              Confirmar
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleReopen(ticket)
+                              }}
+                              className="h-7 px-3 text-[10px] border border-slate-200 text-slate-900 bg-white rounded-md shadow-xs hover:bg-slate-100 transition-all font-bold uppercase tracking-wider cursor-pointer"
+                            >
+                              Reabrir
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
-        {pagination.totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 py-4 border-t border-border">
+        {/* Paginación Estilo DataTable */}
+        <div className="px-4 py-3 border-t border-slate-200 bg-slate-50/30 flex items-center justify-between">
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+            Página {pagination.page} de {pagination.totalPages}
+          </p>
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
               disabled={pagination.page <= 1}
-              className="px-3 py-1 text-sm rounded-lg border border-border disabled:opacity-50 hover:bg-background transition-colors cursor-pointer"
+              className="h-8 px-3 text-xs font-bold border border-slate-200 rounded-md disabled:opacity-50 hover:bg-white hover:border-slate-300 transition-all text-slate-600 flex items-center gap-1"
             >
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
               Anterior
             </button>
-            <span className="text-sm text-text-secondary">
-              Pagina {pagination.page} de {pagination.totalPages}
-            </span>
             <button
               onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
               disabled={pagination.page >= pagination.totalPages}
-              className="px-3 py-1 text-sm rounded-lg border border-border disabled:opacity-50 hover:bg-background transition-colors cursor-pointer"
+              className="h-8 px-3 text-xs font-bold border border-slate-200 rounded-md disabled:opacity-50 hover:bg-white hover:border-slate-300 transition-all text-slate-600 flex items-center gap-1"
             >
               Siguiente
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
             </button>
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Modal de Confirmacion — SIN estrellas */}
+      {/* Modal de Detalles del Ticket */}
+      <AnimatedModal
+        show={showDetails}
+        onClose={() => setShowDetails(false)}
+        className="w-full max-w-2xl mx-4"
+      >
+        <div className="bg-white rounded-2xl overflow-hidden border border-slate-200">
+          {/* Header */}
+          <div className="bg-slate-900 px-6 py-5">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="px-2 py-0.5 bg-white/10 text-white/70 text-[10px] font-bold uppercase tracking-widest rounded">
+                #{selectedTicket?.ticketCode}
+              </span>
+              <StatusBadge status={selectedTicket?.status} size="sm" />
+            </div>
+            <h3 className="text-lg font-bold text-white leading-tight">
+              {selectedTicket?.title}
+            </h3>
+          </div>
+
+          {/* Contenido */}
+          <div className="max-h-[65vh] overflow-y-auto">
+            {/* Metadata */}
+            <div className="grid grid-cols-4 border-b border-slate-100">
+              <div className="px-4 py-3 border-r border-slate-100">
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Categoría</p>
+                <p className="text-xs font-bold text-slate-900">{selectedTicket?.category?.name || 'General'}</p>
+              </div>
+              <div className="px-4 py-3 border-r border-slate-100">
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Prioridad</p>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                  selectedTicket?.priority === 'LOW' ? 'bg-slate-100 text-slate-600' :
+                  selectedTicket?.priority === 'MEDIUM' ? 'bg-amber-50 text-amber-700' :
+                  selectedTicket?.priority === 'HIGH' ? 'bg-orange-50 text-orange-700' :
+                  selectedTicket?.priority === 'CRITICAL' ? 'bg-rose-50 text-rose-700' :
+                  'bg-slate-100 text-slate-600'
+                }`}>
+                  {{ LOW: 'Baja', MEDIUM: 'Media', HIGH: 'Alta', CRITICAL: 'Crítica' }[selectedTicket?.priority] || selectedTicket?.priority}
+                </span>
+              </div>
+              <div className="px-4 py-3 border-r border-slate-100">
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Creado</p>
+                <p className="text-xs font-bold text-slate-900">
+                  {selectedTicket && new Date(selectedTicket.createdAt).toLocaleDateString('es-VE')}
+                </p>
+              </div>
+              <div className="px-4 py-3">
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Técnico</p>
+                <p className="text-xs font-bold text-slate-900">
+                  {selectedTicket?.assignments?.[0]
+                    ? `${selectedTicket.assignments[0].technician.firstName} ${selectedTicket.assignments[0].technician.lastName}`
+                    : '—'}
+                </p>
+              </div>
+            </div>
+
+            {/* Descripción */}
+            <div className="px-6 py-5 border-b border-slate-100">
+              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Descripción del Incidente</h4>
+              <p className="text-sm text-slate-700 leading-relaxed">
+                {selectedTicket?.description || 'No se proporcionó una descripción detallada para este ticket.'}
+              </p>
+            </div>
+
+            {/* Reporte de Resolución */}
+            {(selectedTicket?.status === 'RESOLVED' || selectedTicket?.status === 'CLOSED') ? (
+              <div className="px-6 py-5 border-b border-slate-100 bg-emerald-50/30">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest flex items-center gap-2">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Reporte de Resolución Técnica
+                  </h4>
+                  {selectedTicket.resolvedAt && (
+                    <span className="text-[10px] font-medium text-emerald-600">
+                      {new Date(selectedTicket.resolvedAt).toLocaleDateString('es-VE')}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-slate-700 leading-relaxed border-l-2 border-emerald-300 pl-4">
+                  {selectedTicket?.resolutionNote || selectedTicket?.resolutionComment || 'El personal técnico ha verificado y corregido la incidencia reportada.'}
+                </p>
+              </div>
+            ) : (
+              <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                <p className="text-xs text-slate-400 flex items-center gap-2">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  El reporte de resolución se generará cuando el técnico solucione el ticket.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-4 flex justify-end">
+            <button
+              onClick={() => setShowDetails(false)}
+              className="px-6 py-2 bg-slate-900 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-slate-800 transition-all cursor-pointer"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </AnimatedModal>
+
       <AnimatedModal show={showConfirm} onClose={() => setShowConfirm(false)}>
         <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
           <div className="px-6 py-4 border-b border-border">

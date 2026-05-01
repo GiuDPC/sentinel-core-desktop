@@ -39,13 +39,13 @@ export default function TicketList() {
     // Carga inicial explícita
     loadTickets()
     isInitialMount.current = false
-  }, [])
+  }, [loadTickets, searchParams])
 
   // Solo se dispara por cambios en filtros de select (no search, no mount)
   useEffect(() => {
     if (isInitialMount.current) return
     loadTickets()
-  }, [filters.status, filters.priority, pagination.page])
+  }, [filters.status, filters.priority, pagination.page, loadTickets])
 
   // Debounce search 400ms — separado de los otros filtros
   useEffect(() => {
@@ -55,9 +55,9 @@ export default function TicketList() {
       loadTickets()
     }, 400)
     return () => clearTimeout(searchTimerRef.current)
-  }, [filters.search])
+  }, [filters.search, loadTickets])
 
-  async function loadTickets() {
+  const loadTickets = useCallback(async () => {
     setLoading(true)
     try {
       const data = await ticketsApi.getAll({
@@ -74,7 +74,7 @@ export default function TicketList() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters.status, filters.priority, filters.search, pagination.page])
 
   async function openAssignModal(ticketId, reassign = false) {
     setAssignTicketId(ticketId)

@@ -2,45 +2,38 @@
  * Tarjeta KPI profesional — sin emojis, con indicador circular.
  * Diseño basado en los mockups de referencia.
  */
-export default function KPICard({ title, value, subtitle, trend, trendValue, color = 'blue' }) {
+export default function KPICard({ title, value, subtitle, trend, trendValue, color = 'blue', icon: Icon }) {
   const colorMap = {
-    blue: { dot: 'bg-accent', ring: 'ring-accent/20', border: 'border-accent/20' },
-    green: { dot: 'bg-success', ring: 'ring-success/20', border: 'border-success/20' },
-    yellow: { dot: 'bg-warning', ring: 'ring-warning/20', border: 'border-warning/20' },
-    red: { dot: 'bg-danger', ring: 'ring-danger/20', border: 'border-danger/20' },
+    blue: { bg: 'bg-blue-50/50', text: 'text-blue-600', border: 'border-blue-100' },
+    green: { bg: 'bg-emerald-50/50', text: 'text-emerald-600', border: 'border-emerald-100' },
+    yellow: { bg: 'bg-amber-50/50', text: 'text-amber-600', border: 'border-amber-100' },
+    red: { bg: 'bg-rose-50/50', text: 'text-rose-600', border: 'border-rose-100' },
   }
 
-  const trendColors = { up: 'text-success', down: 'text-danger', neutral: 'text-text-secondary' }
-
+  const trendColors = { up: 'text-emerald-600', down: 'text-rose-600', neutral: 'text-slate-500' }
   const c = colorMap[color] || colorMap.blue
 
   return (
-    <div className={`bg-surface rounded-xl border ${c.border} p-6 shadow-sm hover:shadow-md transition-shadow`}>
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className="text-sm text-text-secondary font-medium">{title}</p>
-          <p className="text-3xl font-bold text-text-primary mt-2 font-display">{value}</p>
+    <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm hover:shadow-md hover:border-slate-200 transition-all duration-300 group">
+      <div className="flex items-center gap-4">
+        <div className={`w-12 h-12 rounded-xl ${c.bg} ${c.text} flex items-center justify-center shrink-0 transition-transform group-hover:scale-110`}>
+          {Icon ? <Icon size={24} strokeWidth={1.5} /> : <div className="w-2 h-2 rounded-full bg-current" />}
+        </div>
+        
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{title}</p>
+          <div className="flex items-baseline gap-2 mt-0.5">
+            <h3 className="text-xl font-bold text-blue-950 font-display tabular-nums leading-none">{value}</h3>
+            {trend && trendValue && (
+              <span className={`text-[10px] font-bold ${trendColors[trend]} flex items-center gap-0.5`}>
+                {trend === 'up' ? '↑' : '↓'}{trendValue}
+              </span>
+            )}
+          </div>
           {subtitle && (
-            <p className="text-xs text-text-secondary mt-2">{subtitle}</p>
-          )}
-          {trend && trendValue && (
-            <div className={`flex items-center gap-1 mt-1 ${trendColors[trend]}`}> 
-              {trend === 'up' && (
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25m0-11.25h-11.25" />
-                </svg>
-              )}
-              {trend === 'down' && (
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 4.5l15 15m0 0V8.25m0 11.25h-11.25" />
-                </svg>
-              )}
-              <span className="text-xs font-bold">{trendValue}</span>
-              <span className="text-xs">vs mes anterior</span>
-            </div>
+            <p className="text-[10px] text-slate-400 font-medium mt-1 truncate">{subtitle}</p>
           )}
         </div>
-        <div className={`w-3 h-3 rounded-full ${c.dot} ring-4 ${c.ring} mt-1`} />
       </div>
     </div>
   )

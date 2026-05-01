@@ -5,11 +5,24 @@ import { PRIORITY_LABELS, PRIORITY_COLORS, AUDIT_ACTION_LABELS } from '../../con
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import AnimatedModal from '../../components/ui/AnimatedModal'
 import notifications from '../../components/ui/Notifications'
+import { Search, Filter, SlidersHorizontal, ChevronLeft, ChevronRight, X } from 'lucide-react'
 
 export default function TicketList() {
   const [tickets, setTickets] = useState([])
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 })
   const [filters, setFilters] = useState({ status: '', priority: '', search: '' })
+  const [openFilter, setOpenFilter] = useState(null)
+  const [visibleColumns, setVisibleColumns] = useState({
+    code: true,
+    title: true,
+    status: true,
+    priority: true,
+    requester: true,
+    technician: true,
+    location: true,
+    sla: true,
+    actions: true
+  })
   const [loading, setLoading] = useState(true)
   const [searchParams] = useSearchParams()
 
@@ -29,6 +42,30 @@ export default function TicketList() {
   // Debounced search — single ref to avoid double fetch
   const searchTimerRef = useRef(null)
   const isInitialMount = useRef(true)
+  const loadTicketsRef = useRef(null)
+
+  // DEFINIR loadTickets ANTES de los useEffects
+  const loadTickets = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await ticketsApi.getAll({
+        status: filters.status || undefined,
+        priority: filters.priority || undefined,
+        search: filters.search || undefined,
+        page: pagination.page,
+        limit: 8,
+      })
+      setTickets(data.data || [])
+      if (data.pagination) setPagination(data.pagination)
+    } catch (error) {
+      console.error('Error cargando tickets:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [filters.status, filters.priority, filters.search, pagination.page])
+
+  // Guardar referencia para usar antes de que se defina
+  loadTicketsRef.current = loadTickets
 
   // Leer search de URL al montar
   useEffect(() => {
@@ -56,25 +93,6 @@ export default function TicketList() {
     }, 400)
     return () => clearTimeout(searchTimerRef.current)
   }, [filters.search, loadTickets])
-
-  const loadTickets = useCallback(async () => {
-    setLoading(true)
-    try {
-      const data = await ticketsApi.getAll({
-        status: filters.status || undefined,
-        priority: filters.priority || undefined,
-        search: filters.search || undefined,
-        page: pagination.page,
-        limit: 15,
-      })
-      setTickets(data.data || [])
-      if (data.pagination) setPagination(data.pagination)
-    } catch (error) {
-      console.error('Error cargando tickets:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [filters.status, filters.priority, filters.search, pagination.page])
 
   async function openAssignModal(ticketId, reassign = false) {
     setAssignTicketId(ticketId)
@@ -132,197 +150,335 @@ export default function TicketList() {
     return ticket.assignments?.length > 0 && ticket.status !== 'CLOSED'
   }
 
-  return (
+return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-text-primary font-display">Todos los Tickets</h2>
-          <p className="text-sm text-text-secondary mt-1">
-            Gestion completa de incidencias
-            {pagination.total > 0 && (
-              <span className="ml-1 text-accent font-medium">({pagination.total} resultados)</span>
-            )}
+          <h2 className="text-3xl font-bold text-slate-900 tracking-tight font-display">Todos los Tickets</h2>
+          <p className="text-sm text-slate-500 mt-1">
+            Gestión completa de incidencias del centro comercial
           </p>
-        </div>
-
-        <div className="flex gap-3">
-          {/* Busqueda */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Codigo, titulo, ubicacion..."
-              value={filters.search}
-              onChange={handleSearchChange}
-              className="w-56 pl-9 pr-4 py-2 bg-surface border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 transition-all focus:w-72"
-            />
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
-            {filters.search && (
-              <button
-                onClick={() => { setFilters(f => ({ ...f, search: '' })); setPagination(p => ({ ...p, page: 1 })) }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary cursor-pointer"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
-          </div>
-          <select
-            value={filters.status}
-            onChange={(e) => { setFilters(f => ({ ...f, status: e.target.value })); setPagination(p => ({ ...p, page: 1 })) }}
-            className="px-3 py-2 bg-surface border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
-          >
-            <option value="">Todos los estados</option>
-            <option value="OPEN">Abierto</option>
-            <option value="ASSIGNED">Asignado</option>
-            <option value="IN_PROGRESS">En Proceso</option>
-            <option value="ON_HOLD">En Espera</option>
-            <option value="AWAITING_CONFIRMATION">Esperando Confirmacion</option>
-            <option value="RESOLVED">Resuelto</option>
-            <option value="CLOSED">Cerrado</option>
-          </select>
-          <select
-            value={filters.priority}
-            onChange={(e) => { setFilters(f => ({ ...f, priority: e.target.value })); setPagination(p => ({ ...p, page: 1 })) }}
-            className="px-3 py-2 bg-surface border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
-          >
-            <option value="">Todas las prioridades</option>
-            <option value="LOW">Baja</option>
-            <option value="MEDIUM">Media</option>
-            <option value="HIGH">Alta</option>
-            <option value="CRITICAL">Critica</option>
-          </select>
         </div>
       </div>
 
-      <div className="bg-surface rounded-xl shadow-sm overflow-hidden">
+      {/* Filtros - Estilo Locatario/Técnico */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-1 items-center gap-2">
+          {/* Buscador */}
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input 
+              value={filters.search}
+              onChange={handleSearchChange}
+              placeholder="Buscar por código o título..." 
+              className="h-9 w-full bg-white border border-slate-200 rounded-lg pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all shadow-sm"
+            />
+          </div>
+
+          {/* Filtros Dropdown Style */}
+          <div className="flex gap-2">
+            <div className="relative">
+              <button
+                onClick={() => setOpenFilter(openFilter === 'status' ? null : 'status')}
+                className='inline-flex items-center justify-center rounded-md text-xs font-medium h-8 px-3 border border-dashed border-slate-300 bg-white hover:bg-slate-50 text-slate-700'
+              >
+                <Filter className='mr-2 h-4 w-4' />
+                Estado
+                {filters.status && (
+                  <>
+                    <div className='mx-2 h-4 w-px bg-slate-200' />
+                    <span className='rounded-sm bg-slate-100 px-1 text-[10px] font-normal text-blue-950 uppercase'>
+                      {filters.status}
+                    </span>
+                  </>
+                )}
+              </button>
+              {openFilter === 'status' && (
+                <div className='absolute left-0 mt-2 z-50 w-52 p-0 border border-slate-200 rounded-md shadow-lg bg-white overflow-hidden'>
+                  <div className='flex flex-col'>
+                    <div className='flex items-center border-b border-slate-100 px-3'>
+                      <input
+                        placeholder='Filtrar estado...'
+                        className='h-9 w-full bg-transparent py-3 text-xs outline-none'
+                        autoFocus
+                      />
+                    </div>
+                    <div className='max-h-[300px] overflow-y-auto p-1'>
+                      {['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'AWAITING_CONFIRMATION', 'RESOLVED', 'CLOSED'].map((val) => (
+                        <div
+                          key={val}
+                          onClick={() => { setFilters(f => ({ ...f, status: val })); setOpenFilter(null); setPagination(p => ({ ...p, page: 1 })) }}
+                          className='relative flex items-center rounded-sm px-2 py-1.5 text-xs hover:bg-slate-50 cursor-pointer text-slate-700'
+                        >
+                          <div className={`mr-2 flex h-3.5 w-3.5 items-center justify-center rounded-sm border ${filters.status === val ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
+                            {filters.status === val && (
+                              <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" /></svg>
+                            )}
+                          </div>
+                          <span>{val}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className='border-t border-slate-100 p-1'>
+                      <button
+                        onClick={() => { setFilters(f => ({ ...f, status: '' })); setOpenFilter(null); setPagination(p => ({ ...p, page: 1 })) }}
+                        className='w-full py-1.5 text-xs text-center hover:bg-slate-50 rounded-sm text-slate-500'
+                      >
+                        Limpiar filtro
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="relative">
+              <button
+                onClick={() => setOpenFilter(openFilter === 'priority' ? null : 'priority')}
+                className='inline-flex items-center justify-center rounded-md text-xs font-medium h-8 px-3 border border-dashed border-slate-300 bg-white hover:bg-slate-50 text-slate-700'
+              >
+                <SlidersHorizontal className='mr-2 h-4 w-4' />
+                Prioridad
+                {filters.priority && (
+                  <>
+                    <div className='mx-2 h-4 w-px bg-slate-200' />
+                    <span className='rounded-sm bg-slate-100 px-1 text-[10px] font-normal text-blue-950 uppercase'>
+                      {filters.priority}
+                    </span>
+                  </>
+                )}
+              </button>
+              {openFilter === 'priority' && (
+                <div className="absolute left-0 mt-2 z-50 w-48 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in fade-in zoom-in duration-200">
+                  {Object.entries(PRIORITY_LABELS).map(([val, label]) => (
+                    <button
+                      key={val}
+                      onClick={() => { setFilters(f => ({ ...f, priority: val })); setOpenFilter(null); setPagination(p => ({ ...p, page: 1 })) }}
+                      className="w-full flex items-center px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                    >
+                      <div className={`mr-2 w-2 h-2 rounded-full ${filters.priority === val ? 'bg-orange-500' : 'bg-slate-200'}`} />
+                      {label}
+                    </button>
+                  ))}
+                  <div className="border-t border-slate-100 mt-1 p-1">
+                    <button onClick={() => { setFilters(f => ({ ...f, priority: '' })); setOpenFilter(null) }} className="w-full py-1.5 text-[10px] font-bold uppercase text-slate-400 hover:text-slate-600">Limpiar</button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {(filters.status || filters.priority || filters.search) && (
+              <button 
+                onClick={() => { setFilters({ status: '', priority: '', search: '' }); setPagination(p => ({ ...p, page: 1 })) }}
+                className="h-9 px-3 text-xs font-bold text-slate-400 hover:text-slate-600 flex items-center transition-colors"
+              >
+                Resetear <X className="ml-1 h-3.5 w-3.5" />
+              </button>
+            )}
+
+          </div>
+
+          {/* Opciones de vista - Alineado a la derecha */}
+          <div className='ml-auto relative'>
+            <button 
+              onClick={() => setOpenFilter(openFilter === 'view' ? null : 'view')}
+              className='h-8 px-3 border border-slate-200 rounded-md flex items-center gap-2 text-xs font-medium hover:bg-slate-50 text-slate-600 transition-all shadow-sm'
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 6h18M3 14h18M3 18h18" /></svg>
+              Ver
+            </button>
+
+            {openFilter === 'view' && (
+              <div className='absolute right-0 mt-2 z-50 w-48 p-2 border border-slate-200 rounded-md shadow-lg bg-white overflow-hidden'>
+                <p className='px-2 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 mb-1'>Columnas visibles</p>
+                <div className='flex flex-col gap-1'>
+                  {Object.entries({
+                    code: 'Código',
+                    title: 'Título',
+                    status: 'Estado',
+                    priority: 'Prioridad',
+                    requester: 'Solicitante',
+                    technician: 'Técnico',
+                    location: 'Ubicación',
+                    sla: 'SLA',
+                    actions: 'Acciones'
+                  }).map(([key, label]) => (
+                    <div 
+                      key={key}
+                      onClick={() => setVisibleColumns(prev => Object.assign({}, prev, { [key]: !prev[key] }))}
+                      className='flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-slate-50 cursor-pointer text-xs text-slate-600 font-medium'
+                    >
+                      <div className={`h-3.5 w-3.5 rounded border flex items-center justify-center transition-colors ${visibleColumns[key] ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
+                        {visibleColumns[key] && <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" /></svg>}
+                      </div>
+                      {label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Tabla - Estilo Técnico */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mt-6">
         {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="w-8 h-8 border-4 border-accent/30 border-t-accent rounded-full animate-spin" />
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <div className="w-10 h-10 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin" />
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Cargando Tickets...</p>
           </div>
         ) : tickets.length === 0 ? (
-          <div className="text-center py-16">
-            <svg className="w-12 h-12 text-text-secondary/30 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
-            </svg>
-            <p className="text-text-secondary font-medium">No se encontraron tickets</p>
-            {filters.search && (
-              <p className="text-text-secondary/70 text-sm mt-1">Intenta con otros terminos de busqueda</p>
+          <div className="text-center py-24 px-6">
+            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-10 h-10 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 font-display">Sin resultados</h3>
+            <p className="text-sm text-slate-500 mt-2 max-w-xs mx-auto">
+              No se encontraron tickets con los filtros aplicados.
+            </p>
+            {(filters.status || filters.priority || filters.search) && (
+              <button onClick={() => { setFilters({ status: '', priority: '', search: '' }); setPagination(p => ({ ...p, page: 1 })) }} className="mt-6 text-sm font-bold text-blue-600 hover:text-blue-700">Limpiar filtros</button>
             )}
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-text-secondary text-xs border-b border-border bg-background/50">
-                <th className="px-6 py-4 font-medium">Codigo</th>
-                <th className="px-6 py-4 font-medium">Titulo</th>
-                <th className="px-6 py-4 font-medium">Solicitante</th>
-                <th className="px-6 py-4 font-medium">Ubicacion</th>
-                <th className="px-6 py-4 font-medium">Prioridad</th>
-                <th className="px-6 py-4 font-medium">Estado</th>
-                <th className="px-6 py-4 font-medium">SLA</th>
-                <th className="px-6 py-4 font-medium">Tecnico</th>
-                <th className="px-6 py-4 font-medium">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {tickets.map((ticket) => {
-                const isSlaBreached = ticket.dueDate && new Date(ticket.dueDate) < new Date() && !['RESOLVED', 'CLOSED'].includes(ticket.status);
-                const isSlaAtRisk = ticket.dueDate && !isSlaBreached && new Date(ticket.dueDate) < new Date(Date.now() + 2 * 60 * 60 * 1000);
-                return (
-                <tr key={ticket.id} className="hover:bg-background/30 transition-colors group">
-                  <td className="px-6 py-4 font-mono text-xs text-accent font-bold">
-                    <button
-                      onClick={() => openDetailModal(ticket.id)}
-                      className="hover:underline cursor-pointer"
-                    >
-                      {ticket.ticketCode}
-                    </button>
-                  </td>
-                  <td className="px-6 py-4 text-text-primary font-medium max-w-48 truncate" title={ticket.title}>
-                    <button
-                      onClick={() => openDetailModal(ticket.id)}
-                      className="hover:text-accent cursor-pointer text-left transition-colors"
-                    >
-                      {ticket.title}
-                    </button>
-                  </td>
-                  <td className="px-6 py-4 text-text-secondary text-xs">
-                    {ticket.creator?.firstName} {ticket.creator?.lastName}
-                  </td>
-                  <td className="px-6 py-4 text-text-secondary text-xs max-w-32 truncate" title={ticket.location}>
-                    {ticket.location || '\u2014'}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`text-xs font-semibold ${PRIORITY_COLORS[ticket.priority] || 'text-text-secondary'}`}>
-                      {PRIORITY_LABELS[ticket.priority] || ticket.priority}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4"><StatusBadge status={ticket.status} /></td>
-                  <td className="px-6 py-4">
-                    {ticket.dueDate && !['RESOLVED', 'CLOSED'].includes(ticket.status) ? (
-                      <span className={`flex items-center gap-1 text-xs ${isSlaBreached ? 'text-danger font-semibold' : isSlaAtRisk ? 'text-warning font-medium' : 'text-text-secondary'}`}>
-                        {isSlaBreached && (
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                          </svg>
-                        )}
-                        {new Date(ticket.dueDate).toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    ) : '\u2014'}
-                  </td>
-                  <td className="px-6 py-4 text-text-secondary text-xs">
-                    {ticket.assignments?.[0]?.technician
-                      ? `${ticket.assignments[0].technician.firstName} ${ticket.assignments[0].technician.lastName}`
-                      : '\u2014'}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex gap-2">
-                      {ticket.status === 'OPEN' && (
-                        <button
-                          onClick={() => openAssignModal(ticket.id, false)}
-                          className="px-3 py-1.5 text-xs bg-accent text-white rounded-lg hover:bg-accent/90 transition-all hover:shadow-md cursor-pointer"
-                        >
-                          Asignar
-                        </button>
-                      )}
-                      {canReassign(ticket) && (
-                        <button
-                          onClick={() => openAssignModal(ticket.id, true)}
-                          className="px-3 py-1.5 text-xs border border-accent/30 text-accent rounded-lg hover:bg-accent/10 transition-all cursor-pointer"
-                        >
-                          Reasignar
-                        </button>
-                      )}
-                    </div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-slate-50/50 border-b border-slate-200">
+                  {visibleColumns.code && <th className="px-6 py-4 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Código</th>}
+                  {visibleColumns.title && <th className="px-6 py-4 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Título</th>}
+                  {visibleColumns.status && <th className="px-6 py-4 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Estado</th>}
+                  {visibleColumns.priority && <th className="px-6 py-4 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Prioridad</th>}
+                  {visibleColumns.requester && <th className="px-6 py-4 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Solicitante</th>}
+                  {visibleColumns.technician && <th className="px-6 py-4 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Técnico</th>}
+                  {visibleColumns.location && <th className="px-6 py-4 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">Ubicación</th>}
+                  {visibleColumns.sla && <th className="px-6 py-4 text-left text-[11px] font-bold text-slate-400 uppercase tracking-widest">SLA</th>}
+                  {visibleColumns.actions && <th className="px-6 py-4 text-right text-[11px] font-bold text-slate-400 uppercase tracking-widest">Acciones</th>}
                 </tr>
-              )})}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {tickets.map((ticket) => {
+                  const isSlaBreached = ticket.dueDate && new Date(ticket.dueDate) < new Date() && !['RESOLVED', 'CLOSED'].includes(ticket.status);
+                  const isSlaAtRisk = ticket.dueDate && !isSlaBreached && new Date(ticket.dueDate) < new Date(Date.now() + 2 * 60 * 60 * 1000);
+                  return (
+                  <tr 
+                    key={ticket.id} 
+                    onClick={() => openDetailModal(ticket.id)}
+                    className="hover:bg-slate-50/80 transition-all group cursor-pointer"
+                  >
+                    {visibleColumns.code && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="font-mono text-[11px] font-bold text-indigo-950 bg-indigo-50/50 px-2 py-1 rounded-md border border-indigo-100 group-hover:bg-indigo-100 transition-colors shadow-sm">
+                          {ticket.ticketCode}
+                        </span>
+                      </td>
+                    )}
+                    {visibleColumns.title && (
+                      <td className="px-6 py-4">
+                        <span
+                          className="text-xs font-bold text-slate-800 line-clamp-1 text-left"
+                          title={ticket.title}
+                        >
+                          {ticket.title}
+                        </span>
+                      </td>
+                    )}
+                    {visibleColumns.status && (
+                      <td className="px-6 py-4"><StatusBadge status={ticket.status} size="sm" /></td>
+                    )}
+                    {visibleColumns.priority && (
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${PRIORITY_COLORS[ticket.priority] || 'text-slate-500'}`}>
+                          {PRIORITY_LABELS[ticket.priority] || ticket.priority}
+                        </span>
+                      </td>
+                    )}
+                    {visibleColumns.requester && (
+                      <td className="px-6 py-4 text-xs text-slate-500">
+                        {ticket.creator?.firstName} {ticket.creator?.lastName}
+                      </td>
+                    )}
+                    {visibleColumns.technician && (
+                      <td className="px-6 py-4 text-xs text-slate-500">
+                        {ticket.assignments?.[0]?.technician
+                          ? `${ticket.assignments[0].technician.firstName} ${ticket.assignments[0].technician.lastName}`
+                          : '—'}
+                      </td>
+                    )}
+                    {visibleColumns.location && (
+                      <td className="px-6 py-4 text-xs text-slate-500 max-w-32 truncate" title={ticket.location}>
+                        {ticket.location || '—'}
+                      </td>
+                    )}
+                    {visibleColumns.sla && (
+                      <td className="px-6 py-4">
+                        {ticket.dueDate && !['RESOLVED', 'CLOSED'].includes(ticket.status) ? (
+                          <span className={`flex items-center gap-1 text-xs ${isSlaBreached ? 'text-rose-600 font-semibold' : isSlaAtRisk ? 'text-amber-600 font-medium' : 'text-slate-500'}`}>
+                            {isSlaBreached && (
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                              </svg>
+                            )}
+                            {new Date(ticket.dueDate).toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        ) : '—'}
+                      </td>
+                    )}
+                    {visibleColumns.actions && (
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                          {ticket.status === 'OPEN' && (
+                            <button
+                              onClick={() => openAssignModal(ticket.id, false)}
+                              className="h-8 px-3 text-[10px] bg-blue-950 text-white rounded-lg font-bold uppercase tracking-widest hover:bg-slate-800 transition-all shadow-sm active:scale-95"
+                            >
+                              Asignar
+                            </button>
+                          )}
+                          {canReassign(ticket) && (
+                            <button
+                              onClick={() => openAssignModal(ticket.id, true)}
+                              className="h-8 px-3 text-[10px] border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-all cursor-pointer"
+                            >
+                              Reasignar
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                )})}
+              </tbody>
+            </table>
+          </div>
         )}
 
-        {pagination.totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 py-4 border-t border-border">
-            <button
-              onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
-              disabled={pagination.page <= 1}
-              className="px-3 py-1 text-sm rounded-lg border border-border disabled:opacity-50 hover:bg-background transition-colors cursor-pointer"
-            >
-              Anterior
-            </button>
-            <span className="text-sm text-text-secondary">
-              Pagina {pagination.page} de {pagination.totalPages}
-            </span>
-            <button
-              onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
-              disabled={pagination.page >= pagination.totalPages}
-              className="px-3 py-1 text-sm rounded-lg border border-border disabled:opacity-50 hover:bg-background transition-colors cursor-pointer"
-            >
-              Siguiente
-            </button>
+        {/* Pagination - Estilo Técnico */}
+        {!loading && tickets.length > 0 && pagination.totalPages > 1 && (
+          <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/30 flex items-center justify-between">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              Página {pagination.page} de {pagination.totalPages}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
+                disabled={pagination.page <= 1}
+                className="h-9 px-4 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 bg-white hover:bg-slate-50 disabled:opacity-50 transition-all shadow-sm flex items-center gap-2"
+              >
+                <ChevronLeft className="h-4 w-4" /> Anterior
+              </button>
+              <button
+                onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
+                disabled={pagination.page >= pagination.totalPages}
+                className="h-9 px-4 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 bg-white hover:bg-slate-50 disabled:opacity-50 transition-all shadow-sm flex items-center gap-2"
+              >
+                Siguiente <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -547,5 +703,5 @@ export default function TicketList() {
         </div>
       </AnimatedModal>
     </div>
-  )
+  );
 }

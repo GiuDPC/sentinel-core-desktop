@@ -100,48 +100,74 @@ export default function AssignedTickets() {
             {/* Filtros Dropdown Style */}
             <div className="flex gap-2">
               <div className="relative">
-                <button 
+                <button
                   onClick={() => setOpenFilter(openFilter === 'status' ? null : 'status')}
-                  className="inline-flex items-center h-9 px-3 border border-dashed border-slate-300 rounded-lg bg-white text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
+                  className='inline-flex items-center justify-center rounded-md text-xs font-medium h-8 px-3 border border-dashed border-slate-300 bg-white hover:bg-slate-50 text-slate-700'
                 >
-                  <Filter className="mr-2 h-3.5 w-3.5" />
+                  <Filter className='mr-2 h-4 w-4' />
                   Estado
                   {statusFilter && (
-                    <span className="ml-2 px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[9px] uppercase font-black">
-                      {STATUS_OPTIONS.find(o => o.value === statusFilter)?.label}
-                    </span>
+                    <>
+                      <div className='mx-2 h-4 w-px bg-slate-200' />
+                      <span className='rounded-sm bg-slate-100 px-1 text-[10px] font-normal text-blue-950 uppercase'>
+                        {STATUS_OPTIONS.find(o => o.value === statusFilter)?.label || statusFilter}
+                      </span>
+                    </>
                   )}
                 </button>
                 {openFilter === 'status' && (
-                  <div className="absolute left-0 mt-2 z-50 w-48 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in fade-in zoom-in duration-200">
-                    {STATUS_OPTIONS.map((opt) => (
-                      <button
-                        key={opt.value}
-                        onClick={() => { setStatusFilter(opt.value); setOpenFilter(null); setPagination(p => ({ ...p, page: 1 })) }}
-                        className="w-full flex items-center px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
-                      >
-                        <div className={`mr-2 w-2 h-2 rounded-full ${statusFilter === opt.value ? 'bg-blue-600' : 'bg-slate-200'}`} />
-                        {opt.label}
-                      </button>
-                    ))}
-                    <div className="border-t border-slate-100 mt-1 p-1">
-                      <button onClick={() => { setStatusFilter(''); setOpenFilter(null) }} className="w-full py-1.5 text-[10px] font-bold uppercase text-slate-400 hover:text-slate-600">Limpiar</button>
+                  <div className='absolute left-0 mt-2 z-50 w-52 p-0 border border-slate-200 rounded-md shadow-lg bg-white overflow-hidden'>
+                    <div className='flex flex-col'>
+                      <div className='flex items-center border-b border-slate-100 px-3'>
+                        <input
+                          placeholder='Filtrar estado...'
+                          className='h-9 w-full bg-transparent py-3 text-xs outline-none'
+                          autoFocus
+                        />
+                      </div>
+                      <div className='max-h-[300px] overflow-y-auto p-1'>
+                        {STATUS_OPTIONS.map((opt) => (
+                          <div
+                            key={opt.value}
+                            onClick={() => { setStatusFilter(opt.value); setOpenFilter(null); setPagination(p => ({ ...p, page: 1 })) }}
+                            className='relative flex items-center rounded-sm px-2 py-1.5 text-xs hover:bg-slate-50 cursor-pointer text-slate-700'
+                          >
+                            <div className={`mr-2 flex h-3.5 w-3.5 items-center justify-center rounded-sm border ${statusFilter === opt.value ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
+                              {statusFilter === opt.value && (
+                                <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" /></svg>
+                              )}
+                            </div>
+                            <span>{opt.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className='border-t border-slate-100 p-1'>
+                        <button
+                          onClick={() => { setStatusFilter(''); setOpenFilter(null); setPagination(p => ({ ...p, page: 1 })) }}
+                          className='w-full py-1.5 text-xs text-center hover:bg-slate-50 rounded-sm text-slate-500'
+                        >
+                          Limpiar filtro
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
               </div>
 
               <div className="relative">
-                <button 
+                <button
                   onClick={() => setOpenFilter(openFilter === 'priority' ? null : 'priority')}
-                  className="inline-flex items-center h-9 px-3 border border-dashed border-slate-300 rounded-lg bg-white text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
+                  className='inline-flex items-center justify-center rounded-md text-xs font-medium h-8 px-3 border border-dashed border-slate-300 bg-white hover:bg-slate-50 text-slate-700'
                 >
-                  <SlidersHorizontal className="mr-2 h-3.5 w-3.5" />
+                  <SlidersHorizontal className='mr-2 h-4 w-4' />
                   Prioridad
                   {priorityFilter && (
-                    <span className="ml-2 px-1.5 py-0.5 bg-orange-50 text-orange-700 rounded text-[9px] uppercase font-black">
-                      {priorityFilter}
-                    </span>
+                    <>
+                      <div className='mx-2 h-4 w-px bg-slate-200' />
+                      <span className='rounded-sm bg-slate-100 px-1 text-[10px] font-normal text-blue-950 uppercase'>
+                        {priorityFilter}
+                      </span>
+                    </>
                   )}
                 </button>
                 {openFilter === 'priority' && (

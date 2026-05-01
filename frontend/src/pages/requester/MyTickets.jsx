@@ -26,9 +26,11 @@ export default function MyTickets() {
 
   // Modal confirmacion
   const [showConfirm, setShowConfirm] = useState(false)
+  const [showReopen, setShowReopen] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
   const [selectedTicket, setSelectedTicket] = useState(null)
   const [confirmComment, setConfirmComment] = useState('')
+  const [reopenComment, setReopenComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   const loadTickets = useCallback(async () => {
@@ -82,31 +84,27 @@ export default function MyTickets() {
     }
   }
 
-  async function handleReopen(ticket) {
-    const { isConfirmed, value } = await notifications.confirm({
-      title: 'Reabrir ticket',
-      text: 'Describe por qué la solución no fue satisfactoria:',
-      input: 'textarea',
-      inputPlaceholder: 'Escribe aquí el motivo...',
-      inputValidator: (value) => {
-        if (!value) return 'Debes ingresar un motivo'
-        if (value.length < 10) return 'El motivo debe tener al menos 10 caracteres'
-      },
-      confirmText: 'Reabrir',
-      cancelText: 'Cancelar',
-      type: 'warning',
-    })
-    if (!isConfirmed) return
+  function openReopenModal(e, ticket) {
+    e.stopPropagation()
+    setSelectedTicket(ticket)
+    setReopenComment('')
+    setShowReopen(true)
+  }
 
+  async function handleReopenConfirm() {
+    setSubmitting(true)
     try {
-      await ticketsApi.confirmTicket(ticket.id, {
+      await ticketsApi.confirmTicket(selectedTicket.id, {
         confirmed: false,
-        ratingComment: value || 'Reabierto por el solicitante',
+        ratingComment: reopenComment || 'Reabierto por el solicitante',
       })
-      notifications.success('Ticket reabierto para atencion', 'Reabierto')
+      notifications.success('Ticket reabierto para atención', 'Reabierto')
+      setShowReopen(false)
       loadTickets()
     } catch (error) {
       notifications.error(error.message, 'Error')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -405,15 +403,12 @@ export default function MyTickets() {
                           <div className="flex justify-end gap-1.5">
                             <button
                               onClick={(e) => openConfirmModal(e, ticket)}
-                              className="h-7 px-3 text-[10px] bg-slate-900  text-white rounded-md shadow-sm transition-all hover:bg-slate-600 font-bold uppercase tracking-wider cursor-pointer"
+                              className="h-7 px-3 text-[10px] bg-slate-900 text-white rounded-md shadow-sm transition-all hover:bg-slate-600 font-bold uppercase tracking-wider cursor-pointer"
                             >
                               Confirmar
                             </button>
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleReopen(ticket)
-                              }}
+                              onClick={(e) => openReopenModal(e, ticket)}
                               className="h-7 px-3 text-[10px] border border-slate-200 text-slate-900 bg-white rounded-md shadow-xs hover:bg-slate-100 transition-all font-bold uppercase tracking-wider cursor-pointer"
                             >
                               Reabrir
@@ -601,6 +596,62 @@ export default function MyTickets() {
               className="px-4 py-2.5 text-sm text-text-secondary border border-border rounded-lg hover:bg-surface transition-colors cursor-pointer"
             >
               Cancelar
+            </button>
+          </div>
+        </div>
+      </AnimatedModal>
+
+      <AnimatedModal show={showReopen} onClose={() => setShowReopen(false)}>
+        <div className="bg-white rounded-[32px] shadow-[0_25px_60px_rgba(15,23,42,0.15)] w-full max-w-xl mx-4 overflow-hidden border border-slate-200">
+          <div className="px-7 py-5 border-b border-slate-200 bg-slate-50">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Reabrir Ticket</p>
+                <h3 className="mt-2 text-xl font-bold text-slate-900">Motivo de reapertura</h3>
+              </div>
+              <span className="inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-[10px] font-bold uppercase text-white tracking-[0.25em]">
+                {selectedTicket?.ticketCode}
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-slate-500 leading-relaxed">
+              El comentario se enviará al equipo técnico y quedará registrado en el historial del ticket.
+            </p>
+          </div>
+
+          <div className="p-7 space-y-5">
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Escribe tu motivo</label>
+              <textarea
+                value={reopenComment}
+                onChange={(e) => setReopenComment(e.target.value)}
+                placeholder="Describe qué no quedó bien resuelto..."
+                rows={5}
+                className="w-full min-h-[140px] resize-none rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+              />
+            </div>
+
+            <div className="rounded-3xl bg-slate-900/5 p-4 text-sm leading-relaxed text-slate-600">
+              <p className="font-semibold text-slate-900 mb-2">Consejo</p>
+              <p>Explica brevemente qué parte de la solución no resolvió tu problema para acelerar la atención.</p>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={handleReopenConfirm}
+                disabled={submitting || reopenComment.trim().length < 10}
+                className="inline-flex items-center justify-center rounded-3xl bg-slate-900 px-4 py-2.5 text-sm font-bold uppercase tracking-[0.18em] text-white shadow-lg shadow-slate-900/20 transition-all hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {submitting ? 'Reabriendo...' : 'Enviar Reapertura'}
+              </button>
+            </div>
+          </div>
+
+          <div className="px-7 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+            <button
+              onClick={() => setShowReopen(false)}
+              className="px-4 py-2.5 text-sm font-bold uppercase tracking-[0.18em] text-slate-700 bg-white border border-slate-200 rounded-3xl hover:bg-slate-100 transition-all"
+            >
+              Volver
             </button>
           </div>
         </div>

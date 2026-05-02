@@ -1,6 +1,6 @@
 import { prisma } from '../config/prisma.js';
 import { AppError } from '../utils/app-error.js';
-import { Department } from '../../generated/prisma/enums.js';
+import { Department } from '../../generated/prisma/index.js';
 
 async function findAll() {
   const users = await prisma.user.findMany({

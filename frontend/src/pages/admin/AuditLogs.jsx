@@ -20,6 +20,24 @@ const ACTION_OPTIONS = [
   { value: 'TICKET_REOPENED', label: 'Reabierto' },
 ]
 
+const formatValue = (value) => {
+  if (!value || value === '-') return '-'
+  const labels = {
+    OPEN: 'Abierto',
+    ASSIGNED: 'Asignado',
+    IN_PROGRESS: 'En Proceso',
+    ON_HOLD: 'En Espera',
+    AWAITING_CONFIRMATION: 'Por Confirmar',
+    RESOLVED: 'Resuelto',
+    CLOSED: 'Cerrado',
+    LOW: 'Baja',
+    MEDIUM: 'Media',
+    HIGH: 'Alta',
+    CRITICAL: 'Crítica'
+  }
+  return labels[value] || value
+}
+
 export default function AuditLogs() {
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
@@ -222,8 +240,12 @@ export default function AuditLogs() {
                           {actionConfig.label}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-xs text-slate-500 font-mono max-w-32 truncate">{log.oldValue || '—'}</td>
-                      <td className="px-6 py-4 text-xs text-slate-500 font-mono max-w-40 truncate">{log.newValue || '—'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs text-slate-500 font-medium">
+                        {formatValue(log.oldValue)}
+                      </td>
+                      <td className="px-6 py-4 text-xs text-slate-700 font-semibold max-w-xs truncate">
+                        {formatValue(log.newValue)}
+                      </td>
                     </tr>
                   )
                 })}

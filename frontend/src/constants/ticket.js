@@ -62,10 +62,9 @@ export const AUDIT_ACTION_LABELS = {
   TICKET_CREATED: 'Ticket creado',
   STATUS_CHANGE: 'Cambio de estado',
   PRIORITY_CHANGE: 'Cambio de prioridad',
-  ASSIGNMENT: 'Asignacion',
-  REASSIGNMENT: 'Reasignacion',
-  RESOLUTION_NOTE: 'Nota de resolucion',
+  ASSIGNMENT: 'Asignación',
+  REASSIGNMENT: 'Reasignación',
+  RESOLUTION_NOTE: 'Nota de resolución',
   TICKET_CONFIRMED: 'Ticket confirmado',
   TICKET_REOPENED: 'Ticket reabierto',
-  RATING: 'Calificacion',
 }

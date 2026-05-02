@@ -14,10 +14,6 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    checkAuth()
-  }, [])
-
   async function checkAuth() {
     try {
       const data = await authApi.getCurrentUser()
@@ -28,6 +24,11 @@ export function AuthProvider({ children }) {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    checkAuth()
+  }, [])
 
   async function login(credentials) {
     setError(null)

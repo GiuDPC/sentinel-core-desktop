@@ -5,8 +5,6 @@ export default function CategoryManagement() {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => { loadCategories() }, [])
-
   async function loadCategories() {
     try {
       const data = await categoriesApi.getAll()
@@ -14,6 +12,11 @@ export default function CategoryManagement() {
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
   }
+
+  useEffect(() => { 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadCategories() 
+  }, [])
 
   const deptLabels = {
     MANTENIMIENTO_ELECTRICO: 'Mtto. Eléctrico',

@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../Contexts/AuthContextObject.js'
-import { useNotifications } from '../../Contexts/NotificationContextObject.js'
+import { useNotificationStore } from '../../store/useNotificationStore.js'
 import { Bell, Search } from 'lucide-react'
+import { useEffect } from 'react'
 
 const NotificationBell = () => {
-  const { unreadCount, notifications, markAsRead, markAllAsRead } = useNotifications()
+  const { unreadCount, notifications, markAsRead, markAllAsRead } = useNotificationStore()
   const [isOpen, setIsOpen] = useState(false)
   const navigate = useNavigate()
 
@@ -71,13 +72,31 @@ const NotificationBell = () => {
 
 export default function Header() {
   const { user } = useAuth()
+  const { startPolling, stopPolling } = useNotificationStore()
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const greeting = getGreeting()
 
+  useEffect(() => {
+    if (user) {
+      startPolling()
+    } else {
+      stopPolling()
+    }
+    return () => stopPolling()
+  }, [user, startPolling, stopPolling])
+
   function handleSearch(e) {
     if (e.key === 'Enter' && searchQuery.trim()) {
-      navigate(`/admin/tickets?search=${encodeURIComponent(searchQuery.trim())}`)
+      const query = encodeURIComponent(searchQuery.trim())
+      const role = user?.role
+      if (role === 'ADMIN') {
+        navigate(`/admin/tickets?search=${query}`)
+      } else if (role === 'TECHNICIAN') {
+        navigate(`/technician/assigned?search=${query}`)
+      } else {
+        navigate(`/requester/my-tickets?search=${query}`)
+      }
       setSearchQuery('')
     }
   }

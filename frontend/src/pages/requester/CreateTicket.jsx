@@ -34,7 +34,26 @@ export default function CreateTicket() {
   })
 
   useEffect(() => {
+    async function loadCategories() {
+      try {
+        const data = await categoriesApi.getAll()
+        const list = Array.isArray(data) ? data : (data.data || data.categories || [])
+        setCategories(list)
+        
+        // Auto-seleccionar categoría si viene por estado de navegación
+        if (locationState.state?.preselectedCategory) {
+          const cat = list.find((c) => c.name === locationState.state.preselectedCategory)
+          if (cat) {
+            setForm((f) => ({ ...f, categoryId: String(cat.id) }))
+          }
+        }
+      } catch (error) {
+        console.error('Error cargando categorias:', error)
+      }
+    }
+    
     loadCategories()
+
     const handleClickOutside = (event) => {
       if (categoryRef.current && !categoryRef.current.contains(event.target)) {
         setIsCategoryOpen(false)
@@ -42,26 +61,7 @@ export default function CreateTicket() {
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  useEffect(() => {
-    if (locationState.state?.preselectedCategory && categories.length > 0) {
-      const cat = categories.find((c) => c.name === locationState.state.preselectedCategory)
-      if (cat) {
-        setForm((f) => ({ ...f, categoryId: String(cat.id) }))
-      }
-    }
-  }, [locationState.state, categories])
-
-  async function loadCategories() {
-    try {
-      const data = await categoriesApi.getAll()
-      const list = Array.isArray(data) ? data : (data.data || data.categories || [])
-      setCategories(list)
-    } catch (error) {
-      console.error('Error cargando categorias:', error)
-    }
-  }
+  }, [locationState.state])
 
   function handleChange(e) {
     const { name, value } = e.target

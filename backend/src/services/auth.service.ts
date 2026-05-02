@@ -100,6 +100,8 @@ async function registerPublic(data: {
   email: string;
   password: string;
   phone?: string;
+  storeNumber?: string;
+  storeName?: string;
 }) {
   // Verificar email único
   const existing = await prisma.user.findUnique({
@@ -129,6 +131,8 @@ async function registerPublic(data: {
       roleId: requesterRole.id,
       phone: data.phone || null,
       department: null, // REQUESTER no tiene departamento
+      storeNumber: data.storeNumber || null,
+      storeName: data.storeName || null,
     },
     include: { role: true },
   })) as UserWithRole;
@@ -162,6 +166,8 @@ async function getProfile(userId: string) {
     role: user.role.name,
     department: user.department,
     phone: user.phone,
+    storeNumber: user.storeNumber,
+    storeName: user.storeName,
   };
 }
 

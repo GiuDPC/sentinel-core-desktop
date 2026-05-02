@@ -14,10 +14,6 @@ export default function TechDashboard() {
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
-  useEffect(() => {
-    loadDashboard()
-  }, [])
-
   async function loadDashboard() {
     try {
       const [metricsData, ticketsData] = await Promise.all([
@@ -43,6 +39,11 @@ export default function TechDashboard() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadDashboard()
+  }, [])
 
   if (loading) {
     return (

@@ -85,6 +85,8 @@ async function updateProfile(id: string, data: {
   firstName?: string;
   lastName?: string;
   phone?: string;
+  storeNumber?: string;
+  storeName?: string;
 }) {
   const user = await prisma.user.findUnique({ where: { id } });
   if (!user) {
@@ -97,6 +99,8 @@ async function updateProfile(id: string, data: {
       firstName: data.firstName ?? user.firstName,
       lastName: data.lastName ?? user.lastName,
       phone: data.phone ?? user.phone,
+      storeNumber: data.storeNumber ?? user.storeNumber,
+      storeName: data.storeName ?? user.storeName,
     },
     include: { role: true },
   });
@@ -109,6 +113,8 @@ async function updateProfile(id: string, data: {
     role: updated.role.name,
     department: updated.department,
     phone: updated.phone,
+    storeNumber: updated.storeNumber,
+    storeName: updated.storeName,
   };
 }
 

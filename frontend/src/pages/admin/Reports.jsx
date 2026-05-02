@@ -11,6 +11,7 @@ const DATE_RANGES = [
 ]
 
 // Componente KPI estilo minimalista
+// eslint-disable-next-line no-unused-vars
 function KPICard({ title, value, subtitle, icon: Icon }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all duration-300">
@@ -35,8 +36,6 @@ export default function Reports() {
   const [dateRange, setDateRange] = useState('all')
   const [openDateFilter, setOpenDateFilter] = useState(null)
 
-  useEffect(() => { loadReports() }, [dateRange])
-
   async function loadReports() {
     setLoading(true)
     try {
@@ -49,6 +48,11 @@ export default function Reports() {
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
   }
+
+  useEffect(() => { 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadReports() 
+  }, [dateRange])
 
   function exportToExcel() {
     const summary = metrics?.summary || {}

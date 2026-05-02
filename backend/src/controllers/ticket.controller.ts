@@ -100,6 +100,8 @@ async function findMyTickets(req: Request, res: Response, next: NextFunction) {
   try {
     const result = await ticketService.findByCreator(req.user!.id, {
       status: req.query.status as string | undefined,
+      priority: req.query.priority as string | undefined,
+      search: req.query.search as string | undefined,
       page: req.query.page ? parseInt(req.query.page as string, 10) : undefined,
     });
     res.json(result);
@@ -112,6 +114,10 @@ async function findAssigned(req: Request, res: Response, next: NextFunction) {
   try {
     const result = await ticketService.findAssigned(req.user!.id, {
       status: req.query.status as string | undefined,
+      priority: req.query.priority as string | undefined,
+      search: req.query.search as string | undefined,
+      page: req.query.page ? parseInt(req.query.page as string, 10) : undefined,
+      limit: req.query.limit ? parseInt(req.query.limit as string, 10) : undefined,
     });
     res.json(result);
   } catch (error) {
@@ -138,7 +144,7 @@ async function confirmTicket(req: Request, res: Response, next: NextFunction) {
       String(req.params.id),
       {
         confirmed: req.body.confirmed,
-        ratingComment: req.body.ratingComment,
+        comment: req.body.comment,
       },
       req.user!.id
     );

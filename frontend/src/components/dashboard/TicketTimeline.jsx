@@ -71,9 +71,24 @@ const STATUS_LABELS = {
 
 function formatValue(value) {
   if (!value) return null
-  // Si es un estado conocido, traducirlo
-  if (STATUS_LABELS[value]) return STATUS_LABELS[value]
-  return value
+  const labels = {
+    ...STATUS_LABELS,
+    'OPEN': 'Abierto',
+    'ASSIGNED': 'Asignado',
+    'IN_PROGRESS': 'En Proceso',
+    'ON_HOLD': 'En Espera',
+    'AWAITING_CONFIRMATION': 'Por Confirmar',
+    'RESOLVED': 'Resuelto',
+    'CLOSED': 'Cerrado',
+    'LOW': 'Baja',
+    'MEDIUM': 'Media',
+    'HIGH': 'Alta',
+    'CRITICAL': 'Crítica',
+    'ADMIN': 'Administrador',
+    'TECHNICIAN': 'Técnico',
+    'REQUESTER': 'Solicitante'
+  }
+  return labels[value] || value
 }
 
 function formatRelativeTime(dateStr) {
@@ -94,7 +109,7 @@ function formatRelativeTime(dateStr) {
 export default function TicketTimeline({ auditLogs = [] }) {
   if (auditLogs.length === 0) {
     return (
-      <div className="py-8 text-center">
+      <div className="py-8 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
         <Clock className="w-8 h-8 text-slate-200 mx-auto mb-3" />
         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Sin actividad registrada</p>
       </div>
@@ -102,9 +117,9 @@ export default function TicketTimeline({ auditLogs = [] }) {
   }
 
   return (
-    <div className="relative">
-      {/* Línea vertical principal */}
-      <div className="absolute left-[19px] top-4 bottom-4 w-px bg-gradient-to-b from-slate-200 via-slate-100 to-transparent" />
+    <div className="relative isolate px-1">
+      {/* Línea vertical principal — Ajustada para no sobresalir */}
+      <div className="absolute left-[19px] top-10 bottom-10 w-px bg-gradient-to-b from-slate-200 via-slate-100 to-transparent z-0" />
 
       <div className="space-y-1">
         {auditLogs.map((log, index) => {

@@ -203,13 +203,35 @@ async function findAll(filters: {
   if (filters.priority) where.priority = filters.priority;
   if (filters.categoryId) where.categoryId = filters.categoryId;
 
-  // Búsqueda por texto en múltiples campos
+  // Búsqueda "Super Power" por texto en múltiples campos y relaciones
   if (filters.search) {
+    const searchLower = filters.search.toLowerCase();
     where.OR = [
       { ticketCode: { contains: filters.search, mode: 'insensitive' } },
       { title: { contains: filters.search, mode: 'insensitive' } },
       { description: { contains: filters.search, mode: 'insensitive' } },
       { location: { contains: filters.search, mode: 'insensitive' } },
+      { 
+        creator: {
+          OR: [
+            { firstName: { contains: filters.search, mode: 'insensitive' } },
+            { lastName: { contains: filters.search, mode: 'insensitive' } },
+            { email: { contains: filters.search, mode: 'insensitive' } },
+          ]
+        }
+      },
+      {
+        assignments: {
+          some: {
+            technician: {
+              OR: [
+                { firstName: { contains: filters.search, mode: 'insensitive' } },
+                { lastName: { contains: filters.search, mode: 'insensitive' } },
+              ]
+            }
+          }
+        }
+      }
     ];
   }
 

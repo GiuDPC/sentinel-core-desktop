@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-// Regex solo letras (incluye ñ, acentos, espacios)
 const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
 
 export const updateUserSchema = z.object({
@@ -13,8 +12,7 @@ export const updateUserSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-// Schema para actualizar perfil propio
-// Valida: solo letras para nombre/apellido
+
 export const updateProfileSchema = z.object({
   firstName: z
     .string()

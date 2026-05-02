@@ -1,7 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from '../Contexts/AuthContext'
-import { NotificationProvider } from '../Contexts/NotificationContext.jsx'
 import ProtectedRoute from '../components/common/ProtectedRoute'
 import MainLayout from '../components/layout/MainLayout'
 import LoadingSpinner from '../components/common/LoadingSpinner'
@@ -39,10 +38,9 @@ function LazyPage({ children }) {
 export function AppRouter() {
   return (
     <AuthProvider>
-      <NotificationProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Rutas públicas */}
+      <BrowserRouter>
+        <Routes>
+          {/* Rutas públicas */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signin" element={<SigninPage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
@@ -124,6 +122,7 @@ export function AppRouter() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/admin/ticket/:id" element={<Navigate to="/admin/tickets" replace />} />
               <Route
                 path="/admin/users"
                 element={
@@ -170,9 +169,8 @@ export function AppRouter() {
 
             {/* Catch-all */}
             <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </NotificationProvider>
+        </Routes>
+      </BrowserRouter>
     </AuthProvider>
   )
 }

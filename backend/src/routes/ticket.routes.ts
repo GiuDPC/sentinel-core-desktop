@@ -20,8 +20,8 @@ router.post(
   ticketController.create
 );
 
-// GET /api/tickets — Todos los autenticados pueden listar
-router.get('/', ticketController.findAll);
+// GET /api/tickets — Solo Admin puede ver todos los tickets
+router.get('/', roleGuard('ADMIN'), ticketController.findAll);
 
 // Rutas estáticas ANTES que rutas con :id
 // GET /api/tickets/technicians/workload — Ver carga de técnicos (Admin)

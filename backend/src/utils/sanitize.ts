@@ -57,7 +57,6 @@ export const TICKET_SANITIZE_FIELDS = [
   'description',
   'location',
   'resolutionNote',
-  'ratingComment',
 ] as const
 
 /**
@@ -68,7 +67,6 @@ export function sanitizeTicketInput(input: {
   description?: string
   location?: string
   resolutionNote?: string
-  ratingComment?: string
 }) {
   const sanitized: any = { ...input }
   for (const field of TICKET_SANITIZE_FIELDS) {

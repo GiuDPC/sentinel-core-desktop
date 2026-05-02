@@ -21,5 +21,5 @@ export const resolveTicketSchema = z.object({
 
 export const confirmTicketSchema = z.object({
   confirmed: z.boolean(),
-  ratingComment: z.string().optional(),
+  comment: z.string().optional(),
 });

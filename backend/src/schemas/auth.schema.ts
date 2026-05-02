@@ -49,6 +49,14 @@ export const registerPublicSchema = z.object({
         .regex(phoneRegex, 'Formato telefónico venezolano inválido (use 04XX-XXX-XXXX)')
         .optional()
         .or(z.literal('')),
+    storeNumber: z.string()
+        .regex(/^L-\d+$/, 'Formato inválido (use L-XXX)')
+        .optional()
+        .or(z.literal('')),
+    storeName: z.string()
+        .min(2, 'El nombre del local debe tener al menos 2 caracteres')
+        .optional()
+        .or(z.literal('')),
 }).refine((data) => data.password === data.confirmPassword, {
     message: 'Las contraseñas no coinciden',
     path: ['confirmPassword'],

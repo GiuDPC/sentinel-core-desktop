@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { ticketsApi } from '../../api/tickets'
 import { STATUS_OPTIONS, PRIORITY_LABELS, PRIORITY_COLORS } from '../../constants/ticket'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import AnimatedModal from '../../components/ui/AnimatedModal'
 import notifications from '../../components/ui/Notifications'
+import CommentSection from '../../components/dashboard/CommentSection'
 
 export default function MyTickets() {
   const [tickets, setTickets] = useState([])
@@ -51,6 +53,16 @@ export default function MyTickets() {
     }
   }, [statusFilter, priorityFilter, searchFilter, pagination.page])
 
+  const [searchParams] = useSearchParams()
+
+  // Leer search de URL al montar
+  useEffect(() => {
+    const urlSearch = searchParams.get('search')
+    if (urlSearch) {
+      setSearchFilter(urlSearch)
+    }
+  }, [searchParams])
+
   useEffect(() => {
     loadTickets()
   }, [loadTickets])
@@ -72,7 +84,7 @@ export default function MyTickets() {
     try {
       await ticketsApi.confirmTicket(selectedTicket.id, {
         confirmed: true,
-        ratingComment: confirmComment || undefined,
+        comment: confirmComment || undefined,
       })
       notifications.success('Ticket cerrado exitosamente', 'Confirmacion exitosa')
       setShowConfirm(false)
@@ -96,7 +108,7 @@ export default function MyTickets() {
     try {
       await ticketsApi.confirmTicket(selectedTicket.id, {
         confirmed: false,
-        ratingComment: reopenComment || 'Reabierto por el solicitante',
+        comment: reopenComment || 'Reabierto por el solicitante',
       })
       notifications.success('Ticket reabierto para atención', 'Reabierto')
       setShowReopen(false)
@@ -213,39 +225,19 @@ export default function MyTickets() {
                 </button>
 
                 {openFilter === 'priority' && (
-                  <div className='absolute left-0 mt-2 z-50 w-52 p-0 border border-slate-200 rounded-md shadow-lg bg-white overflow-hidden'>
-                    <div className='flex flex-col'>
-                      <div className='flex items-center border-b border-slate-100 px-3'>
-                        <input 
-                          placeholder='Filtrar prioridad...' 
-                          className='h-9 w-full bg-transparent py-3 text-xs outline-none' 
-                          autoFocus
-                        />
-                      </div>
-                      <div className='max-h-[300px] overflow-y-auto p-1'>
-                        {['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map((prio) => (
-                          <div 
-                            key={prio}
-                            onClick={() => { setPriorityFilter(prio); setOpenFilter(null); setPagination(p => ({ ...p, page: 1 })) }}
-                            className='relative flex items-center rounded-sm px-2 py-1.5 text-xs hover:bg-slate-50 cursor-pointer text-slate-700'
-                          >
-                            <div className={`mr-2 flex h-3.5 w-3.5 items-center justify-center rounded-sm border ${priorityFilter === prio ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
-                              {priorityFilter === prio && (
-                                <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" /></svg>
-                              )}
-                            </div>
-                            <span>{PRIORITY_LABELS[prio] || prio}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <div className='border-t border-slate-100 p-1'>
-                        <button 
-                          onClick={() => { setPriorityFilter(''); setOpenFilter(null); setPagination(p => ({ ...p, page: 1 })) }}
-                          className='w-full py-1.5 text-xs text-center hover:bg-slate-50 rounded-sm text-slate-500'
-                        >
-                          Limpiar filtro
-                        </button>
-                      </div>
+                  <div className="absolute left-0 mt-2 z-50 w-48 bg-white border border-slate-200 rounded-xl shadow-xl p-1 animate-in fade-in zoom-in duration-200">
+                    {['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map((prio) => (
+                      <button
+                        key={prio}
+                        onClick={() => { setPriorityFilter(prio); setOpenFilter(null); setPagination(p => ({ ...p, page: 1 })) }}
+                        className="w-full flex items-center px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                      >
+                        <div className={`mr-2 w-2 h-2 rounded-full ${priorityFilter === prio ? 'bg-orange-500' : 'bg-slate-200'}`} />
+                        {PRIORITY_LABELS[prio] || prio}
+                      </button>
+                    ))}
+                    <div className="border-t border-slate-100 mt-1 p-1">
+                      <button onClick={() => { setPriorityFilter(''); setOpenFilter(null); setPagination(p => ({ ...p, page: 1 })) }} className="w-full py-1.5 text-[10px] font-bold uppercase text-slate-400 hover:text-slate-600">Limpiar</button>
                     </div>
                   </div>
                 )}
@@ -540,6 +532,20 @@ export default function MyTickets() {
                 </p>
               </div>
             )}
+
+            {/* Comentarios */}
+            <div className="px-6 py-5 border-t border-slate-100 bg-slate-50/20">
+              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <svg className="w-3.5 h-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                Conversación con el equipo técnico
+              </h4>
+              <CommentSection 
+                key={`req-comments-${selectedTicket?.id}`}
+                ticketId={selectedTicket?.id} 
+                userRole="REQUESTER" 
+                initialComments={selectedTicket?.comments || []} 
+              />
+            </div>
           </div>
 
           {/* Footer */}

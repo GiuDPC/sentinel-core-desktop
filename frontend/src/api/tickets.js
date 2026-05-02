@@ -28,6 +28,8 @@ export const ticketsApi = {
   getMyTickets(filters = {}) {
     const params = new URLSearchParams()
     if (filters.status) params.set('status', filters.status)
+    if (filters.priority) params.set('priority', filters.priority)
+    if (filters.search) params.set('search', filters.search)
     if (filters.page) params.set('page', String(filters.page))
     const query = params.toString()
     return apiClient.get(`/tickets/my-tickets${query ? `?${query}` : ''}`)
@@ -36,6 +38,9 @@ export const ticketsApi = {
   getAssigned(filters = {}) {
     const params = new URLSearchParams()
     if (filters.status) params.set('status', filters.status)
+    if (filters.priority) params.set('priority', filters.priority)
+    if (filters.search) params.set('search', filters.search)
+    if (filters.page) params.set('page', String(filters.page))
     const query = params.toString()
     return apiClient.get(`/tickets/assigned${query ? `?${query}` : ''}`)
   },
@@ -57,7 +62,7 @@ export const ticketsApi = {
     return apiClient.post(`/tickets/${ticketId}/resolve`, { resolutionNote })
   },
 
-  confirmTicket(ticketId, { confirmed, ratingComment }) {
-    return apiClient.post(`/tickets/${ticketId}/confirm`, { confirmed, ratingComment })
+  confirmTicket(ticketId, { confirmed, comment }) {
+    return apiClient.post(`/tickets/${ticketId}/confirm`, { confirmed, comment })
   },
 }

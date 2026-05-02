@@ -10,7 +10,7 @@ export const authApi = {
     return data
   },
 
-  async register({ firstName, lastName, email, password, phone }) {
+  async register({ firstName, lastName, email, password, phone, storeNumber, storeName }) {
     const data = await apiClient.post('/auth/register-public', {
       firstName,
       lastName,
@@ -18,6 +18,8 @@ export const authApi = {
       password,
       confirmPassword: password,
       phone: phone || undefined,
+      storeNumber: storeNumber || undefined,
+      storeName: storeName || undefined,
     })
     return data
   },

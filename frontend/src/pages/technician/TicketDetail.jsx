@@ -4,6 +4,8 @@ import { ticketsApi } from '../../api/tickets'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import LiveTracker from '../../components/dashboard/LiveTracker'
 import notifications from '../../components/ui/Notifications'
+import CommentSection from '../../components/dashboard/CommentSection'
+import TicketTimeline from '../../components/dashboard/TicketTimeline'
 import { PRIORITY_LABELS } from '../../constants/ticket'
 import { 
   Clock, 
@@ -24,8 +26,12 @@ export default function TicketDetail() {
   const navigate = useNavigate()
   const [ticket, setTicket] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [showResolveForm, setShowResolveForm] = useState(false)
+  const [resolutionNote, setResolutionNote] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   const loadTicket = useCallback(async () => {
+    setLoading(true)
     try {
       const data = await ticketsApi.getById(id)
       setTicket(data.ticket || data)
@@ -38,6 +44,7 @@ export default function TicketDetail() {
   }, [id])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadTicket()
     // Auto-abrir formulario de resolución si viene por parámetro
     const params = new URLSearchParams(window.location.search)
@@ -55,10 +62,6 @@ export default function TicketDetail() {
       notifications.error(error.message || 'Error al cambiar estado', 'Error')
     }
   }
-
-  const [showResolveForm, setShowResolveForm] = useState(false)
-  const [resolutionNote, setResolutionNote] = useState('')
-  const [submitting, setSubmitting] = useState(false)
 
   async function handleResolve() {
     if (resolutionNote.trim().length < 10) {
@@ -326,47 +329,20 @@ export default function TicketDetail() {
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
             <MessageSquare size={14} className="text-blue-600" /> Comentarios
           </h3>
-          <div className="space-y-6">
-            {ticket.comments?.length > 0 ? ticket.comments.map((comment) => (
-              <div key={comment.id} className="flex gap-4">
-                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 shrink-0">
-                  {comment.user?.firstName?.[0]}{comment.user?.lastName?.[0]}
-                </div>
-                <div className="space-y-1 flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-900">{comment.user?.firstName} {comment.user?.lastName}</span>
-                    <span className="text-[10px] text-slate-400">{new Date(comment.createdAt).toLocaleDateString('es-VE')}</span>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">{comment.content}</p>
-                </div>
-              </div>
-            )) : (
-              <p className="text-xs text-slate-400 italic">No hay comentarios en este ticket.</p>
-            )}
-          </div>
+          <CommentSection 
+            key={`comments-${id}`}
+            ticketId={id} 
+            userRole="TECHNICIAN" 
+            initialComments={ticket?.comments || []} 
+          />
         </div>
 
-        {/* Historial */}
+        {/* Historial — Timeline Visual */}
         <div className="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-            <History size={14} className="text-blue-600" /> Registro de Actividad
+            <History size={14} className="text-blue-600" /> Línea de Tiempo
           </h3>
-          <div className="space-y-4">
-            {ticket.auditLogs?.length > 0 ? ticket.auditLogs.slice(0, 5).map((log) => (
-              <div key={log.id} className="flex items-start gap-3 text-xs border-l-2 border-slate-50 pl-4 py-1">
-                <div className="space-y-1">
-                  <p className="text-slate-900 font-medium">
-                    <span className="font-bold">{log.user?.firstName}</span> {log.action}
-                  </p>
-                  <p className="text-[10px] text-slate-400 font-mono">
-                    {new Date(log.createdAt).toLocaleString('es-VE')}
-                  </p>
-                </div>
-              </div>
-            )) : (
-              <p className="text-xs text-slate-400 italic">Sin registros de auditoría.</p>
-            )}
-          </div>
+          <TicketTimeline auditLogs={ticket.auditLogs || []} />
         </div>
       </div>
     </div>

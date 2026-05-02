@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ticketsApi } from '../../api/tickets'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import notifications from '../../components/ui/Notifications'
@@ -47,6 +47,16 @@ export default function AssignedTickets() {
       setLoading(false)
     }
   }, [statusFilter, priorityFilter, searchFilter, pagination.page])
+
+  const [searchParams] = useSearchParams()
+
+  // Leer search de URL al montar
+  useEffect(() => {
+    const urlSearch = searchParams.get('search')
+    if (urlSearch) {
+      setSearchFilter(urlSearch)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     loadTickets()

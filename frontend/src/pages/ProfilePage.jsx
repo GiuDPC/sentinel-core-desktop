@@ -14,9 +14,8 @@ export default function ProfilePage() {
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
     phone: user?.phone || '',
-    storeNumber: user?.role === 'REQUESTER' ? (user?.storeNumber || 'L-105') : '',
-    storeName: user?.role === 'REQUESTER' ? (user?.storeName || 'Establecimiento General') : '',
-    location: user?.role === 'REQUESTER' ? (user?.location || 'Planta Baja') : '',
+    storeNumber: user?.role === 'REQUESTER' ? (user?.storeNumber || '') : '',
+    storeName: user?.role === 'REQUESTER' ? (user?.storeName || '') : '',
   })
   
   const [passwordForm, setPasswordForm] = useState({
@@ -42,9 +41,8 @@ export default function ProfilePage() {
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         phone: user.phone || '',
-        storeNumber: user.role === 'REQUESTER' ? (user.storeNumber || 'L-105') : '',
-        storeName: user.role === 'REQUESTER' ? (user.storeName || 'Establecimiento General') : '',
-        location: user.role === 'REQUESTER' ? (user.location || 'Planta Baja') : '',
+        storeNumber: user.role === 'REQUESTER' ? (user.storeNumber || '') : '',
+        storeName: user.role === 'REQUESTER' ? (user.storeName || '') : '',
       })
     }
   }, [user])
@@ -83,9 +81,8 @@ export default function ProfilePage() {
       firstName: user?.firstName || '',
       lastName: user?.lastName || '',
       phone: user?.phone || '',
-      storeNumber: user?.role === 'REQUESTER' ? (user?.storeNumber || 'L-105') : '',
-      storeName: user?.role === 'REQUESTER' ? (user?.storeName || 'Establecimiento General') : '',
-      location: user?.role === 'REQUESTER' ? (user?.location || 'Planta Baja') : '',
+      storeNumber: user?.role === 'REQUESTER' ? (user?.storeNumber || '') : '',
+      storeName: user?.role === 'REQUESTER' ? (user?.storeName || '') : '',
     })
     setIsEditing(false)
     setErrors({})
@@ -240,30 +237,27 @@ export default function ProfilePage() {
                   {isEditing ? (
                     <input type="text" value={form.storeName} onChange={(e) => setForm(f => ({ ...f, storeName: e.target.value }))} className="w-full px-0 py-1 bg-transparent border-b-2 border-slate-100 text-sm font-bold text-slate-900 focus:outline-none focus:border-slate-900 transition-all" />
                   ) : (
-                    <p className="text-sm font-bold text-slate-800 py-1">{form.storeName}</p>
+                    <p className="text-sm font-bold text-slate-800 py-1">{form.storeName || 'No registrado'}</p>
                   )}
                 </div>
                 <div className="space-y-2 border-t border-slate-50 pt-4 md:border-t-0 md:pt-0">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nº de Local y Ubicación</label>
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nº de Local</label>
                   {isEditing ? (
                     <div className="space-y-1">
-                      <div className="flex gap-4">
-                        <input 
-                          type="text" 
-                          value={form.storeNumber} 
-                          onChange={handleStoreNumberChange} 
-                          onFocus={() => {
-                            if (!form.storeNumber) setForm(f => ({ ...f, storeNumber: 'L-' }))
-                          }}
-                          className="w-24 px-0 py-1 bg-transparent border-b-2 border-slate-100 text-sm font-bold text-slate-900 focus:outline-none focus:border-slate-900 transition-all" 
-                          placeholder="Local" 
-                        />
-                        <input type="text" value={form.location} onChange={(e) => setForm(f => ({ ...f, location: e.target.value }))} className="flex-1 px-0 py-1 bg-transparent border-b-2 border-slate-100 text-sm font-bold text-slate-900 focus:outline-none focus:border-slate-900 transition-all" placeholder="Piso / Ala" />
-                      </div>
+                      <input 
+                        type="text" 
+                        value={form.storeNumber} 
+                        onChange={handleStoreNumberChange} 
+                        onFocus={() => {
+                          if (!form.storeNumber) setForm(f => ({ ...f, storeNumber: 'L-' }))
+                        }}
+                        className="w-full px-0 py-1 bg-transparent border-b-2 border-slate-100 text-sm font-bold text-slate-900 focus:outline-none focus:border-slate-900 transition-all" 
+                        placeholder="L-105" 
+                      />
                       {errors.storeNumber && <p className="text-[9px] text-rose-500 font-bold uppercase">{errors.storeNumber}</p>}
                     </div>
                   ) : (
-                    <p className="text-sm font-bold text-slate-800 py-1">{form.storeNumber} — {form.location}</p>
+                    <p className="text-sm font-bold text-slate-800 py-1">{form.storeNumber || 'No registrado'}</p>
                   )}
                 </div>
               </>

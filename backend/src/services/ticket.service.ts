@@ -162,6 +162,25 @@ async function create(data: {
         },
       },
     });
+    if (!finalTicket) throw new AppError(500, 'Error al recuperar el ticket creado');
+
+
+    // Notificar a los administradores del nuevo ticket
+    await notificationService.notifyAdmins({
+      title: 'Nuevo Ticket Creado',
+      message: `El locatario ${finalTicket.creator.firstName} ha creado el ticket #${finalTicket.ticketCode}`,
+      type: 'TICKET_STATUS',
+      link: `/admin/tickets?search=${finalTicket.ticketCode}`
+    });
+
+    // Notificar al creador que su ticket ha sido creado (opcional, pero útil para feedback)
+    await notificationService.createNotification({
+      userId: finalTicket.creatorId,
+      title: 'Ticket Creado con Éxito',
+      message: `Tu ticket #${finalTicket.ticketCode} ha sido registrado correctamente.`,
+      type: 'TICKET_STATUS',
+      link: `/requester/my-tickets`
+    });
 
     return { ...finalTicket, autoAssigned: !!assignedTechId };
   });
@@ -414,7 +433,7 @@ async function resolveWithNote(
  */
 async function confirmTicket(
   ticketId: string,
-  data: { confirmed: boolean; ratingComment?: string },
+  data: { confirmed: boolean; comment?: string },
   userId: string
 ) {
   const ticket = await prisma.ticket.findUnique({ where: { id: ticketId } });
@@ -435,7 +454,6 @@ async function confirmTicket(
         where: { id: ticketId },
         data: {
           status: 'CLOSED',
-          ratingComment: data.ratingComment || null,
         },
         include: {
           category: true,
@@ -463,7 +481,7 @@ async function confirmTicket(
       });
 
       await auditService.logAction(ticketId, userId, 'STATUS_CHANGE', 'AWAITING_CONFIRMATION', 'IN_PROGRESS', tx);
-      await auditService.logAction(ticketId, userId, 'TICKET_REOPENED', null, data.ratingComment || 'Falla persiste', tx);
+      await auditService.logAction(ticketId, userId, 'TICKET_REOPENED', null, data.comment || 'Falla persiste', tx);
 
       // Notificar al técnico de la reapertura
       const assignment = await tx.assignment.findFirst({ where: { ticketId } });
@@ -485,13 +503,23 @@ async function confirmTicket(
 /**
  * Tickets creados por un solicitante específico.
  */
-async function findByCreator(creatorId: string, filters: { status?: string; page?: number; limit?: number }) {
+async function findByCreator(creatorId: string, filters: { status?: string; priority?: string; search?: string; page?: number; limit?: number }) {
   const page = filters.page || 1;
   const limit = filters.limit || 20;
   const skip = (page - 1) * limit;
 
   const where: any = { creatorId };
   if (filters.status) where.status = filters.status;
+  if (filters.priority) where.priority = filters.priority;
+
+  if (filters.search) {
+    where.OR = [
+      { ticketCode: { contains: filters.search, mode: 'insensitive' } },
+      { title: { contains: filters.search, mode: 'insensitive' } },
+      { description: { contains: filters.search, mode: 'insensitive' } },
+      { location: { contains: filters.search, mode: 'insensitive' } },
+    ];
+  }
 
   const [tickets, total] = await Promise.all([
     prisma.ticket.findMany({
@@ -522,14 +550,31 @@ async function findByCreator(creatorId: string, filters: { status?: string; page
 /**
  * Tickets asignados a un técnico específico.
  */
-async function findAssigned(technicianId: string, filters: { status?: string }) {
+async function findAssigned(technicianId: string, filters: { status?: string; priority?: string; search?: string; page?: number; limit?: number }) {
+  const page = filters.page || 1;
+  const limit = filters.limit || 20;
+  const skip = (page - 1) * limit;
+
   const where: any = {
     assignments: { some: { technicianId } },
   };
   if (filters.status) where.status = filters.status;
+  if (filters.priority) where.priority = filters.priority;
 
-  const tickets = await prisma.ticket.findMany({
-    where,
+  if (filters.search) {
+    where.OR = [
+      { ticketCode: { contains: filters.search, mode: 'insensitive' } },
+      { title: { contains: filters.search, mode: 'insensitive' } },
+      { description: { contains: filters.search, mode: 'insensitive' } },
+      { location: { contains: filters.search, mode: 'insensitive' } },
+    ];
+  }
+
+  const [tickets, total] = await Promise.all([
+    prisma.ticket.findMany({
+      where,
+      skip,
+      take: limit,
     orderBy: { createdAt: 'desc' },
     include: {
       category: true,
@@ -543,10 +588,20 @@ async function findAssigned(technicianId: string, filters: { status?: string }) 
           },
         },
       },
-    },
-  });
+      },
+    }),
+    prisma.ticket.count({ where }),
+  ]);
 
-  return { data: tickets, total: tickets.length };
+  return {
+    data: tickets,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 }
 
 export const ticketService = {

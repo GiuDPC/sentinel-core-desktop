@@ -118,7 +118,7 @@ describe('Ticket Schema Validation', () => {
     it('should accept confirmation with comment', () => {
       const result = confirmTicketSchema.safeParse({
         confirmed: true,
-        ratingComment: 'Excelente servicio, muy rápido.',
+        comment: 'Excelente servicio, muy rápido.',
       })
       expect(result.success).toBe(true)
     })
@@ -133,14 +133,14 @@ describe('Ticket Schema Validation', () => {
     it('should accept reopening with reason', () => {
       const result = confirmTicketSchema.safeParse({
         confirmed: false,
-        ratingComment: 'El problema persiste, la luminaria sigue sin encender.',
+        comment: 'El problema persiste, la luminaria sigue sin encender.',
       })
       expect(result.success).toBe(true)
     })
 
     it('should reject when confirmed is missing', () => {
       const result = confirmTicketSchema.safeParse({
-        ratingComment: 'Comentario sin confirmación',
+        comment: 'Comentario sin confirmación',
       })
       expect(result.success).toBe(false)
     })

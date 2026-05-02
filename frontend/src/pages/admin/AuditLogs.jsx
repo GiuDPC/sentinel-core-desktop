@@ -7,7 +7,7 @@ const ACTION_LABELS = {
   STATUS_CHANGE: { label: 'Cambio de Estado', color: 'bg-amber-50 text-amber-700' },
   ASSIGNMENT: { label: 'Asignación', color: 'bg-purple-50 text-purple-700' },
   RESOLUTION_NOTE: { label: 'Nota de Resolución', color: 'bg-emerald-50 text-emerald-700' },
-  RATING: { label: 'Calificación', color: 'bg-orange-50 text-orange-700' },
+  TICKET_CONFIRMED: { label: 'Confirmado', color: 'bg-green-50 text-green-700' },
   TICKET_REOPENED: { label: 'Reabierto', color: 'bg-rose-50 text-rose-700' },
 }
 
@@ -16,7 +16,7 @@ const ACTION_OPTIONS = [
   { value: 'STATUS_CHANGE', label: 'Cambio de Estado' },
   { value: 'ASSIGNMENT', label: 'Asignación' },
   { value: 'RESOLUTION_NOTE', label: 'Nota de Resolución' },
-  { value: 'RATING', label: 'Calificación' },
+  { value: 'TICKET_CONFIRMED', label: 'Confirmado' },
   { value: 'TICKET_REOPENED', label: 'Reabierto' },
 ]
 
@@ -46,6 +46,7 @@ export default function AuditLogs() {
   }, [pagination.page, filters.action])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadLogs()
   }, [loadLogs])
 

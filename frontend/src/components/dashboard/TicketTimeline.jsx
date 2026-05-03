@@ -132,7 +132,6 @@ export default function TicketTimeline({ auditLogs = [] }) {
           }
           const Icon = config.icon
           const isFirst = index === 0
-          const isLast = index === auditLogs.length - 1
           const oldVal = formatValue(log.oldValue)
           const newVal = formatValue(log.newValue)
 

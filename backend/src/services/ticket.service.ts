@@ -205,34 +205,36 @@ async function findAll(filters: {
 
   // Búsqueda "Super Power" por texto en múltiples campos y relaciones
   if (filters.search) {
-    const searchLower = filters.search.toLowerCase();
-    where.OR = [
-      { ticketCode: { contains: filters.search, mode: 'insensitive' } },
-      { title: { contains: filters.search, mode: 'insensitive' } },
-      { description: { contains: filters.search, mode: 'insensitive' } },
-      { location: { contains: filters.search, mode: 'insensitive' } },
-      { 
-        creator: {
-          OR: [
-            { firstName: { contains: filters.search, mode: 'insensitive' } },
-            { lastName: { contains: filters.search, mode: 'insensitive' } },
-            { email: { contains: filters.search, mode: 'insensitive' } },
-          ]
-        }
-      },
-      {
-        assignments: {
-          some: {
-            technician: {
-              OR: [
-                { firstName: { contains: filters.search, mode: 'insensitive' } },
-                { lastName: { contains: filters.search, mode: 'insensitive' } },
-              ]
+    const searchTerms = filters.search.trim().split(/\s+/);
+    where.AND = searchTerms.map(term => ({
+      OR: [
+        { ticketCode: { contains: term, mode: 'insensitive' } },
+        { title: { contains: term, mode: 'insensitive' } },
+        { description: { contains: term, mode: 'insensitive' } },
+        { location: { contains: term, mode: 'insensitive' } },
+        { 
+          creator: {
+            OR: [
+              { firstName: { contains: term, mode: 'insensitive' } },
+              { lastName: { contains: term, mode: 'insensitive' } },
+              { email: { contains: term, mode: 'insensitive' } },
+            ]
+          }
+        },
+        {
+          assignments: {
+            some: {
+              technician: {
+                OR: [
+                  { firstName: { contains: term, mode: 'insensitive' } },
+                  { lastName: { contains: term, mode: 'insensitive' } },
+                ]
+              }
             }
           }
         }
-      }
-    ];
+      ]
+    }));
   }
 
   const [tickets, total] = await Promise.all([
@@ -535,12 +537,15 @@ async function findByCreator(creatorId: string, filters: { status?: string; prio
   if (filters.priority) where.priority = filters.priority;
 
   if (filters.search) {
-    where.OR = [
-      { ticketCode: { contains: filters.search, mode: 'insensitive' } },
-      { title: { contains: filters.search, mode: 'insensitive' } },
-      { description: { contains: filters.search, mode: 'insensitive' } },
-      { location: { contains: filters.search, mode: 'insensitive' } },
-    ];
+    const searchTerms = filters.search.trim().split(/\s+/);
+    where.AND = searchTerms.map(term => ({
+      OR: [
+        { ticketCode: { contains: term, mode: 'insensitive' } },
+        { title: { contains: term, mode: 'insensitive' } },
+        { description: { contains: term, mode: 'insensitive' } },
+        { location: { contains: term, mode: 'insensitive' } },
+      ]
+    }));
   }
 
   const [tickets, total] = await Promise.all([
@@ -584,12 +589,15 @@ async function findAssigned(technicianId: string, filters: { status?: string; pr
   if (filters.priority) where.priority = filters.priority;
 
   if (filters.search) {
-    where.OR = [
-      { ticketCode: { contains: filters.search, mode: 'insensitive' } },
-      { title: { contains: filters.search, mode: 'insensitive' } },
-      { description: { contains: filters.search, mode: 'insensitive' } },
-      { location: { contains: filters.search, mode: 'insensitive' } },
-    ];
+    const searchTerms = filters.search.trim().split(/\s+/);
+    where.AND = searchTerms.map(term => ({
+      OR: [
+        { ticketCode: { contains: term, mode: 'insensitive' } },
+        { title: { contains: term, mode: 'insensitive' } },
+        { description: { contains: term, mode: 'insensitive' } },
+        { location: { contains: term, mode: 'insensitive' } },
+      ]
+    }));
   }
 
   const [tickets, total] = await Promise.all([

@@ -12,24 +12,16 @@ export default function CommentSection({ ticketId, userRole, initialComments = [
   const [submitting, setSubmitting] = useState(false)
   const commentsEndRef = useRef(null)
 
-  const scrollToBottom = useCallback(() => {
-    // Usamos setTimeout para asegurar que el DOM se haya actualizado
-    setTimeout(() => {
-      commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }, 50)
-  }, [])
-
   // Sincronizar solo si llegan comentarios nuevos desde el padre (ej. polling o refresh)
   useEffect(() => {
     if (Array.isArray(initialComments) && initialComments.length !== comments.length) {
       // Para evitar el error de "cascading renders", actualizamos en el siguiente tick
       const timer = setTimeout(() => {
         setComments(initialComments)
-        scrollToBottom()
       }, 0)
       return () => clearTimeout(timer)
     }
-  }, [initialComments, comments.length, scrollToBottom])
+  }, [initialComments, comments.length])
 
   const fetchComments = useCallback(async () => {
     if (!ticketId) return
@@ -37,12 +29,11 @@ export default function CommentSection({ ticketId, userRole, initialComments = [
       const data = await commentsApi.getByTicketId(ticketId)
       if (Array.isArray(data)) {
         setComments(data)
-        scrollToBottom()
       }
     } catch (error) {
       console.error('Error fetching comments:', error)
     }
-  }, [ticketId, scrollToBottom])
+  }, [ticketId])
 
   // Cargar solo si no tenemos comentarios iniciales
   useEffect(() => {
@@ -67,7 +58,6 @@ export default function CommentSection({ ticketId, userRole, initialComments = [
       
       setComments(prev => [...prev, data])
       setNewComment('')
-      scrollToBottom()
     } catch (error) {
       notifications.error(error.message || 'Error al enviar')
     } finally {

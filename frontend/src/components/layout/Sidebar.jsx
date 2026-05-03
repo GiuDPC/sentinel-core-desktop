@@ -78,6 +78,8 @@ const ICONS = {
   ),
 }
 
+import { ROLE_LABELS } from '../../constants/roles'
+
 export default function Sidebar() {
   const { user, logout, hasRole } = useAuth()
   const navigate = useNavigate()
@@ -135,7 +137,7 @@ export default function Sidebar() {
             <p className="text-sm font-medium truncate text-gray-800">
               {user?.firstName} {user?.lastName}
             </p>
-            <p className="text-xs text-gray-400">{user?.role}</p>
+            <p className="text-xs text-gray-400">{ROLE_LABELS[user?.role] || user?.role}</p>
           </div>
         </div>
         <button

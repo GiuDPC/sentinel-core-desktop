@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Eye, EyeOff, ShieldCheck } from 'lucide-react'
 import { useAuth } from '../Contexts/AuthContextObject.js'
 import { usersApi } from '../api/users'
 import { authApi } from '../api/auth'
 import notifications from '../components/ui/Notifications'
-
-const phoneRegex = /^04(12|14|16|24|26)-\d{3}-\d{4}$/
+import { ROLE_LABELS } from '../constants/roles'
 
 export default function ProfilePage() {
   const { user, updateUser } = useAuth()
@@ -35,17 +34,18 @@ export default function ProfilePage() {
   })
   const [errors, setErrors] = useState({})
 
-  useEffect(() => {
-    if (user) {
-      setForm({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        phone: user.phone || '',
-        storeNumber: user.role === 'REQUESTER' ? (user.storeNumber || '') : '',
-        storeName: user.role === 'REQUESTER' ? (user.storeName || '') : '',
-      })
-    }
-  }, [user])
+  const [prevUser, setPrevUser] = useState(user)
+
+  if (user !== prevUser) {
+    setPrevUser(user)
+    setForm({
+      firstName: user?.firstName || '',
+      lastName: user?.lastName || '',
+      phone: user?.phone || '',
+      storeNumber: user?.role === 'REQUESTER' ? (user?.storeNumber || '') : '',
+      storeName: user?.role === 'REQUESTER' ? (user?.storeName || '') : '',
+    })
+  }
 
   function filterLettersOnly(value) {
     return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')
@@ -64,6 +64,7 @@ export default function ProfilePage() {
   }
 
   const handlePhoneChange = (e) => {
+    const phoneRegex = /^04(12|14|16|24|26)-\d{3}-\d{4}$/
     let value = e.target.value.replace(/\D/g, '')
     if (value.length > 4 && value.length <= 7) value = `${value.slice(0, 4)}-${value.slice(4)}`
     else if (value.length > 7) value = `${value.slice(0, 4)}-${value.slice(4, 7)}-${value.slice(7, 11)}`
@@ -141,12 +142,6 @@ export default function ProfilePage() {
     }
   }
 
-  const roleLabels = {
-    ADMIN: 'Administrador',
-    TECHNICIAN: 'Técnico Especialista',
-    REQUESTER: 'Locatario / Encargado',
-  }
-
   const initials = `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`.toUpperCase()
 
   if (!user) return <div className="p-12 text-center text-slate-400 font-black uppercase tracking-[0.3em] text-[10px]">Sincronizando Perfil...</div>
@@ -164,7 +159,7 @@ export default function ProfilePage() {
             <div className="flex flex-col md:flex-row md:items-center gap-3 mb-1">
               <h2 className="text-2xl font-black text-slate-900 tracking-tight">{user.firstName} {user.lastName}</h2>
               <span className="inline-flex items-center px-2.5 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-black uppercase tracking-widest rounded border border-slate-200">
-                {roleLabels[user.role]}
+                {ROLE_LABELS[user.role]}
               </span>
             </div>
             <p className="text-slate-500 font-medium text-sm">{user.email}</p>

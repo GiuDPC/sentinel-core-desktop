@@ -2,23 +2,12 @@ import { useState, useEffect } from 'react'
 import { usersApi } from '../../api/users'
 import notifications from '../../components/ui/Notifications'
 import { Search, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react'
-
-const ROLE_OPTIONS = [
-  { value: 'ADMIN', label: 'Administrador' },
-  { value: 'TECHNICIAN', label: 'Técnico' },
-  { value: 'REQUESTER', label: 'Locatario' },
-]
+import { ROLE_LABELS, ROLE_COLORS, ROLE_OPTIONS } from '../../constants/roles'
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Activo' },
   { value: 'inactive', label: 'Inactivo' },
 ]
-
-const roleLabels = {
-  ADMIN: { label: 'Administrador', color: 'bg-blue-50 text-blue-700' },
-  TECHNICIAN: { label: 'Técnico', color: 'bg-amber-50 text-amber-700' },
-  REQUESTER: { label: 'Locatario', color: 'bg-emerald-50 text-emerald-700' },
-}
 
 export default function UserManagement() {
   const [users, setUsers] = useState([])
@@ -267,7 +256,9 @@ export default function UserManagement() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {paginatedUsers.map((user) => {
-                  const roleConfig = roleLabels[user.role?.name || user.role] || { label: user.role?.name || 'Unknown', color: 'bg-gray-100 text-gray-600' }
+                  const roleName = user.role?.name || user.role
+                  const roleLabel = ROLE_LABELS[roleName] || roleName
+                  const roleColor = ROLE_COLORS[roleName] || 'bg-gray-100 text-gray-600'
                   return (
                     <tr key={user.id} className="hover:bg-slate-50/80 transition-all group cursor-pointer">
                       <td className="px-6 py-4">
@@ -283,8 +274,8 @@ export default function UserManagement() {
                       <td className="px-6 py-4 text-xs text-slate-500">{user.email}</td>
                       <td className="px-6 py-4 text-xs text-slate-500">{user.phone || '—'}</td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${roleConfig.color}`}>
-                          {roleConfig.label}
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${roleColor}`}>
+                          {roleLabel}
                         </span>
                       </td>
                       <td className="px-6 py-4">

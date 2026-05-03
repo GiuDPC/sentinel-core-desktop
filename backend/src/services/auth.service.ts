@@ -38,6 +38,10 @@ async function login(email: string, password: string) {
       lastName: user.lastName,
       email: user.email,
       role: user.role.name,
+      department: user.department,
+      phone: user.phone,
+      storeNumber: user.storeNumber,
+      storeName: user.storeName,
     },
   };
 }

@@ -34,6 +34,8 @@ async function update(id: string, data: {
   department?: Department;
   roleId?: number;
   isActive?: boolean;
+  storeNumber?: string;
+  storeName?: string;
 }) {
   const user = await prisma.user.findUnique({ where: { id } });
   if (!user) {

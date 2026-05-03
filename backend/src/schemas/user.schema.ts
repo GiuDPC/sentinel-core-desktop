@@ -10,6 +10,8 @@ export const updateUserSchema = z.object({
   department: z.enum(['ELECTRICIDAD', 'AGUAS_Y_SANEAMIENTO', 'INFRAESTRUCTURA_VIAL', 'ASEO_URBANO', 'PROTECCION_CIVIL', 'TELECOMUNICACIONES', 'SALUD_PUBLICA', 'ADMINISTRACION', 'OTROS']).optional(),
   roleId: z.number().int().positive().optional(),
   isActive: z.boolean().optional(),
+  storeNumber: z.string().optional(),
+  storeName: z.string().optional(),
 });
 
 
@@ -25,4 +27,6 @@ export const updateProfileSchema = z.object({
     .refine(val => nameRegex.test(val), { message: 'Solo letras permitidas' })
     .optional(),
   phone: z.string().optional(),
+  storeNumber: z.string().optional(),
+  storeName: z.string().optional(),
 });

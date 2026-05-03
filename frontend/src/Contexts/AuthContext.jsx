@@ -45,13 +45,8 @@ export function AuthProvider({ children }) {
   async function register(userData) {
     setError(null)
     try {
-      await authApi.register(userData)
-      const loginData = await authApi.login({
-        email: userData.email,
-        password: userData.password,
-      })
-      setUser(loginData.user)
-      return loginData
+      const data = await authApi.register(userData)
+      return data
     } catch (err) {
       setError(err.message)
       throw err

@@ -15,7 +15,7 @@ export default function SigninPage() {
     try {
       await register(formData)
       notifications.success('Tu cuenta ha sido creada exitosamente', '¡Bienvenido!')
-      navigate('/')
+      navigate('/login')
     } catch (error) {
       console.error('Registro:', error)
       notifications.error(error.message || 'No se pudo crear la cuenta', 'Error de registro')

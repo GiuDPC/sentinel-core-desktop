@@ -32,6 +32,7 @@ export default function MyTickets() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [showReopen, setShowReopen] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
+  const [loadingDetail, setLoadingDetail] = useState(false)
   const [selectedTicket, setSelectedTicket] = useState(null)
   const [confirmComment, setConfirmComment] = useState('')
   const [reopenComment, setReopenComment] = useState('')
@@ -63,16 +64,44 @@ export default function MyTickets() {
     return () => clearTimeout(timer)
   }, [loadTickets])
 
+  // Abrir modal automáticamente si viene ticketId en la URL
+  useEffect(() => {
+    const ticketId = searchParams.get('ticketId')
+    if (ticketId) {
+      const timer = setTimeout(() => {
+        openDetailsModal(ticketId)
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [searchParams])
+
+  async function openDetailsModal(ticketOrId) {
+    const id = typeof ticketOrId === 'object' ? ticketOrId.id : ticketOrId
+    
+    // Si ya tenemos el objeto básico, lo mostramos mientras carga el full
+    if (typeof ticketOrId === 'object') {
+      setSelectedTicket(ticketOrId)
+    }
+    
+    setShowDetails(true)
+    setLoadingDetail(true)
+    
+    try {
+      const data = await ticketsApi.getById(id)
+      setSelectedTicket(data.ticket || data)
+    } catch (error) {
+      console.error('Error cargando detalle:', error)
+      notifications.error('No se pudo cargar el detalle completo', 'Error')
+    } finally {
+      setLoadingDetail(false)
+    }
+  }
+
   function openConfirmModal(e, ticket) {
     e.stopPropagation()
     setSelectedTicket(ticket)
     setConfirmComment('')
     setShowConfirm(true)
-  }
-
-  function openDetailsModal(ticket) {
-    setSelectedTicket(ticket)
-    setShowDetails(true)
   }
 
   async function handleConfirm() {
@@ -82,7 +111,7 @@ export default function MyTickets() {
         confirmed: true,
         comment: confirmComment || undefined,
       })
-      notifications.success('Ticket cerrado exitosamente', 'Confirmacion exitosa')
+      notifications.success('Ticket cerrado exitosamente', 'Confirmación exitosa')
       setShowConfirm(false)
       loadTickets()
     } catch (error) {
@@ -442,7 +471,14 @@ export default function MyTickets() {
           </div>
 
           {/* Contenido */}
-          <div className="max-h-[65vh] overflow-y-auto">
+          <div className="max-h-[65vh] overflow-y-auto min-h-[300px] relative">
+            {loadingDetail ? (
+              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center gap-4">
+                <div className="w-10 h-10 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin" />
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest animate-pulse">Sincronizando detalles...</p>
+              </div>
+            ) : null}
+            
             {/* Metadata */}
             <div className="grid grid-cols-4 border-b border-slate-100">
               <div className="px-4 py-3 border-r border-slate-100">

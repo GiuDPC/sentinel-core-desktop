@@ -96,6 +96,16 @@ export default function TicketList() {
     return () => clearTimeout(searchTimerRef.current)
   }, [filters.search, loadTickets])
 
+  // Abrir modal automáticamente si viene ticketId en la URL
+  useEffect(() => {
+    const ticketId = searchParams.get('ticketId')
+    if (ticketId) {
+      // Usamos el ticketId directamente para abrir el modal, 
+      // la función openDetailModal ya se encarga de buscar el detalle por ID
+      openDetailModal(ticketId)
+    }
+  }, [searchParams])
+
   async function openAssignModal(ticketId, reassign = false) {
     setAssignTicketId(ticketId)
     setIsReassign(reassign)

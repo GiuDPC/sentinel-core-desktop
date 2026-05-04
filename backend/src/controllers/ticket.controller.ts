@@ -39,7 +39,10 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
 
 async function findById(req: Request, res: Response, next: NextFunction) {
   try {
-    const ticket = await ticketService.findById(String(req.params.id));
+    const ticket = await ticketService.findById(
+      String(req.params.id),
+      req.user?.role
+    );
     res.json({ ticket });
   } catch (error) {
     next(error);

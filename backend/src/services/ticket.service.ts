@@ -179,7 +179,7 @@ async function create(data: {
       title: 'Ticket Creado con Éxito',
       message: `Tu ticket #${finalTicket.ticketCode} ha sido registrado correctamente.`,
       type: 'TICKET_STATUS',
-      link: `/requester/my-tickets`
+      link: `/requester/my-tickets?ticketId=${finalTicket.id}`
     });
 
     return { ...finalTicket, autoAssigned: !!assignedTechId };
@@ -271,7 +271,7 @@ async function findAll(filters: {
   };
 }
 
-async function findById(id: string) {
+async function findById(id: string, userRole?: string) {
   const ticket = await prisma.ticket.findUnique({
     where: { id },
     include: {
@@ -287,6 +287,7 @@ async function findById(id: string) {
         },
       },
       comments: {
+        where: userRole === 'REQUESTER' ? { isInternal: false } : {},
         include: {
           user: {
             select: { id: true, firstName: true, lastName: true },
@@ -381,7 +382,7 @@ async function updateStatus(
       title: 'Actualización de Ticket',
       message: `Tu ticket #${ticket.ticketCode} ahora está en estado: ${newStatus}`,
       type: 'TICKET_STATUS',
-      link: `/requester/my-tickets` // O el link al detalle si existiera para locatario
+      link: `/requester/my-tickets?ticketId=${ticket.id}`
     });
 
     return updated;
@@ -433,8 +434,7 @@ async function resolveWithNote(
       },
     });
 
-    await auditService.logAction(ticketId, userId, 'STATUS_CHANGE', ticket.status, 'RESOLVED', tx);
-    await auditService.logAction(ticketId, userId, 'STATUS_CHANGE', 'RESOLVED', 'AWAITING_CONFIRMATION', tx);
+    await auditService.logAction(ticketId, userId, 'STATUS_CHANGE', ticket.status, 'AWAITING_CONFIRMATION', tx);
     await auditService.logAction(ticketId, userId, 'RESOLUTION_NOTE', null, data.resolutionNote.trim(), tx);
 
     // Notificar al creador que debe confirmar
@@ -443,7 +443,7 @@ async function resolveWithNote(
       title: 'Ticket Resuelto',
       message: `El técnico ha resuelto tu ticket #${ticket.ticketCode}. Por favor, verificá y confirmá la solución.`,
       type: 'TICKET_STATUS',
-      link: `/requester/my-tickets`
+      link: `/requester/my-tickets?ticketId=${updated.id}`
     });
 
     return updated;
@@ -487,6 +487,18 @@ async function confirmTicket(
 
       await auditService.logAction(ticketId, userId, 'STATUS_CHANGE', 'AWAITING_CONFIRMATION', 'CLOSED', tx);
       await auditService.logAction(ticketId, userId, 'TICKET_CONFIRMED', null, 'Confirmado por el solicitante', tx);
+
+      // Notificar al técnico que el ticket fue confirmado/cerrado
+      const assignment = await tx.assignment.findFirst({ where: { ticketId } });
+      if (assignment) {
+        await notificationService.createNotification({
+          userId: assignment.technicianId,
+          title: 'Ticket Confirmado',
+          message: `El locatario ha confirmado la resolución del ticket #${ticket.ticketCode}.`,
+          type: 'TICKET_STATUS',
+          link: `/technician/ticket/${ticketId}`
+        });
+      }
 
       return updated;
     } else {

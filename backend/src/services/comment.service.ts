@@ -56,7 +56,7 @@ async function create(data: {
         title: 'Nuevo Comentario Técnico',
         message: `Hay una nueva respuesta en tu ticket #${ticketInfo.ticketCode}`,
         type: 'COMMENT',
-        link: `/requester/my-tickets`
+        link: `/requester/my-tickets?ticketId=${data.ticketId}`
       });
     }
   }

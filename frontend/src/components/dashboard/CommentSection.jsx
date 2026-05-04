@@ -1,64 +1,69 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { commentsApi } from '../../api/comments'
-import { MessageSquare, Send, Lock, Info } from 'lucide-react'
+import { useAuth } from '../../Contexts/AuthContextObject'
+import { MessageSquare, Send, Lock, Eye, Info } from 'lucide-react'
 import notifications from '../ui/Notifications'
 
 export default function CommentSection({ ticketId, userRole, initialComments = [] }) {
-  // Inicializamos con las props. Gracias al 'key' en el padre, este componente
-  // se remonta limpiamente cuando cambia el ticketId.
+  const { user } = useAuth()
   const [comments, setComments] = useState(initialComments)
+  const [prevInitialComments, setPrevInitialComments] = useState(initialComments)
   const [newComment, setNewComment] = useState('')
-  const [isInternal, setIsInternal] = useState(userRole !== 'REQUESTER')
+  const [isInternal, setIsInternal] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const commentsEndRef = useRef(null)
 
-  // Sincronizar solo si llegan comentarios nuevos desde el padre (ej. polling o refresh)
-  useEffect(() => {
-    if (Array.isArray(initialComments) && initialComments.length !== comments.length) {
-      // Para evitar el error de "cascading renders", actualizamos en el siguiente tick
-      const timer = setTimeout(() => {
-        setComments(initialComments)
-      }, 0)
-      return () => clearTimeout(timer)
-    }
-  }, [initialComments, comments.length])
+  // Patrón de React para ajustar el estado si las props cambian sin gatillar efectos en cascada
+  if (initialComments !== prevInitialComments) {
+    setComments(initialComments)
+    setPrevInitialComments(initialComments)
+  }
 
-  const fetchComments = useCallback(async () => {
-    if (!ticketId) return
-    try {
-      const data = await commentsApi.getByTicketId(ticketId)
-      if (Array.isArray(data)) {
-        setComments(data)
-      }
-    } catch (error) {
-      console.error('Error fetching comments:', error)
-    }
-  }, [ticketId])
+  const scrollToBottom = () => {
+    commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
 
-  // Cargar solo si no tenemos comentarios iniciales
   useEffect(() => {
-    if (ticketId && (!initialComments || initialComments.length === 0)) {
-      // Evitamos llamar a fetchComments directamente para que el linter no detecte
-      // un setState síncrono (por el setLoading que solía tener o por la estructura)
-      const timer = setTimeout(fetchComments, 0)
-      return () => clearTimeout(timer)
-    }
-  }, [ticketId, fetchComments, initialComments])
+    scrollToBottom()
+  }, [comments])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!newComment.trim()) return
 
+    const content = newComment.trim()
+    const internal = userRole === 'REQUESTER' ? false : isInternal
+    
+    // Actualización Optimista: Mostramos el mensaje de inmediato
+    const tempId = Date.now().toString()
+    const optimisticComment = {
+      id: tempId,
+      content,
+      isInternal: internal,
+      createdAt: new Date().toISOString(),
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName
+      },
+      isOptimistic: true // Bandera para estilo visual sutil
+    }
+
+    setComments(prev => [...prev, optimisticComment])
+    setNewComment('')
     setSubmitting(true)
+
     try {
       const data = await commentsApi.create(ticketId, {
-        content: newComment.trim(),
-        isInternal: userRole === 'REQUESTER' ? false : isInternal
+        content,
+        isInternal: internal
       })
       
-      setComments(prev => [...prev, data])
-      setNewComment('')
+      // Reemplazamos el optimista con el real
+      setComments(prev => prev.map(c => c.id === tempId ? data : c))
     } catch (error) {
+      // Revertimos el cambio si falla
+      setComments(prev => prev.filter(c => c.id !== tempId))
       notifications.error(error.message || 'Error al enviar')
     } finally {
       setSubmitting(false)
@@ -67,33 +72,39 @@ export default function CommentSection({ ticketId, userRole, initialComments = [
 
   return (
     <div className="space-y-6">
+      {/* Formulario de envío con diseño Premium */}
       <form 
         onSubmit={handleSubmit} 
-        className={`bg-white rounded-2xl p-4 border shadow-sm transition-all duration-300 ${
-          isInternal && userRole !== 'REQUESTER' ? 'border-amber-200 bg-amber-50/10' : 'border-slate-200 focus-within:border-blue-300'
+        className={`bg-white rounded-2xl p-4 border shadow-lg transition-all duration-500 transform ${
+          isInternal && userRole !== 'REQUESTER' 
+            ? 'border-amber-200 bg-amber-50/20 ring-4 ring-amber-500/5' 
+            : 'border-slate-200 focus-within:border-blue-400 focus-within:ring-4 focus-within:ring-blue-500/5'
         }`}
       >
         <textarea
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
-          placeholder={isInternal && userRole !== 'REQUESTER' ? "Escribe una nota interna..." : "Escribe un comentario..."}
-          className="w-full bg-transparent border-none text-xs text-slate-700 placeholder:text-slate-400 focus:ring-0 focus:outline-none outline-none resize-none min-h-[70px] shadow-none"
+          placeholder={isInternal && userRole !== 'REQUESTER' ? "Escribe una nota interna para el equipo..." : "Escribe un comentario para el locatario..."}
+          className="w-full bg-transparent border-none text-sm text-slate-700 placeholder:text-slate-400 focus:ring-0 focus:outline-none outline-none resize-none min-h-[80px] transition-all"
           rows={2}
-          style={{ outline: 'none', boxShadow: 'none', border: 'none' }}
         />
         
-        <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
+          <div className="flex items-center gap-2">
             {userRole !== 'REQUESTER' && (
               <button
                 type="button"
                 onClick={() => setIsInternal(!isInternal)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${
-                  isInternal ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
+                className={`group flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 relative overflow-hidden ${
+                  isInternal 
+                    ? 'bg-amber-100 text-amber-700' 
+                    : 'bg-slate-100 text-slate-500 hover:bg-blue-50 hover:text-blue-600'
                 }`}
+                title={isInternal ? "Visible solo para Admins y Técnicos" : "Visible para el Locatario"}
               >
-                <Lock size={10} />
-                <span className="text-[9px] font-bold uppercase tracking-widest">
+                <div className="absolute inset-0 bg-current opacity-0 group-hover:opacity-5 transition-opacity" />
+                {isInternal ? <Lock size={14} className="animate-pulse" /> : <Eye size={14} />}
+                <span className="text-[10px] font-black uppercase tracking-[0.1em]">
                   {isInternal ? 'Privado' : 'Público'}
                 </span>
               </button>
@@ -103,49 +114,65 @@ export default function CommentSection({ ticketId, userRole, initialComments = [
           <button
             type="submit"
             disabled={submitting || !newComment.trim()}
-            className="flex items-center gap-2 px-5 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-800 disabled:opacity-50 transition-all shadow-lg shadow-slate-900/10 active:scale-95"
+            className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-500/20 disabled:opacity-50 transition-all active:scale-95 group"
           >
-            {submitting ? '...' : <Send size={12} />}
+            {submitting ? 'Enviando...' : (
+              <>
+                <span>Enviar</span>
+                <Send size={14} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              </>
+            )}
           </button>
         </div>
       </form>
 
-      <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+      {/* Lista de Mensajes */}
+      <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar scroll-smooth">
         {comments.length === 0 ? (
-          <div className="py-12 text-center bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
-            <MessageSquare className="w-8 h-8 text-slate-200 mx-auto mb-3" />
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Sin mensajes aún</p>
+          <div className="py-16 text-center bg-slate-50/50 rounded-3xl border border-dashed border-slate-200 animate-in fade-in zoom-in duration-500">
+            <MessageSquare className="w-10 h-10 text-slate-200 mx-auto mb-4" />
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Sin actividad aún</p>
           </div>
         ) : (
-          comments.map((comment) => (
+          comments.map((comment, index) => (
             <div 
               key={comment.id} 
-              className={`flex gap-4 p-4 rounded-2xl border transition-all animate-in fade-in slide-in-from-bottom-2 duration-500 ${
-                comment.isInternal ? 'bg-amber-50/50 border-amber-100' : 'bg-white border-slate-100 shadow-sm'
-              }`}
+              className={`flex gap-4 p-5 rounded-2xl border transition-all duration-500 animate-in fade-in slide-in-from-bottom-4 shadow-sm ${
+                comment.isInternal 
+                  ? 'bg-amber-50/40 border-amber-100 ring-1 ring-amber-200/50' 
+                  : 'bg-white border-slate-100 hover:border-blue-100 hover:shadow-md'
+              } ${comment.isOptimistic ? 'opacity-70 scale-[0.98]' : 'scale-100'}`}
+              style={{ animationDelay: `${index * 50}ms` }}
             >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 shadow-sm ${
-                comment.isInternal ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'
+              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-sm font-black shrink-0 shadow-inner transform transition-transform hover:scale-110 ${
+                comment.isInternal ? 'bg-amber-100 text-amber-700' : 'bg-blue-50 text-blue-600'
               }`}>
                 {comment.user?.firstName?.[0]}{comment.user?.lastName?.[0]}
               </div>
+              
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold text-slate-900">
-                    {comment.user?.firstName} {comment.user?.lastName}
-                  </span>
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-black text-slate-900">
+                      {comment.user?.firstName} {comment.user?.lastName}
+                    </span>
                     {comment.isInternal && (
-                      <span className="bg-amber-100 text-amber-600 text-[8px] font-black uppercase px-1.5 py-0.5 rounded flex items-center gap-1">
-                        <Lock size={8} /> Interno
+                      <span className="bg-amber-100 text-amber-700 text-[9px] font-black uppercase px-2 py-0.5 rounded-lg flex items-center gap-1.5 border border-amber-200/50">
+                        <Lock size={10} /> Privado
                       </span>
                     )}
-                    <span className="text-[10px] font-medium text-slate-400">
-                      {new Date(comment.createdAt).toLocaleDateString('es-VE', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
+                    {comment.userId === user.id && !comment.isInternal && (
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Tú</span>
+                    )}
                   </div>
+                  <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md">
+                    {new Date(comment.createdAt).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
                 </div>
-                <p className="text-sm text-slate-600 leading-relaxed break-words whitespace-pre-wrap">
+                
+                <p className={`text-sm leading-relaxed break-words whitespace-pre-wrap font-medium ${
+                  comment.isInternal ? 'text-amber-900/80' : 'text-slate-600'
+                }`}>
                   {comment.content}
                 </p>
               </div>

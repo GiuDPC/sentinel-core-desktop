@@ -139,11 +139,7 @@ export default function UserManagement() {
                         onClick={() => { handleRoleFilter(opt.value); setOpenFilter(null) }}
                         className='flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-slate-50 cursor-pointer text-xs text-slate-700'
                       >
-                        <div className={`h-3.5 w-3.5 rounded border flex items-center justify-center transition-colors ${filters.role === opt.value ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
-                          {filters.role === opt.value && (
-                            <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" /></svg>
-                          )}
-                        </div>
+                        <div className={`mr-2 h-2 w-2 rounded-full ${filters.role === opt.value ? 'bg-blue-600' : 'bg-slate-200'}`} />
                         <span>{opt.label}</span>
                       </div>
                     ))}
@@ -186,11 +182,7 @@ export default function UserManagement() {
                         onClick={() => { handleStatusFilter(opt.value); setOpenFilter(null) }}
                         className='flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-slate-50 cursor-pointer text-xs text-slate-700'
                       >
-                        <div className={`h-3.5 w-3.5 rounded border flex items-center justify-center transition-colors ${filters.status === opt.value ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
-                          {filters.status === opt.value && (
-                            <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" /></svg>
-                          )}
-                        </div>
+                        <div className={`mr-2 h-2 w-2 rounded-full ${filters.status === opt.value ? 'bg-blue-600' : 'bg-slate-200'}`} />
                         <span>{opt.label}</span>
                       </div>
                     ))}

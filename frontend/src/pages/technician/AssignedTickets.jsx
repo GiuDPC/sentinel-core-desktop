@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ticketsApi } from '../../api/tickets'
 import StatusBadge from '../../components/dashboard/StatusBadge'
+import PriorityBadge from '../../components/dashboard/PriorityBadge'
 import notifications from '../../components/ui/Notifications'
 import { Search, Filter, SlidersHorizontal, ChevronLeft, ChevronRight, X, Ticket } from 'lucide-react'
 
@@ -20,11 +21,12 @@ const PRIORITY_LABELS = {
 }
 
 export default function AssignedTickets() {
+  const [searchParams] = useSearchParams()
   const [tickets, setTickets] = useState([])
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1 })
   const [statusFilter, setStatusFilter] = useState('')
   const [priorityFilter, setPriorityFilter] = useState('')
-  const [searchFilter, setSearchFilter] = useState('')
+  const [searchFilter, setSearchFilter] = useState(() => searchParams.get('search') || '')
   const [openFilter, setOpenFilter] = useState(null)
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
@@ -48,18 +50,11 @@ export default function AssignedTickets() {
     }
   }, [statusFilter, priorityFilter, searchFilter, pagination.page])
 
-  const [searchParams] = useSearchParams()
-
-  // Leer search de URL al montar
   useEffect(() => {
-    const urlSearch = searchParams.get('search')
-    if (urlSearch) {
-      setSearchFilter(urlSearch)
-    }
-  }, [searchParams])
-
-  useEffect(() => {
-    loadTickets()
+    const timer = setTimeout(() => {
+      loadTickets()
+    }, 0)
+    return () => clearTimeout(timer)
   }, [loadTickets])
 
   async function handleStatusChange(e, ticketId, newStatus) {
@@ -142,11 +137,7 @@ export default function AssignedTickets() {
                             onClick={() => { setStatusFilter(opt.value); setOpenFilter(null); setPagination(p => ({ ...p, page: 1 })) }}
                             className='relative flex items-center rounded-sm px-2 py-1.5 text-xs hover:bg-slate-50 cursor-pointer text-slate-700'
                           >
-                            <div className={`mr-2 flex h-3.5 w-3.5 items-center justify-center rounded-sm border ${statusFilter === opt.value ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
-                              {statusFilter === opt.value && (
-                                <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" /></svg>
-                              )}
-                            </div>
+                            <div className={`mr-2 h-2 w-2 rounded-full ${statusFilter === opt.value ? 'bg-blue-600' : 'bg-slate-200'}`} />
                             <span>{opt.label}</span>
                           </div>
                         ))}
@@ -270,14 +261,7 @@ export default function AssignedTickets() {
                       <StatusBadge status={ticket.status} size="sm" />
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                        ticket.priority === 'CRITICAL' ? 'bg-rose-50 text-rose-700' :
-                        ticket.priority === 'HIGH' ? 'bg-orange-50 text-orange-700' :
-                        ticket.priority === 'MEDIUM' ? 'bg-amber-50 text-amber-700' :
-                        'bg-slate-50 text-slate-600'
-                      }`}>
-                        {PRIORITY_LABELS[ticket.priority] || ticket.priority}
-                      </span>
+                      <PriorityBadge priority={ticket.priority} size="sm" />
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2" onClick={e => e.stopPropagation()}>

@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { ticketsApi } from '../../api/tickets'
 import { PRIORITY_LABELS, PRIORITY_COLORS, AUDIT_ACTION_LABELS } from '../../constants/ticket'
 import StatusBadge from '../../components/dashboard/StatusBadge'
+import PriorityBadge from '../../components/dashboard/PriorityBadge'
 import AnimatedModal from '../../components/ui/AnimatedModal'
 import notifications from '../../components/ui/Notifications'
 import CommentSection from '../../components/dashboard/CommentSection'
@@ -206,20 +207,27 @@ return (
                       />
                     </div>
                     <div className='max-h-[300px] overflow-y-auto p-1'>
-                      {['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'AWAITING_CONFIRMATION', 'RESOLVED', 'CLOSED'].map((val) => (
-                        <div
-                          key={val}
-                          onClick={() => { setFilters(f => ({ ...f, status: val })); setOpenFilter(null); setPagination(p => ({ ...p, page: 1 })) }}
-                          className='relative flex items-center rounded-sm px-2 py-1.5 text-xs hover:bg-slate-50 cursor-pointer text-slate-700'
-                        >
-                          <div className={`mr-2 flex h-3.5 w-3.5 items-center justify-center rounded-sm border ${filters.status === val ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
-                            {filters.status === val && (
-                              <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" /></svg>
-                            )}
+                      {['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'AWAITING_CONFIRMATION', 'RESOLVED', 'CLOSED'].map((val) => {
+                        const labels = {
+                          OPEN: 'Abierto',
+                          ASSIGNED: 'Asignado',
+                          IN_PROGRESS: 'En Proceso',
+                          ON_HOLD: 'En Espera',
+                          AWAITING_CONFIRMATION: 'Por Confirmar',
+                          RESOLVED: 'Resuelto',
+                          CLOSED: 'Cerrado'
+                        };
+                        return (
+                          <div
+                            key={val}
+                            onClick={() => { setFilters(f => ({ ...f, status: val })); setOpenFilter(null); setPagination(p => ({ ...p, page: 1 })) }}
+                            className='relative flex items-center rounded-sm px-2 py-1.5 text-xs hover:bg-slate-50 cursor-pointer text-slate-700'
+                          >
+                            <div className={`mr-2 h-2 w-2 rounded-full ${filters.status === val ? 'bg-blue-600' : 'bg-slate-200'}`} />
+                            <span>{labels[val] || val}</span>
                           </div>
-                          <span>{val}</span>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                     <div className='border-t border-slate-100 p-1'>
                       <button
@@ -393,9 +401,7 @@ return (
                     )}
                     {visibleColumns.priority && (
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${PRIORITY_COLORS[ticket.priority] || 'text-slate-500'}`}>
-                          {PRIORITY_LABELS[ticket.priority] || ticket.priority}
-                        </span>
+                        <PriorityBadge priority={ticket.priority} size="sm" />
                       </td>
                     )}
                     {visibleColumns.requester && (

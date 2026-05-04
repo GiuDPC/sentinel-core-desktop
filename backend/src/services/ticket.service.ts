@@ -544,6 +544,18 @@ async function findByCreator(creatorId: string, filters: { status?: string; prio
         { title: { contains: term, mode: 'insensitive' } },
         { description: { contains: term, mode: 'insensitive' } },
         { location: { contains: term, mode: 'insensitive' } },
+        {
+          assignments: {
+            some: {
+              technician: {
+                OR: [
+                  { firstName: { contains: term, mode: 'insensitive' } },
+                  { lastName: { contains: term, mode: 'insensitive' } },
+                ]
+              }
+            }
+          }
+        }
       ]
     }));
   }
@@ -596,6 +608,15 @@ async function findAssigned(technicianId: string, filters: { status?: string; pr
         { title: { contains: term, mode: 'insensitive' } },
         { description: { contains: term, mode: 'insensitive' } },
         { location: { contains: term, mode: 'insensitive' } },
+        { 
+          creator: {
+            OR: [
+              { firstName: { contains: term, mode: 'insensitive' } },
+              { lastName: { contains: term, mode: 'insensitive' } },
+              { email: { contains: term, mode: 'insensitive' } },
+            ]
+          }
+        }
       ]
     }));
   }

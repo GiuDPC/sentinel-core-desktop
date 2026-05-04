@@ -7,14 +7,16 @@ export default function LoginForm({ onSubmit, onSwitchToRegister, loading }) {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    rememberMe: false
   })
   const [errors, setErrors] = useState({})
 
-  function handleChange(field, value) {
-    setFormData(prev => ({ ...prev, [field]: value }))
+  const handleChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }))
+      setErrors(prev => ({ ...prev, [field]: null }))
     }
   }
 
@@ -41,7 +43,6 @@ export default function LoginForm({ onSubmit, onSwitchToRegister, loading }) {
     onSubmit?.({
       email: formData.email,
       password: formData.password,
-      rememberMe: formData.rememberMe
     })
   }
 
@@ -72,18 +73,7 @@ export default function LoginForm({ onSubmit, onSwitchToRegister, loading }) {
         error={errors.password}
       />
 
-      <div className="flex items-center justify-between">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            name="rememberMe"
-            checked={formData.rememberMe}
-            onChange={(e) => handleChange('rememberMe', e.target.checked)}
-            className="w-4 h-4 text-[#002570] border-gray-300 border rounded focus:ring-[#003091]/20"
-          />
-          <span className="font-body text-sm text-gray-600">Recordarme</span>
-        </label>
-        
+      <div className="flex items-center justify-end">
         <button 
           type="button" 
           className="font-body text-sm text-blue-950 hover:underline focus:outline-none focus:ring-2 focus:ring-[#003091]/20 rounded"

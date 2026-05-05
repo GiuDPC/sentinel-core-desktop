@@ -107,33 +107,33 @@ export default function TicketDetail() {
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12 animate-in fade-in duration-500">
       {/* Header & Main Actions */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-        <div className="space-y-4 flex-1">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-slate-900 p-8 rounded-2xl shadow-[0_25px_60px_rgba(15,23,42,0.15)] border border-slate-800">
+        <div className="space-y-6 flex-1">
           <button
             onClick={() => navigate('/technician/assigned')}
-            className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-blue-950 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-white transition-colors cursor-pointer"
           >
             <ArrowLeft size={14} /> Volver a tickets
           </button>
           
-          <div className="space-y-1">
+          <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <span className="font-mono text-sm font-bold text-blue-950 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100">
-                {ticket.ticketCode}
+              <span className="px-2.5 py-1 bg-white/10 text-white/80 text-[10px] font-bold uppercase tracking-widest rounded shadow-sm">
+                #{ticket.ticketCode}
               </span>
               <StatusBadge status={ticket.status} />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 font-display leading-tight pt-2">
+            <h2 className="text-2xl md:text-3xl font-bold text-white font-display leading-tight">
               {ticket.title}
             </h2>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-3">
           {ticket.status === 'ASSIGNED' && (
             <button
               onClick={() => handleStatusChange('IN_PROGRESS')}
-              className="px-6 py-2.5 bg-blue-950 text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-slate-800 transition-all shadow-lg shadow-blue-900/20 active:scale-95"
+              className="px-6 py-3 bg-white text-slate-900 text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-slate-100 transition-all shadow-lg active:scale-95 cursor-pointer"
             >
               Iniciar Trabajo
             </button>
@@ -142,13 +142,13 @@ export default function TicketDetail() {
             <>
               <button
                 onClick={() => setShowResolveForm(true)}
-                className="px-6 py-2.5 bg-slate-900 text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-slate-700 transition-all shadow-lg shadow-slate-900/20 active:scale-95"
+                className="px-6 py-3 bg-blue-600 text-white border border-blue-500 text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-blue-500 transition-all shadow-lg shadow-blue-900/20 active:scale-95 cursor-pointer"
               >
                 Resolver Ticket
               </button>
               <button
                 onClick={() => handleStatusChange('ON_HOLD')}
-                className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-slate-50 transition-all active:scale-95"
+                className="px-6 py-3 bg-white/10 text-white border border-white/20 text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-white/20 transition-all active:scale-95 cursor-pointer"
               >
                 Pausar
               </button>
@@ -157,7 +157,7 @@ export default function TicketDetail() {
           {ticket.status === 'ON_HOLD' && (
             <button
               onClick={() => handleStatusChange('IN_PROGRESS')}
-              className="px-6 py-2.5 bg-blue-950 text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-slate-800 transition-all shadow-lg shadow-blue-900/20 active:scale-95"
+              className="px-6 py-3 bg-white text-slate-900 text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-slate-100 transition-all shadow-lg active:scale-95 cursor-pointer"
             >
               Reanudar
             </button>

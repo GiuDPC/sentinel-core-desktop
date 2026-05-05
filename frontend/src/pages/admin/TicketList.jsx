@@ -326,12 +326,10 @@ return (
                     <div 
                       key={key}
                       onClick={() => setVisibleColumns(prev => Object.assign({}, prev, { [key]: !prev[key] }))}
-                      className='flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-slate-50 cursor-pointer text-xs text-slate-600 font-medium'
+                      className='flex items-center rounded-sm px-2 py-1.5 text-xs hover:bg-slate-50 cursor-pointer text-slate-700'
                     >
-                      <div className={`h-3.5 w-3.5 rounded border flex items-center justify-center transition-colors ${visibleColumns[key] ? 'bg-blue-600 border-blue-600' : 'border-slate-300'}`}>
-                        {visibleColumns[key] && <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" /></svg>}
-                      </div>
-                      {label}
+                      <div className={`mr-2 h-2 w-2 rounded-full ${visibleColumns[key] ? 'bg-blue-600' : 'bg-slate-200'}`} />
+                      <span>{label}</span>
                     </div>
                   ))}
                 </div>
@@ -451,7 +449,7 @@ return (
                           {ticket.status === 'OPEN' && (
                             <button
                               onClick={() => openAssignModal(ticket.id, false)}
-                              className="h-8 px-3 text-[10px] bg-blue-950 text-white rounded-lg font-bold uppercase tracking-widest hover:bg-slate-800 transition-all shadow-sm active:scale-95"
+                              className="h-8 px-4 text-[10px] font-bold bg-blue-950 text-white rounded-lg hover:bg-slate-800 transition-all shadow-sm min-w-[80px]"
                             >
                               Asignar
                             </button>
@@ -459,7 +457,7 @@ return (
                           {canReassign(ticket) && (
                             <button
                               onClick={() => openAssignModal(ticket.id, true)}
-                              className="h-8 px-3 text-[10px] border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-all cursor-pointer"
+                              className="h-8 px-4 text-[10px] font-bold border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-all cursor-pointer min-w-[80px]"
                             >
                               Reasignar
                             </button>
@@ -588,7 +586,7 @@ return (
 
       {/* Modal Detalle de Ticket (Admin) */}
       <AnimatedModal show={detailModal} onClose={() => setDetailModal(false)}>
-        <div className="bg-white rounded-[32px] shadow-[0_25px_60px_rgba(15,23,42,0.15)] w-full max-w-2xl mx-4 overflow-hidden max-h-[85vh] overflow-y-auto border border-slate-200">
+        <div className="bg-white rounded-[32px] shadow-[0_25px_60px_rgba(15,23,42,0.15)] w-[600px] mx-4 overflow-hidden border border-slate-200" style={{ maxHeight: '600px' }}>
           {loadingDetail ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <div className="w-8 h-8 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin" />
@@ -616,9 +614,9 @@ return (
                 <h3 className="text-xl font-bold text-white leading-tight">{detailTicket.title}</h3>
               </div>
 
-              <div className="p-6 space-y-6">
+              <div className="p-6 space-y-6 overflow-y-auto w-full" style={{ height: '480px' }}>
                 {/* Info general */}
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm w-full">
                   <div>
                     <span className="text-text-secondary text-xs block">Solicitante</span>
                     <span className="text-text-primary font-medium">

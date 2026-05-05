@@ -87,36 +87,36 @@ export default function AdminDashboard() {
       </div>
 
       {/* Estadisticas por categoria y estado */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Tickets por Categoria */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col">
-          <div className="flex items-center justify-between mb-6 shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
-                <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col">
+          <div className="flex items-center justify-between mb-4 shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-800 font-display">Tickets por Categoría</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Distribución por tipo de incidencia</p>
+                <h3 className="text-sm font-bold text-slate-800 font-display">Tickets por Categoría</h3>
+                <p className="text-[10px] text-slate-400 mt-0.5">Distribución por tipo de incidencia</p>
               </div>
             </div>
             <div className="text-right shrink-0">
-              <span className="text-2xl font-bold text-slate-800">{summary.totalTickets || 0}</span>
-              <p className="text-xs text-slate-400">total</p>
+              <span className="text-xl font-bold text-slate-800">{summary.totalTickets || 0}</span>
+              <p className="text-[10px] text-slate-400">total</p>
             </div>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {(metrics?.ticketsByCategory || []).map((item) => {
               const percentage = Math.min((item.count / (summary.totalTickets || 1)) * 100, 100)
               return (
                 <div key={item.category} className="group">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-600 truncate max-w-[160px]">{item.category}</span>
-                    <span className="text-sm font-bold text-slate-800">{item.count}</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-slate-600 truncate max-w-[140px]">{item.category}</span>
+                    <span className="text-xs font-bold text-slate-800">{item.count}</span>
                   </div>
-                  <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-slate-700 rounded-full transition-all duration-700 ease-out group-hover:bg-slate-800"
                       style={{ width: `${percentage}%` }}
@@ -125,33 +125,29 @@ export default function AdminDashboard() {
                 </div>
               )
             })}
-            {/* Espacios vacíos para igualar con estado si tiene menos categorías */}
-            {Array.from({ length: Math.max(0, (metrics?.ticketsByStatus?.length || 0) - (metrics?.ticketsByCategory?.length || 0)) }).map((_, i) => (
-              <div key={`empty-${i}`} className="h-[52px]" />
-            ))}
           </div>
         </div>
 
         {/* Tickets por Estado */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
-                <svg className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
+                <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-800 font-display">Tickets por Estado</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Estado actual del sistema</p>
+                <h3 className="text-sm font-bold text-slate-800 font-display">Tickets por Estado</h3>
+                <p className="text-[10px] text-slate-400 mt-0.5">Estado actual del sistema</p>
               </div>
             </div>
             <div className="text-right">
-              <span className="text-2xl font-bold text-slate-800">{summary.totalTickets || 0}</span>
-              <p className="text-xs text-slate-400">total</p>
+              <span className="text-xl font-bold text-slate-800">{summary.totalTickets || 0}</span>
+              <p className="text-[10px] text-slate-400">total</p>
             </div>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-5">
             {(metrics?.ticketsByStatus || []).map((item) => {
               const percentage = Math.min((item.count / (summary.totalTickets || 1)) * 100, 100)
               const statusLabels = {
@@ -164,11 +160,11 @@ export default function AdminDashboard() {
               }
               return (
                 <div key={item.status} className="group">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-600">{statusLabels[item.status] || item.status}</span>
-                    <span className="text-sm font-bold text-slate-800">{item.count}</span>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-medium text-slate-600">{statusLabels[item.status] || item.status}</span>
+                    <span className="text-xs font-bold text-slate-800">{item.count}</span>
                   </div>
-                  <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-slate-700 rounded-full transition-all duration-700 ease-out group-hover:bg-slate-800"
                       style={{ width: `${percentage}%` }}
@@ -177,10 +173,6 @@ export default function AdminDashboard() {
                 </div>
               )
             })}
-            {/* Espacios vacíos para igualar con categoría si tiene menos estados */}
-            {Array.from({ length: Math.max(0, (metrics?.ticketsByCategory?.length || 0) - (metrics?.ticketsByStatus?.length || 0)) }).map((_, i) => (
-              <div key={`empty-${i}`} className="h-[52px]" />
-            ))}
           </div>
         </div>
       </div>

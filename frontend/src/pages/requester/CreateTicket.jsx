@@ -109,22 +109,6 @@ export default function CreateTicket() {
           </nav>
           <h2 className="text-3xl font-black text-slate-900 tracking-tight">Crear Incidencia</h2>
         </div>
-        
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('/requester/dashboard')}
-            className="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-all cursor-pointer flex items-center gap-2"
-          >
-            <X size={14} /> Cancelar
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="px-6 py-2.5 bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl hover:bg-slate-800 disabled:opacity-50 transition-all shadow-sm flex items-center gap-2 cursor-pointer"
-          >
-            {loading ? 'Procesando...' : <><Send size={14} /> Enviar Reporte</>}
-          </button>
-        </div>
       </div>
 
       {/* Info del Local - Fija */}
@@ -284,6 +268,23 @@ export default function CreateTicket() {
                   ))}
                 </div>
               </div>
+            </div>
+
+            {/* Footer de Acciones del Formulario */}
+            <div className="px-8 py-5 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-3 rounded-b-2xl">
+              <button
+                onClick={() => navigate('/requester/dashboard')}
+                className="px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-100 transition-all cursor-pointer flex items-center gap-2"
+              >
+                <X size={16} /> Cancelar
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-white bg-slate-900 shadow-lg shadow-slate-900/20 rounded-xl hover:bg-slate-800 disabled:opacity-50 transition-all cursor-pointer flex items-center gap-2"
+              >
+                {loading ? 'Procesando...' : <><Send size={16} /> Enviar Reporte</>}
+              </button>
             </div>
           </section>
         </div>

@@ -1,59 +1,34 @@
-import Swal from 'sweetalert2';
-import 'sweetalert2/dist/sweetalert2.min.css';
+import { toast } from 'sonner'
+import Swal from 'sweetalert2'
+import 'sweetalert2/dist/sweetalert2.min.css'
 
-// Colores institucionales de Sentinel
-const toastConfig = Swal.mixin({
-  toast: true,
-  position: 'top-end',
-  showConfirmButton: false,
-  timer: 4000,
-  timerProgressBar: true,
-  background: '#f8fafc',
-  color: '#1e293b',
-  customClass: {
-    popup: 'font-sans rounded-lg shadow-lg',
-    timerProgressBar: 'bg-[#003091]',
-  },
-});
+// ─────────────────────────────────────────────
+// Toast notifications → Sonner
+// Modales de confirmación / loading → SweetAlert2
+// ─────────────────────────────────────────────
 
 export const notifications = {
-  success: (message, title = '¡Éxito!') => {
-    return toastConfig.fire({
-      icon: 'success',
-      title,
-      text: message,
-    });
+  // ── Toasts (Sonner) ──────────────────────────
+  success: (message, title) => {
+    toast.success(title || '¡Éxito!', { description: message })
   },
 
-  error: (message, title = 'Error') => {
-    return toastConfig.fire({
-      icon: 'error',
-      title,
-      text: message,
-      timer: 6000,
-    });
+  error: (message, title) => {
+    toast.error(title || 'Error', { description: message })
   },
 
-  warning: (message, title = 'Atención') => {
-    return toastConfig.fire({
-      icon: 'warning',
-      title,
-      text: message,
-    });
+  warning: (message, title) => {
+    toast.warning(title || 'Atención', { description: message })
   },
 
-  info: (message, title = 'Información') => {
-    return toastConfig.fire({
-      icon: 'info',
-      title,
-      text: message,
-    });
+  info: (message, title) => {
+    toast.info(title || 'Información', { description: message })
   },
 
-  // Modal de confirmación con botones
+  // ── Modales (SweetAlert2 — se mantienen) ─────
   confirm: (options) => {
-    const { title = '¿Estás seguro?', text, confirmText = 'Sí', cancelText = 'Cancelar', type = 'question' } = options;
-    
+    const { title = '¿Estás seguro?', text, confirmText = 'Sí', cancelText = 'Cancelar', type = 'question' } = options
+
     return Swal.fire({
       ...options,
       title,
@@ -75,7 +50,7 @@ export const notifications = {
         actions: 'mt-5 flex flex-wrap justify-end gap-2',
         input: 'w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10',
       },
-    });
+    })
   },
 
   // Toast con loading
@@ -84,14 +59,14 @@ export const notifications = {
       title: message,
       allowOutsideClick: false,
       didOpen: () => {
-        Swal.showLoading();
+        Swal.showLoading()
       },
-    });
+    })
   },
 
   close: () => {
-    Swal.close();
+    Swal.close()
   },
-};
+}
 
-export default notifications;
+export default notifications

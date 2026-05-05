@@ -62,7 +62,7 @@ export default function RecentActivity({
             {tickets.slice(0, 5).map((ticket) => (
               <tr key={ticket.id} className="hover:bg-slate-50/50 transition-colors cursor-pointer">
                 <td className="px-6 py-3.5">
-                  <span className="font-mono text-[10px] font-bold text-primary-700 bg-primary-50 px-2 py-1 rounded">
+                  <span className="font-mono text-[10px] font-bold text-indigo-950 bg-indigo-50/50 px-2 py-1 rounded-md border border-indigo-100 shadow-xs">
                     {ticket.ticketCode}
                   </span>
                 </td>

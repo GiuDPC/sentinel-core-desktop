@@ -63,7 +63,7 @@ export default function AnimatedModal({ show, onClose, children, className = '' 
       }`}
     >
       <div
-        className={`transition-all duration-200 ease-out ${
+        className={`max-h-[90vh] transition-all duration-200 ease-out ${
           animating
             ? 'opacity-100 scale-100 translate-y-0'
             : 'opacity-0 scale-95 translate-y-2'

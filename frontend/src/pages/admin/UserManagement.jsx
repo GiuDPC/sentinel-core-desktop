@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { usersApi } from '../../api/users'
 import notifications from '../../components/ui/Notifications'
-import { Search, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Filter, X, ChevronLeft, ChevronRight, Shield } from 'lucide-react'
 import { ROLE_LABELS, ROLE_COLORS, ROLE_OPTIONS } from '../../constants/roles'
 
 const STATUS_OPTIONS = [
@@ -117,9 +117,9 @@ export default function UserManagement() {
             <div className="relative">
               <button
                 onClick={() => setOpenFilter(openFilter === 'role' ? null : 'role')}
-                className='inline-flex items-center justify-center rounded-md text-xs font-medium h-8 px-3 border border-dashed border-slate-300 bg-white hover:bg-slate-50 text-slate-700'
+                className='inline-flex items-center justify-center rounded-md text-xs font-medium h-8 px-3 border border-dashed border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition-colors'
               >
-                <Filter className='mr-2 h-4 w-4' />
+                <Shield className='mr-2 h-3.5 w-3.5 text-slate-500' />
                 Rol
                 {filters.role && (
                   <>
@@ -255,7 +255,7 @@ export default function UserManagement() {
                     <tr key={user.id} className="hover:bg-slate-50/80 transition-all group cursor-pointer">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs font-bold">
+                          <div className="w-8 h-8 rounded-full bg-gray-200 text-black flex items-center justify-center text-xs font-semibold">
                             {user.firstName?.[0]}{user.lastName?.[0]}
                           </div>
                           <span className="text-xs font-bold text-slate-800">

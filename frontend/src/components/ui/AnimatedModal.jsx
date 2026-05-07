@@ -1,56 +1,48 @@
 import { useState, useEffect, useRef } from 'react'
 
-/**
- * Wrapper de animacion para modales y paneles overlay.
- * Maneja entrada con scale/fade y salida con fade-out suave.
- *
- * @param {Object} props
- * @param {boolean} props.show - Controla visibilidad del modal
- * @param {function} props.onClose - Callback al cerrar (despues de animacion)
- * @param {React.ReactNode} props.children - Contenido del modal
- * @param {string} [props.className] - Clases adicionales para el panel
- */
 export default function AnimatedModal({ show, onClose, children, className = '' }) {
   const [visible, setVisible] = useState(show)
   const [animating, setAnimating] = useState(show)
   const [prevShow, setPrevShow] = useState(show)
   const backdropRef = useRef(null)
 
-  // Derivar estado durante el render (React 18 Best Practice) para evitar el warning
-  // de "Calling setState synchronously within an effect"
+  const ANIM_DURATION = 400
+
   if (show !== prevShow) {
     setPrevShow(show)
     if (show) {
       setVisible(true)
+      setAnimating(false)
     } else {
       setAnimating(false)
     }
   }
 
   useEffect(() => {
-    if (show) {
-      // El componente ya es 'visible', disparamos la animación en el proximo frame
-      const frame = requestAnimationFrame(() => setAnimating(true))
-      return () => cancelAnimationFrame(frame)
-    } else if (visible) {
-      // La animación ya se desactivó en el render, esperamos 200ms y desmontamos
-      const timer = setTimeout(() => {
+    let timer;
+    if (show && visible && !animating) {
+      timer = requestAnimationFrame(() => {
+        requestAnimationFrame(() => setAnimating(true))
+      })
+    } else if (!show && visible) {
+      timer = setTimeout(() => {
         setVisible(false)
-        onClose?.()
-      }, 200) // duration matches CSS transition
-      return () => clearTimeout(timer)
+      }, ANIM_DURATION)
     }
-  }, [show, visible, onClose])
+    
+    return () => {
+      if (typeof timer === 'number') {
+        clearTimeout(timer)
+        cancelAnimationFrame(timer)
+      }
+    }
+  }, [show, visible, animating])
 
   if (!visible) return null
 
   function handleBackdropClick(e) {
     if (e.target === backdropRef.current) {
-      setAnimating(false)
-      setTimeout(() => {
-        setVisible(false)
-        onClose?.()
-      }, 200)
+      onClose?.()
     }
   }
 
@@ -58,15 +50,15 @@ export default function AnimatedModal({ show, onClose, children, className = '' 
     <div
       ref={backdropRef}
       onClick={handleBackdropClick}
-      className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-200 ${
-        animating ? 'bg-black/50' : 'bg-black/0'
+      className={`fixed inset-0 z-50 flex items-center justify-center transition-colors duration-[400ms] ease-out ${
+        animating ? 'bg-slate-900/50' : 'bg-transparent'
       }`}
     >
       <div
-        className={`max-h-[90vh] transition-all duration-200 ease-out ${
+        className={`max-h-[90vh] origin-center will-change-transform transition-all duration-[400ms] ease-[cubic-bezier(0.34,1.2,0.64,1)] ${
           animating
-            ? 'opacity-100 scale-100 translate-y-0'
-            : 'opacity-0 scale-95 translate-y-2'
+            ? 'opacity-100 scale-100 translate-y-0 drop-shadow-[0_20px_40px_rgba(0,0,0,0.2)]'
+            : 'opacity-0 scale-[0.95] translate-y-4 drop-shadow-none'
         } ${className}`}
       >
         {children}

@@ -1,16 +1,19 @@
+import { motion as Motion } from 'framer-motion'
+
 export function Button({ type = 'submit', children, loading, disabled, className = '', onClick }) {
   return (
-    <button
+    <Motion.button
       type={type}
       onClick={onClick}
       disabled={disabled || loading}
+      whileTap={!(disabled || loading) ? { scale: 0.96 } : {}}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
       className={`
         w-full py-3 px-4 
         bg-[#000e2b] text-white font-semibold font-body
         rounded-lg
-        transition-all duration-200
+        transition-colors duration-200
         hover:bg-[#00153f]/90 hover:shadow-lg hover:shadow-[#00153f]/30
-        active:scale-[0.98]
         disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none
         ${loading ? 'cursor-wait' : ''}
         ${className}
@@ -25,6 +28,6 @@ export function Button({ type = 'submit', children, loading, disabled, className
           Cargando...
         </span>
       ) : children}
-    </button>
+    </Motion.button>
   )
 }

@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { Zap, Flame, Droplets, WifiOff, ArrowRight } from 'lucide-react'
+import { motion as Motion } from 'framer-motion'
 
 const QUICK_ACTION_ITEMS = [
   {
@@ -51,10 +52,13 @@ export default function QuickActions() {
         {QUICK_ACTION_ITEMS.map((item) => {
           const Icon = item.icon
           return (
-            <button
+            <Motion.button
               key={item.label}
               onClick={() => handleClick(item.category)}
-              className="group flex items-center gap-4 p-3.5 rounded-xl border border-slate-50 bg-slate-50/30 hover:bg-white hover:border-slate-200 hover:shadow-lg hover:shadow-slate-200/30 transition-all duration-300 cursor-pointer relative overflow-hidden"
+              whileHover={{ y: -2, scale: 1.01 }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              className="group flex items-center gap-4 p-3.5 rounded-xl border border-slate-50 bg-slate-50/30 hover:bg-white hover:border-slate-200 hover:shadow-lg hover:shadow-slate-200/30 transition-colors cursor-pointer relative overflow-hidden"
             >
               <div className="w-10 h-10 shrink-0 rounded-xl bg-white border border-slate-100 text-slate-600 flex items-center justify-center shadow-sm transition-all duration-300 group-hover:bg-slate-900 group-hover:text-white group-hover:border-slate-900">
                 <Icon size={20} strokeWidth={2} />
@@ -72,10 +76,10 @@ export default function QuickActions() {
               <div className="w-6 h-6 rounded-full bg-slate-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
                 <ArrowRight size={12} className="text-slate-400" />
               </div>
-            </button>
+            </Motion.button>
           )
         })}
       </div>
     </div>
   )
-}
+}

@@ -1,8 +1,11 @@
 -- CreateEnum
-CREATE TYPE "TicketStatus" AS ENUM ('OPEN', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'CLOSED');
+CREATE TYPE "TicketStatus" AS ENUM ('OPEN', 'ASSIGNED', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'AWAITING_CONFIRMATION', 'CLOSED');
 
 -- CreateEnum
 CREATE TYPE "TicketPriority" AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL');
+
+-- CreateEnum
+CREATE TYPE "Department" AS ENUM ('MANTENIMIENTO_ELECTRICO', 'PLOMERIA', 'SEGURIDAD', 'INFRAESTRUCTURA', 'REDES_Y_TELECOMUNICACIONES', 'ADMINISTRACION', 'OTROS');
 
 -- CreateTable
 CREATE TABLE "roles" (
@@ -19,11 +22,14 @@ CREATE TABLE "roles" (
 CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "role_id" INTEGER NOT NULL,
-    "full_name" TEXT NOT NULL,
+    "first_name" TEXT NOT NULL,
+    "last_name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "password_hash" TEXT NOT NULL,
     "phone" TEXT,
-    "department" TEXT,
+    "department" "Department",
+    "store_number" TEXT,
+    "store_name" TEXT,
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -32,9 +38,24 @@ CREATE TABLE "users" (
 );
 
 -- CreateTable
+CREATE TABLE "notifications" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "message" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "link" TEXT,
+    "is_read" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "notifications_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "categories" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
+    "department" "Department" NOT NULL DEFAULT 'OTROS',
     "sla_hours" INTEGER NOT NULL,
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -55,6 +76,8 @@ CREATE TABLE "tickets" (
     "status" "TicketStatus" NOT NULL DEFAULT 'OPEN',
     "priority" "TicketPriority" NOT NULL,
     "due_date" TIMESTAMP(3),
+    "resolution_note" TEXT,
+    "resolved_at" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -84,20 +107,6 @@ CREATE TABLE "comments" (
 );
 
 -- CreateTable
-CREATE TABLE "attachments" (
-    "id" TEXT NOT NULL,
-    "ticket_id" TEXT NOT NULL,
-    "file_url" TEXT NOT NULL,
-    "file_name" TEXT NOT NULL,
-    "file_size" INTEGER NOT NULL,
-    "file_type" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "attachments_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "audit_logs" (
     "id" TEXT NOT NULL,
     "ticket_id" TEXT NOT NULL,
@@ -117,13 +126,40 @@ CREATE UNIQUE INDEX "roles_name_key" ON "roles"("name");
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
+CREATE INDEX "notifications_user_id_is_read_idx" ON "notifications"("user_id", "is_read");
+
+-- CreateIndex
+CREATE INDEX "notifications_user_id_created_at_idx" ON "notifications"("user_id", "created_at");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "categories_name_key" ON "categories"("name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "tickets_ticket_code_key" ON "tickets"("ticket_code");
 
+-- CreateIndex
+CREATE INDEX "tickets_status_idx" ON "tickets"("status");
+
+-- CreateIndex
+CREATE INDEX "tickets_creator_id_idx" ON "tickets"("creator_id");
+
+-- CreateIndex
+CREATE INDEX "tickets_status_due_date_idx" ON "tickets"("status", "due_date");
+
+-- CreateIndex
+CREATE INDEX "tickets_created_at_idx" ON "tickets"("created_at");
+
+-- CreateIndex
+CREATE INDEX "audit_logs_ticket_id_idx" ON "audit_logs"("ticket_id");
+
+-- CreateIndex
+CREATE INDEX "audit_logs_created_at_idx" ON "audit_logs"("created_at");
+
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_role_id_fkey" FOREIGN KEY ("role_id") REFERENCES "roles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "notifications" ADD CONSTRAINT "notifications_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "tickets" ADD CONSTRAINT "tickets_creator_id_fkey" FOREIGN KEY ("creator_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -142,9 +178,6 @@ ALTER TABLE "comments" ADD CONSTRAINT "comments_ticket_id_fkey" FOREIGN KEY ("ti
 
 -- AddForeignKey
 ALTER TABLE "comments" ADD CONSTRAINT "comments_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "attachments" ADD CONSTRAINT "attachments_ticket_id_fkey" FOREIGN KEY ("ticket_id") REFERENCES "tickets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_ticket_id_fkey" FOREIGN KEY ("ticket_id") REFERENCES "tickets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -4,6 +4,7 @@ import { useAuth } from '../Contexts/AuthContextObject.js'
 import { AuthLayout } from '../components/auth/AuthLayout'
 import SigninForm from '../components/auth/SigninForm'
 import notifications from '../components/ui/Notifications'
+import { motion as Motion } from 'framer-motion'
 
 export default function SigninPage() {
   const [loading, setLoading] = useState(false)
@@ -31,10 +32,15 @@ export default function SigninPage() {
 
   return (
     <AuthLayout>
-      <div className="w-full flex flex-col items-center">
+      <Motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+        className="w-full flex flex-col items-center"
+      >
         <h1 className="font-display text-3xl font-bold text-center text-[#001b52] mb-6">SentinelCore</h1>
         <SigninForm onSubmit={handleRegister} onSwitchToLogin={handleSwitchToLogin} loading={loading} />
-      </div>
+      </Motion.div>
     </AuthLayout>
   )
 }

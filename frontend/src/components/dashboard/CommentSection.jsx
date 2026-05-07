@@ -11,7 +11,7 @@ export default function CommentSection({ ticketId, userRole, initialComments = [
   const [newComment, setNewComment] = useState('')
   const [isInternal, setIsInternal] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const commentsEndRef = useRef(null)
+  const scrollContainerRef = useRef(null)
 
   // Patrón de React para ajustar el estado si las props cambian sin gatillar efectos en cascada
   if (initialComments !== prevInitialComments) {
@@ -20,10 +20,17 @@ export default function CommentSection({ ticketId, userRole, initialComments = [
   }
 
   const scrollToBottom = () => {
-    commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if(scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight
+    }
   }
 
+  const ifFirstRender = useRef(true)
   useEffect(() => {
+    if (ifFirstRender.current) {
+      ifFirstRender.current = false
+      return
+    }
     scrollToBottom()
   }, [comments])
 
@@ -34,7 +41,6 @@ export default function CommentSection({ ticketId, userRole, initialComments = [
     const content = newComment.trim()
     const internal = userRole === 'REQUESTER' ? false : isInternal
     
-    // Actualización Optimista: Mostramos el mensaje de inmediato
     const tempId = Date.now().toString()
     const optimisticComment = {
       id: tempId,
@@ -179,7 +185,7 @@ export default function CommentSection({ ticketId, userRole, initialComments = [
             </div>
           ))
         )}
-        <div ref={commentsEndRef} />
+       {/* <div ref={commentsEndRef} /> */}
       </div>
     </div>
   )

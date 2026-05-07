@@ -1,3 +1,5 @@
+import { motion as Motion } from 'framer-motion'
+
 const STATUS_LABELS = {
   OPEN: 'Reportado',
   ASSIGNED: 'Asignado',
@@ -9,13 +11,11 @@ const STATUS_LABELS = {
 
 const STEPS = ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'AWAITING_CONFIRMATION', 'CLOSED']
 
-
 export default function LiveTracker({ ticketCode, title, currentStatus, technicianName, eta, priority }) {
   const currentIndex = STEPS.indexOf(currentStatus)
 
   return (
     <div className="w-full">
-      {/* Header del ticket - Solo si hay titulo/codigo */}
       {(title || ticketCode) && (
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
           <div className="space-y-2">
@@ -57,12 +57,14 @@ export default function LiveTracker({ ticketCode, title, currentStatus, technici
         </div>
       )}
 
-      {/* Stepper Pro - Mas simetrico */}
       <div className="flex items-center justify-between relative px-2 pt-2">
         <div className="absolute top-6 left-10 right-10 h-1 bg-slate-100 rounded-full" />
-        <div
-          className="absolute top-6 left-10 h-1 bg-blue-950 rounded-full transition-all duration-1000 ease-in-out"
-          style={{ width: `calc(${(currentIndex / (STEPS.length - 1)) * 100}% - ${(currentIndex / (STEPS.length - 1)) * 40}px)` }}
+        
+        <Motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `calc(${(currentIndex / (STEPS.length - 1)) * 100}% - ${(currentIndex / (STEPS.length - 1)) * 40}px)` }}
+          transition={{ duration: 1.2, ease: [0.23, 1, 0.32, 1] }}
+          className="absolute top-6 left-10 h-1 bg-blue-950 rounded-full"
         />
 
         {STEPS.map((step, i) => {

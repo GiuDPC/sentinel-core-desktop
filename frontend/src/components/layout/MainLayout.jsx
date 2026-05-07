@@ -1,20 +1,31 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
+import { motion as Motion, AnimatePresence } from 'framer-motion'
 import Sidebar from './Sidebar'
 import Header from './Header'
 
-/**
- * Shell principal de la aplicación: Sidebar + Header + contenido.
- * Envuelve todas las rutas protegidas del dashboard.
- */
 export default function MainLayout() {
+  const location = useLocation()
+
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-slate-50">
       <Sidebar />
       <div className="flex-1 flex flex-col ml-64 py-2 pr-2 pl-0">
-        <div className="relative flex flex-1 flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="relative flex flex-1 flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <Header />
-          <main className="flex-1 p-4 overflow-y-auto">
-            <Outlet />
+          {/* El contenedor principal debe ser relativo para manejar el enrutamiento absoluto interno */}
+          <main className="flex-1 overflow-y-auto bg-slate-50/30 relative">
+            <AnimatePresence mode="wait">
+              <Motion.div
+                key={location.pathname}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="absolute inset-0 p-4 h-full custom-scrollbar"
+              >
+                <Outlet />
+              </Motion.div>
+            </AnimatePresence>
           </main>
         </div>
       </div>

@@ -1,7 +1,5 @@
-/**
- * Tarjeta KPI profesional — sin emojis, con indicador circular.
- * Diseño basado en los mockups de referencia.
- */
+import { motion as Motion } from 'framer-motion'
+
 export default function KPICard({ title, value, subtitle, trend, trendValue, color = 'blue', icon: Icon }) {
   const colorMap = {
     blue: { bg: 'bg-blue-50/50', text: 'text-blue-600', border: 'border-blue-100' },
@@ -14,9 +12,14 @@ export default function KPICard({ title, value, subtitle, trend, trendValue, col
   const c = colorMap[color] || colorMap.blue
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm hover:shadow-md hover:border-slate-200 transition-all duration-300 group">
+    <Motion.div 
+      whileHover={{ y: -4, scale: 1.01 }}
+      whileTap={{ scale: 0.96 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-slate-200 transition-colors cursor-pointer group"
+    >
       <div className="flex items-center gap-4">
-        <div className={`w-12 h-12 rounded-xl ${c.bg} ${c.text} flex items-center justify-center shrink-0 transition-transform group-hover:scale-110`}>
+        <div className={`w-12 h-12 rounded-xl ${c.bg} ${c.text} flex items-center justify-center shrink-0`}>
           {Icon ? <Icon size={24} strokeWidth={1.5} /> : <div className="w-2 h-2 rounded-full bg-current" />}
         </div>
         
@@ -35,6 +38,6 @@ export default function KPICard({ title, value, subtitle, trend, trendValue, col
           )}
         </div>
       </div>
-    </div>
+    </Motion.div>
   )
-}
+}

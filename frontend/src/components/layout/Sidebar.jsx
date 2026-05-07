@@ -1,6 +1,7 @@
 import logoDashboard from '../../assets/Logo_Claro-fOscuro.jpg'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../Contexts/AuthContextObject.js'
+import { motion as Motion } from 'framer-motion'
 
 /** Configuracion de navegacion por rol */
 const NAV_ITEMS = [
@@ -105,26 +106,40 @@ export default function Sidebar() {
       </div>
 
       {/* Navegacion */}
-      <nav className="flex-1 py-4 overflow-y-auto">
-        <ul className="space-y-1 px-3">
+      <nav className="flex-1 py-4 overflow-y-auto custom-scrollbar">
+        <Motion.ul 
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+          }}
+          className="space-y-1 px-3"
+        >
           {visibleItems.map((item) => (
-            <li key={item.path}>
+            <Motion.li 
+              key={item.path}
+              variants={{
+                hidden: { opacity: 0, x: -15 },
+                visible: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+              }}
+            >
               <NavLink
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors active:scale-[0.97] ${
                     isActive
-                      ? 'bg-slate-200 text-gray-900'
-                      : 'text-gray-800 hover:bg-gray-100'
+                      ? 'bg-slate-200 text-slate-900'
+                      : 'text-slate-600 hover:bg-slate-100'
                   }`
                 }
               >
                 {ICONS[item.icon]}
                 {item.label}
               </NavLink>
-            </li>
+            </Motion.li>
           ))}
-        </ul>
+        </Motion.ul>
       </nav>
 
       {/* Footer */}

@@ -5,6 +5,7 @@ import { AuthLayout } from '../components/auth/AuthLayout'
 import LoginForm from '../components/auth/LoginForm'
 import SigninForm from '../components/auth/SigninForm'
 import notifications from '../components/ui/Notifications'
+import { motion as Motion } from 'framer-motion'
 
 export default function LoginPage() {
   const [showRegister, setShowRegister] = useState(false)
@@ -16,14 +17,13 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const data = await login(formData)
-      notifications.success('Bienvenido de vuelta', 'Sesion iniciada')
-      // Usar el rol del response directamente porque getDashboardPath() lee state viejo
+      notifications.success('Bienvenido de vuelta', 'Sesión iniciada')
       const role = data.user?.role || data.role
       const dashPaths = { ADMIN: '/admin/dashboard', TECHNICIAN: '/technician/dashboard', REQUESTER: '/requester/dashboard' }
       navigate(dashPaths[role] || '/login')
     } catch (error) {
       console.error('Login:', error)
-      notifications.error(error.message || 'Credenciales invalidas', 'Error de autenticacion')
+      notifications.error(error.message || 'Credenciales inválidas', 'Error de autenticación')
     } finally {
       setLoading(false)
     }
@@ -34,7 +34,6 @@ export default function LoginPage() {
     try {
       await register(formData)
       notifications.success('Tu cuenta ha sido creada exitosamente', '¡Bienvenido!')
-      // Requester por defecto — redirige a su dashboard
       navigate(getDashboardPath())
     } catch (error) {
       console.error('Registro:', error)
@@ -51,7 +50,12 @@ export default function LoginPage() {
 
   return (
     <AuthLayout>
-      <div className="w-full flex flex-col items-center">
+      <Motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+        className="w-full flex flex-col items-center"
+      >
         <h1 className="font-display text-3xl font-bold text-center text-blue-950 mb-6">
           SentinelCore
         </h1>
@@ -61,7 +65,7 @@ export default function LoginPage() {
         ) : (
           <LoginForm onSubmit={handleLogin} onSwitchToRegister={handleSwitch} loading={loading} />
         )}
-      </div>
+      </Motion.div>
     </AuthLayout>
   )
 }

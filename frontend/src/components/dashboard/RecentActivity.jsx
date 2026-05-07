@@ -1,16 +1,7 @@
+import { motion as Motion } from 'framer-motion'
 import StatusBadge from './StatusBadge'
 
-/**
- * Mini tabla de actividad reciente — últimos 5 tickets.
- * @param {Object} props
- * @param {Array} props.tickets — Array de tickets recientes
- * @param {Function} [props.onViewAll] — Callback para "Ver todo"
- */
-export default function RecentActivity({ 
-  tickets = [], 
-  onViewAll, 
-  title = "Actividad Reciente" 
-}) {
+export default function RecentActivity({ tickets = [], onViewAll, title = "Actividad Reciente" }) {
   if (tickets.length === 0) {
     return (
       <div className="flex flex-col flex-1 min-h-0">
@@ -32,6 +23,16 @@ export default function RecentActivity({
     )
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+  }
+
+  const rowVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  }
+
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
@@ -41,7 +42,7 @@ export default function RecentActivity({
         {onViewAll && (
           <button
             onClick={onViewAll}
-            className="text-[10px] text-primary-600 hover:text-primary-700 font-medium cursor-pointer"
+            className="text-[10px] text-blue-600 hover:text-blue-700 font-medium cursor-pointer transition-colors"
           >
             Ver Todo
           </button>
@@ -50,7 +51,7 @@ export default function RecentActivity({
 
       <div className="overflow-auto flex-1">
         <table className="w-full text-xs">
-          <thead className="sticky top-0 bg-surface z-10">
+          <thead className="sticky top-0 bg-white z-10">
             <tr className="text-left text-slate-400 text-[10px] uppercase tracking-wider border-b border-slate-100">
               <th className="px-6 py-3 font-semibold">Código</th>
               <th className="px-6 py-3 font-semibold">Incidencia</th>
@@ -58,11 +59,20 @@ export default function RecentActivity({
               <th className="px-6 py-3 font-semibold text-right">Fecha</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <Motion.tbody 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="divide-y divide-slate-100"
+          >
             {tickets.slice(0, 5).map((ticket) => (
-              <tr key={ticket.id} className="hover:bg-slate-50/50 transition-colors cursor-pointer">
+              <Motion.tr 
+                variants={rowVariants}
+                key={ticket.id} 
+                className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+              >
                 <td className="px-6 py-3.5">
-                  <span className="font-mono text-[10px] font-bold text-indigo-950 bg-indigo-50/50 px-2 py-1 rounded-md border border-indigo-100 shadow-xs">
+                  <span className="font-mono text-[10px] font-bold text-indigo-950 bg-indigo-50/50 px-2 py-1 rounded-md border border-indigo-100 shadow-sm group-hover:bg-indigo-100/50 transition-colors">
                     {ticket.ticketCode}
                   </span>
                 </td>
@@ -73,37 +83,15 @@ export default function RecentActivity({
                   <StatusBadge status={ticket.status} size="sm" />
                 </td>
                 <td className="px-6 py-3.5 text-right">
-                  <span className="text-slate-400 text-[10px]">
+                  <span className="text-slate-400 text-[10px] font-medium">
                     {new Date(ticket.createdAt).toLocaleDateString('es-VE', { day: '2-digit', month: 'short' })}
                   </span>
                 </td>
-              </tr>
+              </Motion.tr>
             ))}
-          </tbody>
+          </Motion.tbody>
         </table>
       </div>
     </div>
   )
-}
-
-function PriorityBadge({ priority }) {
-  const colors = {
-    LOW: 'bg-gray-100 text-gray-600',
-    MEDIUM: 'bg-warning/10 text-warning',
-    HIGH: 'bg-orange-100 text-orange-600',
-    CRITICAL: 'bg-danger/10 text-danger',
-  }
-
-  const labels = {
-    LOW: 'Baja',
-    MEDIUM: 'Media',
-    HIGH: 'Alta',
-    CRITICAL: 'Crítica',
-  }
-
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${colors[priority] || colors.LOW}`}>
-      {labels[priority] || priority}
-    </span>
-  )
-}
+}

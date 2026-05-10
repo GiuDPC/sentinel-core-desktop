@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { metricsApi } from '../../api/metrics'
 import * as XLSX from 'xlsx'
 import { Download, Calendar, FileText, Clock, AlertTriangle, CheckCircle } from 'lucide-react'
+import KPICard from '../../components/dashboard/KPICard'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, Cell
@@ -14,28 +15,6 @@ const DATE_RANGES = [
   { value: 'all', label: 'Todo' },
 ]
 
-// Componente KPI estilo premium y simétrico
-// eslint-disable-next-line no-unused-vars
-function KPICard({ title, value, subtitle, icon: Icon }) {
-  return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-full justify-between group">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{title}</p>
-          <h3 className="text-3xl font-bold text-slate-900 font-display tabular-nums mt-1">{value}</h3>
-        </div>
-        <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center group-hover:bg-slate-100 transition-colors">
-          <Icon size={18} className="text-slate-500" strokeWidth={2} />
-        </div>
-      </div>
-      <div className="mt-3">
-        <p className={`text-[11px] font-medium ${subtitle ? 'text-slate-500' : 'text-transparent select-none'}`}>
-          {subtitle || '-'}
-        </p>
-      </div>
-    </div>
-  )
-}
 
 export default function Reports() {
   const [metrics, setMetrics] = useState(null)

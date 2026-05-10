@@ -594,98 +594,121 @@ return (
             </div>
           ) : detailTicket ? (
             <>
-              <div className="bg-slate-900 px-7 py-6 sticky top-0 z-10">
-                <div className="flex items-center justify-between mb-3">
+              <div className="bg-slate-900 px-6 py-5 sticky top-0 z-10 flex items-center justify-between">
+                <div className="space-y-1.5">
                   <div className="flex items-center gap-3">
                     <span className="px-2 py-0.5 bg-white/10 text-white/70 text-[10px] font-bold uppercase tracking-widest rounded">
                       #{detailTicket.ticketCode}
                     </span>
-                    <StatusBadge status={detailTicket.status} />
+                    <StatusBadge status={detailTicket.status} size="sm" />
                   </div>
-                  <button
-                    onClick={() => setDetailModal(false)}
-                    className="text-slate-400 hover:text-white transition-colors cursor-pointer p-1 bg-white/5 rounded-full hover:bg-white/10"
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+                  <h3 className="text-lg font-bold text-white leading-tight">
+                    {detailTicket.title}
+                  </h3>
                 </div>
-                <h3 className="text-xl font-bold text-white leading-tight">{detailTicket.title}</h3>
+                <button
+                  onClick={() => setDetailModal(false)}
+                  className="text-slate-400 hover:text-white transition-colors cursor-pointer p-1.5 bg-white/5 rounded-full hover:bg-white/10"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
 
-              <div className="p-6 space-y-6 overflow-y-auto w-full" style={{ height: '480px' }}>
-                {/* Info general */}
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm w-full">
-                  <div>
-                    <span className="text-text-secondary text-xs block">Solicitante</span>
-                    <span className="text-text-primary font-medium">
+              <div className="overflow-y-auto w-full" style={{ maxHeight: '480px' }}>
+                {/* Metadata Grid */}
+                <div className="grid grid-cols-4 border-b border-slate-100 bg-white">
+                  <div className="px-4 py-3 border-r border-b border-slate-100">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Solicitante</p>
+                    <p className="text-xs font-bold text-slate-900 truncate">
                       {detailTicket.creator?.firstName} {detailTicket.creator?.lastName}
+                    </p>
+                  </div>
+                  <div className="px-4 py-3 border-r border-b border-slate-100">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Categoría</p>
+                    <p className="text-xs font-bold text-slate-900 truncate">{detailTicket.category?.name || 'General'}</p>
+                  </div>
+                  <div className="px-4 py-3 border-r border-b border-slate-100">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Ubicación</p>
+                    <p className="text-xs font-bold text-slate-900 truncate">{detailTicket.location}</p>
+                  </div>
+                  <div className="px-4 py-3 border-b border-slate-100">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Prioridad</p>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                      detailTicket.priority === 'LOW' ? 'bg-slate-100 text-slate-600' :
+                      detailTicket.priority === 'MEDIUM' ? 'bg-amber-50 text-amber-700' :
+                      detailTicket.priority === 'HIGH' ? 'bg-orange-50 text-orange-700' :
+                      detailTicket.priority === 'CRITICAL' ? 'bg-rose-50 text-rose-700' :
+                      'bg-slate-100 text-slate-600'
+                    }`}>
+                      {PRIORITY_LABELS[detailTicket.priority] || detailTicket.priority}
                     </span>
                   </div>
-                  <div>
-                    <span className="text-text-secondary text-xs block">Categoria</span>
-                    <span className="text-text-primary font-medium">{detailTicket.category?.name}</span>
-                  </div>
-                  <div>
-                    <span className="text-text-secondary text-xs block">Ubicacion</span>
-                    <span className="text-text-primary font-medium">{detailTicket.location}</span>
-                  </div>
-                  <div>
-                    <span className="text-text-secondary text-xs block">Prioridad</span>
-                    <span className={`font-semibold ${PRIORITY_COLORS[detailTicket.priority]}`}>
-                      {PRIORITY_LABELS[detailTicket.priority]}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-text-secondary text-xs block">Tecnico Asignado</span>
-                    <span className="text-text-primary font-medium">
+                  <div className="px-4 py-3 border-r border-slate-100">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Técnico</p>
+                    <p className="text-xs font-bold text-slate-900 truncate">
                       {detailTicket.assignments?.[0]?.technician
                         ? `${detailTicket.assignments[0].technician.firstName} ${detailTicket.assignments[0].technician.lastName}`
-                        : 'Sin asignar'}
-                    </span>
+                        : '—'}
+                    </p>
                   </div>
-                  <div>
-                    <span className="text-text-secondary text-xs block">Creado</span>
-                    <span className="text-text-primary font-medium">
-                      {new Date(detailTicket.createdAt).toLocaleString('es-VE')}
-                    </span>
+                  <div className="px-4 py-3 border-r border-slate-100">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Creado</p>
+                    <p className="text-xs font-bold text-slate-900">
+                      {new Date(detailTicket.createdAt).toLocaleDateString('es-VE')}
+                    </p>
                   </div>
-                  {detailTicket.dueDate && (
-                    <div>
-                      <span className="text-text-secondary text-xs block">SLA Vencimiento</span>
-                      <span className={`font-medium ${new Date(detailTicket.dueDate) < new Date() ? 'text-danger' : 'text-success'}`}>
+                  {detailTicket.dueDate ? (
+                    <div className="px-4 py-3 border-r border-slate-100 col-span-2 bg-slate-50/50">
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">SLA Vencimiento</p>
+                      <p className={`text-xs font-bold ${new Date(detailTicket.dueDate) < new Date() ? 'text-rose-600' : 'text-emerald-600'}`}>
                         {new Date(detailTicket.dueDate).toLocaleString('es-VE')}
-                      </span>
+                      </p>
                     </div>
+                  ) : (
+                    <div className="px-4 py-3 col-span-2 border-slate-100 bg-slate-50/30" />
                   )}
                 </div>
 
                 {/* Descripcion */}
-                <div>
-                  <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Descripcion</h4>
-                  <p className="text-sm text-text-primary leading-relaxed bg-background/50 p-3 rounded-lg">{detailTicket.description}</p>
+                <div className="px-6 py-5 border-b border-slate-100">
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Descripción del Incidente</h4>
+                  <p className="text-sm text-slate-700 leading-relaxed">
+                    {detailTicket.description || 'No se proporcionó una descripción detallada.'}
+                  </p>
                 </div>
 
                 {/* Nota de resolucion */}
                 {detailTicket.resolutionNote && (
-                  <div>
-                    <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Nota de Resolucion</h4>
-                    <p className="text-sm text-text-primary leading-relaxed bg-success/5 p-3 rounded-lg border border-success/20">{detailTicket.resolutionNote}</p>
+                  <div className="px-6 py-5 border-b border-slate-100 bg-emerald-50/30">
+                    <h4 className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      Reporte de Resolución Técnica
+                    </h4>
+                    <p className="text-sm text-slate-700 leading-relaxed border-l-2 border-emerald-300 pl-4">
+                      {detailTicket.resolutionNote}
+                    </p>
                   </div>
                 )}
 
-                {/* Timeline Visual */}
+                {/* Historial — Timeline Visual */}
                 {detailTicket.auditLogs?.length > 0 && (
-                  <div>
-                    <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Línea de Tiempo</h4>
+                  <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/20">
+                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <svg className="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      Historial de Actividad
+                    </h4>
                     <TicketTimeline auditLogs={detailTicket.auditLogs} />
                   </div>
                 )}
 
                 {/* Comentarios */}
-                <div>
-                  <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">Comentarios</h4>
+                <div className="px-6 py-5 bg-white">
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <svg className="w-3.5 h-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                    Conversación y Seguimiento
+                  </h4>
                   <CommentSection 
                     key={`admin-comments-${detailTicket.id}`}
                     ticketId={detailTicket.id} 

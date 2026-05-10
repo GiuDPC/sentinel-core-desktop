@@ -15,9 +15,10 @@ export default function BackupManager() {
   const [confirmText, setConfirmText] = useState('')
   const [isRestoring, setIsRestoring] = useState(false)
 
-  // Filtros de fecha (simulados visualmente por ahora o funcionales si se quiere)
+  // Filtros de fecha
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [appliedFilter, setAppliedFilter] = useState({ from: '', to: '' })
 
   const loadBackups = async () => {
     try {
@@ -94,12 +95,12 @@ export default function BackupManager() {
     }
   }
 
-  // Filtrado local
+  // Filtrado local basado en el filtro aplicado (no en tiempo real)
   const filteredBackups = backups.filter(b => {
-    if (!dateFrom && !dateTo) return true
+    if (!appliedFilter.from && !appliedFilter.to) return true
     const bDate = new Date(b.createdAt)
-    const from = dateFrom ? new Date(dateFrom) : new Date('2000-01-01')
-    const to = dateTo ? new Date(dateTo) : new Date('2100-01-01')
+    const from = appliedFilter.from ? new Date(appliedFilter.from) : new Date('2000-01-01')
+    const to = appliedFilter.to ? new Date(appliedFilter.to) : new Date('2100-01-01')
     to.setHours(23, 59, 59)
     return bDate >= from && bDate <= to
   })
@@ -168,12 +169,25 @@ export default function BackupManager() {
               className="text-sm border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-sky-500 text-slate-600"
             />
           </div>
-          <button 
-            onClick={() => {}} 
-            className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-1.5 rounded-lg text-sm font-medium transition-colors shadow-sm ml-auto md:ml-0"
-          >
-            <Filter className="w-3.5 h-3.5" /> Filtrar
-          </button>
+          <div className="flex gap-2 ml-auto md:ml-0">
+            <button 
+              onClick={() => {
+                setDateFrom('')
+                setDateTo('')
+                setAppliedFilter({ from: '', to: '' })
+              }} 
+              className="flex items-center gap-2 bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors shadow-sm"
+              title="Resetear filtros"
+            >
+              Resetear
+            </button>
+            <button 
+              onClick={() => setAppliedFilter({ from: dateFrom, to: dateTo })} 
+              className="flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-4 py-1.5 rounded-lg text-sm font-medium transition-colors shadow-sm"
+            >
+              <Filter className="w-3.5 h-3.5" /> Filtrar
+            </button>
+          </div>
         </div>
 
         {/* Tabla */}

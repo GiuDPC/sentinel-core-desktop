@@ -40,19 +40,20 @@ Los centros comerciales enfrentan desafíos operativos derivados de la comunicac
 
 ### Frontend
 
-| Tecnología   | Versión  | Descripción                        |
-| ------------ | -------- | ---------------------------------- |
-| React        | 19.2.4   | Biblioteca UI construir interfaces |
-| Vite         | 8.0.4    | Build tool y dev server            |
-| Tailwind CSS | 4.2.2    | Framework CSS utility-first        |
-| React Router | 7.14.1   | Enrutamiento SPA                   |
-| Recharts     | -        | Gráficos y visualizaciones         |
-| Lucide React | -        | Iconos SVG                         |
-| SweetAlert2  | 11.26.24 | Modales y notificaciones           |
-| Sonner       | 2.0.7    | Notificaciones toast               |
-| XLSX         | 0.18.5   | Exportación a Excel                |
-| Vitest       | 4.1.5    | Testing unitario                   |
-| JSdom        | 29.0.2   | DOM para testing                   |
+| Tecnología    | Versión  | Descripción                        |
+| ------------- | -------- | ---------------------------------- |
+| React         | 19.2.4   | Biblioteca UI construir interfaces |
+| Vite          | 8.0.4    | Build tool y dev server            |
+| Tailwind CSS  | 4.2.2    | Framework CSS utility-first        |
+| Framer Motion | 12.38.0  | Animaciones y micro-interacciones  |
+| React Router  | 7.14.1   | Enrutamiento SPA                   |
+| Recharts      | -        | Gráficos y visualizaciones         |
+| Lucide React  | -        | Iconos SVG                         |
+| SweetAlert2   | 11.26.24 | Modales y notificaciones           |
+| Sonner        | 2.0.7    | Notificaciones toast               |
+| XLSX          | 0.18.5   | Exportación a Excel                |
+| Vitest        | 4.1.5    | Testing unitario                   |
+| JSdom         | 29.0.2   | DOM para testing                   |
 
 ### Backend
 

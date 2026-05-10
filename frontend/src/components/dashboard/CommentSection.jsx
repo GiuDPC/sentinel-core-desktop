@@ -104,7 +104,7 @@ export default function CommentSection({ ticketId, userRole, initialComments = [
                 className={`group flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 relative overflow-hidden ${
                   isInternal 
                     ? 'bg-amber-100 text-amber-700' 
-                    : 'bg-slate-100 text-slate-500 hover:bg-blue-50 hover:text-blue-600'
+                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700'
                 }`}
                 title={isInternal ? "Visible solo para Admins y Técnicos" : "Visible para el Locatario"}
               >
@@ -120,12 +120,12 @@ export default function CommentSection({ ticketId, userRole, initialComments = [
           <button
             type="submit"
             disabled={submitting || !newComment.trim()}
-            className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-500/20 disabled:opacity-50 transition-all active:scale-95 group"
+            className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-200 text-slate-900 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-slate-100 shadow-sm transition-all active:scale-95 group"
           >
             {submitting ? 'Enviando...' : (
               <>
                 <span>Enviar</span>
-                <Send size={14} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                <Send size={14} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform text-slate-400" />
               </>
             )}
           </button>

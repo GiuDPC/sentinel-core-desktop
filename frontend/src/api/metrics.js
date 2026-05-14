@@ -1,19 +1,19 @@
-import { apiClient } from './client'
+import { api } from './client'
 
 export const metricsApi = {
-  getDashboard() {
-    return apiClient.get('/metrics/dashboard')
+  async getDashboard() {
+    return await api.invoke('get_dashboard_metrics')
   },
 
-  getSlaBreached() {
-    return apiClient.get('/metrics/sla-breached')
+  async getSlaBreached() {
+    return await api.invoke('get_sla_breached')
   },
 
-  getRequesterMetrics() {
-    return apiClient.get('/metrics/requester')
+  async getRequesterMetrics() {
+    return await api.invoke('get_requester_metrics')
   },
 
-  getTechnicianMetrics() {
-    return apiClient.get('/metrics/technician')
+  async getTechnicianMetrics() {
+    return await api.invoke('get_technician_metrics')
   },
 }

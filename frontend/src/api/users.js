@@ -1,25 +1,26 @@
-import { apiClient } from './client'
+import { api } from './client'
 
 export const usersApi = {
   async getAll() {
-    const data = await apiClient.get('/users')
-    return data.users || data.data || data || []
+    return await api.invoke('get_users')
   },
 
-  getById(id) {
-    return apiClient.get(`/users/${id}`)
+  async getById(id) {
+    return await api.invoke('get_user', { id })
   },
 
-  update(id, data) {
-    return apiClient.patch(`/users/${id}`, data)
+  async update(id, data) {
+    return await api.invoke('update_user', { 
+      payload: { id, ...data } 
+    })
   },
 
-  deactivate(id) {
-    return apiClient.delete(`/users/${id}`)
+  async deactivate(id) {
+    return await api.invoke('deactivate_user', { id })
   },
 
-  // Actualizar perfil propio
-  updateProfile(data) {
-    return apiClient.patch('/users/profile', data)
+  async updateProfile(data) {
+    // Si existe un update_profile específico en Rust
+    return await api.invoke('update_profile', { payload: data })
   },
 }

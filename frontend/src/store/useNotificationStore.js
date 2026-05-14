@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { apiClient } from '../api/client';
+import { api } from '../api/client';
 
 export const useNotificationStore = create((set, get) => ({
   notifications: [],
@@ -7,25 +7,27 @@ export const useNotificationStore = create((set, get) => ({
   loading: false,
   intervalId: null,
 
-  fetchNotifications: async () => {
+  fetchNotifications: async (userId) => {
+    if (!userId) return;
     try {
-      const data = await apiClient.get('/notifications');
+      const data = await api.invoke('get_notifications', { userId });
+      const unreadCount = data.filter(n => n.is_read === 0).length;
       
       set({
-        notifications: data.notifications,
-        unreadCount: data.unreadCount
+        notifications: data,
+        unreadCount
       });
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }
   },
 
-  startPolling: () => {
+  startPolling: (userId) => {
     const { fetchNotifications, intervalId } = get();
     if (intervalId) clearInterval(intervalId);
     
-    fetchNotifications();
-    const newIntervalId = setInterval(fetchNotifications, 10000);
+    fetchNotifications(userId);
+    const newIntervalId = setInterval(() => fetchNotifications(userId), 10000);
     set({ intervalId: newIntervalId });
   },
 
@@ -37,10 +39,10 @@ export const useNotificationStore = create((set, get) => ({
 
   markAsRead: async (id) => {
     try {
-      await apiClient.patch(`/notifications/${id}/read`);
+      await api.invoke('mark_as_read', { id });
       
       set((state) => ({
-        notifications: state.notifications.map(n => n.id === id ? { ...n, isRead: true } : n),
+        notifications: state.notifications.map(n => n.id === id ? { ...n, is_read: 1 } : n),
         unreadCount: Math.max(0, state.unreadCount - 1)
       }));
     } catch (error) {
@@ -48,12 +50,13 @@ export const useNotificationStore = create((set, get) => ({
     }
   },
 
-  markAllAsRead: async () => {
+  markAllAsRead: async (userId) => {
+    if (!userId) return;
     try {
-      await apiClient.patch('/notifications/all/read');
+      await api.invoke('mark_all_as_read', { userId });
       
       set((state) => ({
-        notifications: state.notifications.map(n => ({ ...n, isRead: true })),
+        notifications: state.notifications.map(n => ({ ...n, is_read: 1 })),
         unreadCount: 0
       }));
     } catch (error) {

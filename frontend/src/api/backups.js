@@ -1,74 +1,26 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+import { api } from './client'
 
 export const backupsApi = {
   async getAll() {
-    const response = await fetch(`${API_URL}/backups`, {
-      method: 'GET',
-      credentials: 'include',
-    })
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.message || errorData.error || 'Error al obtener backups')
-    }
-    return response.json()
+    return await api.invoke('list_backups')
   },
 
   async createBackup() {
-    const response = await fetch(`${API_URL}/backups`, {
-      method: 'POST',
-      credentials: 'include',
-    })
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.message || errorData.error || 'Error al crear el backup')
-    }
-    return response.json()
+    return await api.invoke('create_backup')
   },
 
   async downloadBackup(filename) {
-    const response = await fetch(`${API_URL}/backups/${filename}/download`, {
-      method: 'GET',
-      credentials: 'include',
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.message || errorData.error || 'Error al descargar el backup')
-    }
-
-    const blob = await response.blob()
-    const url = window.URL.createObjectURL(blob)
-    
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    window.URL.revokeObjectURL(url)
-    document.body.removeChild(a)
+    // En desktop/offline nativo, 'download' generalmente implica abrir un diálogo para guardar el archivo
+    // Si existe el comando `download_backup` o `export_backup` en Rust:
+    return await api.invoke('export_backup', { filename })
   },
 
   async restoreBackup(filename) {
-    const response = await fetch(`${API_URL}/backups/${filename}/restore`, {
-      method: 'POST',
-      credentials: 'include',
-    })
-    const data = await response.json()
-    if (!response.ok) {
-      throw new Error(data.message || data.error || 'Error al restaurar el backup')
-    }
-    return data
+    return await api.invoke('restore_backup', { filename })
   },
 
   async deleteBackup(filename) {
-    const response = await fetch(`${API_URL}/backups/${filename}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    })
-    const data = await response.json()
-    if (!response.ok) {
-      throw new Error(data.message || data.error || 'Error al eliminar el backup')
-    }
-    return data
+    // Si Rust tiene delete_backup:
+    return await api.invoke('delete_backup', { filename })
   }
 }

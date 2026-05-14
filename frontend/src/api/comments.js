@@ -1,4 +1,4 @@
-import { apiClient } from './client'
+import { api } from './client'
 
 export const commentsApi = {
   /**
@@ -7,8 +7,16 @@ export const commentsApi = {
    * @param {object} data { content: string, isInternal: boolean }
    */
   async create(ticketId, data) {
-    const res = await apiClient.post(`/tickets/${ticketId}/comments`, data)
-    return res.comment || res
+    // Mapeamos a CreateCommentPayload: { ticketId, userId, content, isInternal }
+    // Asumimos que data trae userId, si no el frontend deberá ajustarlo o pasarlo.
+    return await api.invoke('create_comment', {
+      payload: {
+        ticketId: ticketId,
+        userId: data.userId || '', 
+        content: data.content,
+        isInternal: data.isInternal ? 1 : 0
+      }
+    })
   },
 
   /**
@@ -16,7 +24,6 @@ export const commentsApi = {
    * @param {string} ticketId 
    */
   async getByTicketId(ticketId) {
-    const res = await apiClient.get(`/tickets/${ticketId}/comments`)
-    return res.comments || res
+    return await api.invoke('get_comments', { ticketId })
   }
 }

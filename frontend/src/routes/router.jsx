@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from '../Contexts/AuthContext'
 import ProtectedRoute from '../components/common/ProtectedRoute'
 import MainLayout from '../components/layout/MainLayout'
@@ -39,7 +39,7 @@ function LazyPage({ children }) {
 export function AppRouter() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <Router>
         <Routes>
           {/* Rutas públicas */}
             <Route path="/login" element={<LoginPage />} />
@@ -179,7 +179,7 @@ export function AppRouter() {
             {/* Catch-all */}
             <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
-      </BrowserRouter>
+      </Router>
     </AuthProvider>
   )
 }

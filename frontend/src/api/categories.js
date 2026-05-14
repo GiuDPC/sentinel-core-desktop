@@ -1,12 +1,27 @@
-import { apiClient } from './client'
+import { api } from './client'
 
 export const categoriesApi = {
   async getAll() {
-    const data = await apiClient.get('/categories')
-    return data.categories || data.data || data || []
+    return await api.invoke('get_categories')
   },
 
-  getById(id) {
-    return apiClient.get(`/categories/${id}`)
+  async getById(id) {
+    // Asumiendo que se requiere, aunque el backend Rust no lo tiene implementado aún
+    // Podés crear el comando 'get_category' en Rust luego.
+    return await api.invoke('get_category', { id: Number(id) })
   },
+
+  async create(data) {
+    return await api.invoke('create_category', { payload: data })
+  },
+
+  async update(id, data) {
+    return await api.invoke('update_category', { 
+      payload: { id: Number(id), ...data } 
+    })
+  },
+
+  async delete(id) {
+    return await api.invoke('delete_category', { id: Number(id) })
+  }
 }

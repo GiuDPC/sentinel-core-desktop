@@ -1,68 +1,56 @@
-import { apiClient } from './client'
+import { api } from './client'
 
 export const ticketsApi = {
-  getAll(filters = {}) {
-    const params = new URLSearchParams()
-    if (filters.status) params.set('status', filters.status)
-    if (filters.priority) params.set('priority', filters.priority)
-    if (filters.categoryId) params.set('categoryId', String(filters.categoryId))
-    if (filters.search) params.set('search', filters.search)
-    if (filters.page) params.set('page', String(filters.page))
-    if (filters.limit) params.set('limit', String(filters.limit))
-    const query = params.toString()
-    return apiClient.get(`/tickets${query ? `?${query}` : ''}`)
+  async getAll(filters = {}) {
+    return await api.invoke('get_tickets', { payload: filters })
   },
 
-  getById(id) {
-    return apiClient.get(`/tickets/${id}`)
+  async getById(id) {
+    return await api.invoke('get_ticket', { id })
   },
 
-  create(data) {
-    return apiClient.post('/tickets', data)
+  async create(data) {
+    return await api.invoke('create_ticket', { payload: data })
   },
 
-  updateStatus(id, status) {
-    return apiClient.patch(`/tickets/${id}/status`, { status })
+  async updateStatus(id, status) {
+    return await api.invoke('update_ticket_status', { 
+      payload: { ticketId: id, status }
+    })
   },
 
-  getMyTickets(filters = {}) {
-    const params = new URLSearchParams()
-    if (filters.status) params.set('status', filters.status)
-    if (filters.priority) params.set('priority', filters.priority)
-    if (filters.search) params.set('search', filters.search)
-    if (filters.page) params.set('page', String(filters.page))
-    const query = params.toString()
-    return apiClient.get(`/tickets/my-tickets${query ? `?${query}` : ''}`)
+  async getMyTickets(filters = {}) {
+    return await api.invoke('get_my_tickets', { userId: filters.userId || '' })
   },
 
-  getAssigned(filters = {}) {
-    const params = new URLSearchParams()
-    if (filters.status) params.set('status', filters.status)
-    if (filters.priority) params.set('priority', filters.priority)
-    if (filters.search) params.set('search', filters.search)
-    if (filters.page) params.set('page', String(filters.page))
-    const query = params.toString()
-    return apiClient.get(`/tickets/assigned${query ? `?${query}` : ''}`)
+  async getAssigned(filters = {}) {
+    return await api.invoke('get_assigned_tickets', { technicianId: filters.technicianId || '' })
   },
 
-  assignTechnician(ticketId, technicianId) {
-    return apiClient.post(`/tickets/${ticketId}/assign`, { technicianId })
+  async resolveWithNote(ticketId, resolutionNote) {
+    return await api.invoke('resolve_ticket', {
+      payload: { ticketId, resolutionNote }
+    })
   },
 
-  reassignTechnician(ticketId, technicianId) {
-    return apiClient.post(`/tickets/${ticketId}/reassign`, { technicianId })
+  async confirmTicket(ticketId, { confirmed, comment }) {
+    return await api.invoke('confirm_ticket', { ticketId })
   },
 
-  getTechniciansWorkload(department) {
-    const query = department ? `?department=${department}` : ''
-    return apiClient.get(`/tickets/technicians/workload${query}`)
+  // Manteniendo las firmas originales que estaban en tickets.js para no romper React
+  async assignTechnician(ticketId, technicianId) {
+    return await api.invoke('assign_technician', { 
+      payload: { ticketId, technicianId }
+    })
   },
 
-  resolveWithNote(ticketId, resolutionNote) {
-    return apiClient.post(`/tickets/${ticketId}/resolve`, { resolutionNote })
+  async reassignTechnician(ticketId, technicianId) {
+    return await api.invoke('reassign_technician', {
+      payload: { ticketId, technicianId }
+    })
   },
 
-  confirmTicket(ticketId, { confirmed, comment }) {
-    return apiClient.post(`/tickets/${ticketId}/confirm`, { confirmed, comment })
-  },
+  async getTechniciansWorkload(department) {
+    return await api.invoke('get_workload', { department: department || '' })
+  }
 }

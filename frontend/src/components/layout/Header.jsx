@@ -6,6 +6,7 @@ import { Bell, Search } from 'lucide-react'
 import { motion as Motion, AnimatePresence } from 'framer-motion'
 
 const NotificationBell = () => {
+  const { user } = useAuth()
   const { unreadCount, notifications, markAsRead, markAllAsRead } = useNotificationStore()
   const [isOpen, setIsOpen] = useState(false)
   const navigate = useNavigate()
@@ -39,7 +40,7 @@ const NotificationBell = () => {
               <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Notificaciones</h3>
               {unreadCount > 0 && (
                 <button 
-                  onClick={markAllAsRead}
+                  onClick={() => markAllAsRead(user?.id)}
                   className="text-[9px] font-bold text-blue-600 hover:text-blue-700 uppercase transition-colors"
                 >
                   Limpiar todo
@@ -61,14 +62,14 @@ const NotificationBell = () => {
                       if (n.link) navigate(n.link)
                       setIsOpen(false)
                     }}
-                    className={`px-5 py-4 border-b border-slate-50 last:border-0 cursor-pointer hover:bg-slate-50 transition-colors ${!n.isRead ? 'bg-blue-50/30' : ''}`}
+                    className={`px-5 py-4 border-b border-slate-50 last:border-0 cursor-pointer hover:bg-slate-50 transition-colors ${n.is_read === 0 ? 'bg-blue-50/30' : ''}`}
                   >
                     <div className="flex justify-between gap-2 mb-1">
-                      <p className={`text-[11px] font-bold ${!n.isRead ? 'text-blue-900' : 'text-slate-700'}`}>{n.title}</p>
-                      {!n.isRead && <span className="w-1.5 h-1.5 bg-blue-600 rounded-full shrink-0 mt-1 shadow-[0_0_8px_rgba(37,99,235,0.5)]"></span>}
+                      <p className={`text-[11px] font-bold ${n.is_read === 0 ? 'text-blue-900' : 'text-slate-700'}`}>{n.title}</p>
+                      {n.is_read === 0 && <span className="w-1.5 h-1.5 bg-blue-600 rounded-full shrink-0 mt-1 shadow-[0_0_8px_rgba(37,99,235,0.5)]"></span>}
                     </div>
                     <p className="text-[10px] text-slate-500 leading-relaxed mb-2">{n.message}</p>
-                    <p className="text-[9px] text-slate-400 font-medium">{new Date(n.createdAt).toLocaleString('es-VE', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })}</p>
+                    <p className="text-[9px] text-slate-400 font-medium">{new Date(n.created_at).toLocaleString('es-VE', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })}</p>
                   </div>
                 ))
               )}
@@ -88,8 +89,8 @@ export default function Header() {
   const greeting = getGreeting()
 
   useEffect(() => {
-    if (user) {
-      startPolling()
+    if (user && user.id) {
+      startPolling(user.id)
     } else {
       stopPolling()
     }

@@ -1,48 +1,28 @@
-import { apiClient } from './client'
+import { api } from './client';
 
-/**
- * API de autenticacion basada en cookies httpOnly.
- * El backend setea la cookie al hacer login — el frontend no maneja tokens.
- */
 export const authApi = {
-  async login({ email, password }) {
-    const data = await apiClient.post('/auth/login', { email, password })
-    return data
+  login: async (credentials) => {
+    // credentials tiene { email, password }
+    return await api.invoke('login', credentials);
+  },
+  
+  register: async (userData) => {
+    // userData tiene el RegisterPayload esperado en Rust
+    // Tauri requiere que el nombre del argumento coincida con el nombre en Rust
+    // En auth.rs el argumento se llama `payload`
+    return await api.invoke('register_public', { payload: userData });
+  },
+  
+  logout: async () => {
+    return await api.invoke('logout');
+  },
+  
+  getCurrentUser: async (userId) => {
+    return await api.invoke('get_profile', { userId });
   },
 
-  async register({ firstName, lastName, email, password, phone, storeNumber, storeName }) {
-    const data = await apiClient.post('/auth/register-public', {
-      firstName,
-      lastName,
-      email,
-      password,
-      confirmPassword: password,
-      phone: phone || undefined,
-      storeNumber: storeNumber || undefined,
-      storeName: storeName || undefined,
-    })
-    return data
-  },
-
-  async logout() {
-    try {
-      await apiClient.post('/auth/logout')
-    } catch {
-      // Ignorar errores en logout
-    }
-  },
-
-  async getCurrentUser() {
-    const data = await apiClient.get('/auth/me')
-    return data
-  },
-
-  async changePassword({ currentPassword, newPassword }) {
-    const data = await apiClient.post('/auth/change-password', {
-      currentPassword,
-      newPassword,
-      confirmPassword: newPassword,
-    })
-    return data
-  },
-}
+  changePassword: async (passwordData) => {
+    // passwordData: { userId, oldPassword, newPassword }
+    return await api.invoke('change_password', { payload: passwordData });
+  }
+};

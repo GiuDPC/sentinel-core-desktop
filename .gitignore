@@ -5,6 +5,7 @@ Prompt.md
 .env
 .env.local
 *.session.sqlite
+error.md
 
 # Rust / Tauri build artifacts
 src-tauri/target/

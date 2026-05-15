@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ticketsApi } from '../../api/tickets'
+import { useAuth } from '../../Contexts/AuthContextObject'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import PriorityBadge from '../../components/dashboard/PriorityBadge'
 import notifications from '../../components/ui/Notifications'
@@ -21,6 +22,7 @@ const PRIORITY_LABELS = {
 }
 
 export default function AssignedTickets() {
+  const { user } = useAuth()
   const [searchParams] = useSearchParams()
   const [tickets, setTickets] = useState([])
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1 })
@@ -34,7 +36,7 @@ export default function AssignedTickets() {
   const loadTickets = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await ticketsApi.getAssigned({
+      const data = await ticketsApi.getAssigned(user.id, {
         status: statusFilter || undefined,
         priority: priorityFilter || undefined,
         search: searchFilter || undefined,
@@ -60,7 +62,7 @@ export default function AssignedTickets() {
   async function handleStatusChange(e, ticketId, newStatus) {
     e.stopPropagation()
     try {
-      await ticketsApi.updateStatus(ticketId, newStatus)
+      await ticketsApi.updateStatus(ticketId, newStatus, user.id)
       notifications.success(`Estado actualizado a ${newStatus}`)
       loadTickets()
     } catch (error) {

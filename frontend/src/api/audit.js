@@ -2,8 +2,7 @@ import { api } from './client'
 
 export const auditApi = {
   async getAll(filters = {}) {
-    // Si necesitas mandar filtros, ajusta el comando Rust en el futuro
-    return await api.invoke('get_audit_logs')
+    return await api.invoke('get_audit_logs', { filters })
   },
 
   async getByTicket(ticketId) {

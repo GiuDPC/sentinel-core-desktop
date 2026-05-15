@@ -32,6 +32,16 @@ pub async fn get_categories(db: State<'_, SqlitePool>) -> Result<Vec<Category>, 
 }
 
 #[tauri::command]
+pub async fn get_category(id: i64, db: State<'_, SqlitePool>) -> Result<Category, AppError> {
+    let cat = sqlx::query_as("SELECT * FROM categories WHERE id = ?1")
+        .bind(id)
+        .fetch_optional(db.inner())
+        .await?
+        .ok_or_else(|| AppError::NotFound("Categoría no encontrada".into()))?;
+    Ok(cat)
+}
+
+#[tauri::command]
 pub async fn create_category(
     payload: CreateCategoryPayload,
     db: State<'_, SqlitePool>,
@@ -43,8 +53,8 @@ pub async fn create_category(
         .execute(db.inner())
         .await?;
 
-    // Sqlite last_insert_rowid via un query extra
-    let cat = sqlx::query_as("SELECT * FROM categories WHERE id = (SELECT seq FROM sqlite_sequence WHERE name='categories')")
+    // Use last_insert_rowid() instead of sqlite_sequence (which is fragile)
+    let cat = sqlx::query_as("SELECT * FROM categories WHERE id = last_insert_rowid()")
         .fetch_one(db.inner())
         .await?;
     Ok(cat)
@@ -76,7 +86,6 @@ pub async fn delete_category(
     id: i64,
     db: State<'_, SqlitePool>,
 ) -> Result<(), AppError> {
-    // Soft delete o delete real. Por seguridad, usaremos soft delete.
     sqlx::query("UPDATE categories SET is_active = 0, updated_at = datetime('now') WHERE id = ?")
         .bind(id)
         .execute(db.inner())

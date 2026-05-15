@@ -51,17 +51,16 @@ export default function AuditLogs() {
     try {
       const data = await auditApi.getAll({
         page: pagination.page,
-        limit: 8,
+        limit: pagination.limit,
         action: filters.action || undefined,
       })
-      setLogs(data.data || [])
-      if (data.pagination) setPagination(p => ({ ...p, totalPages: data.pagination.totalPages || 1 }))
+      setLogs(Array.isArray(data) ? data : data.data || [])
     } catch (err) {
       console.error('Error cargando audit logs:', err)
     } finally {
       setLoading(false)
     }
-  }, [pagination.page, filters.action])
+  }, [pagination.page, pagination.limit, filters.action])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

@@ -109,8 +109,9 @@ export default function ProfilePage() {
     
     setSavingProfile(true)
     try {
-      const response = await usersApi.updateProfile(form)
-      updateUser(response.user || response)
+      const response = await usersApi.updateProfile({ ...form, id: user.id })
+      const updated = response.user || response
+      updateUser({ ...updated, role: user.role })
       setIsEditing(false)
       notifications.success('Perfil actualizado correctamente', 'Guardado')
     } catch (error) {
@@ -128,6 +129,7 @@ export default function ProfilePage() {
     setSavingPassword(true)
     try {
       await authApi.changePassword({
+        userId: user.id,
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword,
       })

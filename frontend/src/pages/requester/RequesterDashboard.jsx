@@ -7,8 +7,10 @@ import QuickActions from '../../components/dashboard/QuickActions'
 import RecentActivity from '../../components/dashboard/RecentActivity'
 import { metricsApi } from '../../api/metrics'
 import { ticketsApi } from '../../api/tickets'
+import { useAuth } from '../../Contexts/AuthContextObject'
 
 export default function RequesterDashboard() {
+  const { user } = useAuth()
   const [metrics, setMetrics] = useState(null)
   const [recentTickets, setRecentTickets] = useState([])
   const [activeTicket, setActiveTicket] = useState(null)
@@ -18,8 +20,8 @@ export default function RequesterDashboard() {
   async function loadDashboard() {
     try {
       const [metricsData, ticketsData] = await Promise.all([
-        metricsApi.getRequesterMetrics(),
-        ticketsApi.getMyTickets({ limit: 5 }),
+        metricsApi.getRequesterMetrics(user.id),
+        ticketsApi.getMyTickets(user.id, { limit: 5 }),
       ])
       setMetrics(metricsData)
       setRecentTickets(ticketsData.data || [])

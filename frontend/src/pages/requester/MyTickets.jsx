@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ticketsApi } from '../../api/tickets'
+import { useAuth } from '../../Contexts/AuthContextObject'
 import { STATUS_OPTIONS, PRIORITY_LABELS, PRIORITY_COLORS } from '../../constants/ticket'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import PriorityBadge from '../../components/dashboard/PriorityBadge'
@@ -10,6 +11,7 @@ import CommentSection from '../../components/dashboard/CommentSection'
 import { Filter, SlidersHorizontal } from 'lucide-react'
 
 export default function MyTickets() {
+  const { user } = useAuth()
   const [searchParams] = useSearchParams()
   const [tickets, setTickets] = useState([])
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1 })
@@ -42,7 +44,7 @@ export default function MyTickets() {
   const loadTickets = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await ticketsApi.getMyTickets({
+      const data = await ticketsApi.getMyTickets(user.id, {
         status: statusFilter || undefined,
         priority: priorityFilter || undefined,
         search: searchFilter || undefined,
@@ -108,12 +110,10 @@ export default function MyTickets() {
   async function handleConfirm() {
     setSubmitting(true)
     try {
-      await ticketsApi.confirmTicket(selectedTicket.id, {
-        confirmed: true,
-        comment: confirmComment || undefined,
-      })
+      await ticketsApi.confirmTicket(selectedTicket.id, user.id, true, confirmComment || null)
       notifications.success('Ticket cerrado exitosamente', 'Confirmación exitosa')
       setShowConfirm(false)
+      setConfirmComment('')
       loadTickets()
     } catch (error) {
       notifications.error(error.message, 'Error')
@@ -132,12 +132,10 @@ export default function MyTickets() {
   async function handleReopenConfirm() {
     setSubmitting(true)
     try {
-      await ticketsApi.confirmTicket(selectedTicket.id, {
-        confirmed: false,
-        comment: reopenComment || 'Reabierto por el solicitante',
-      })
+      await ticketsApi.confirmTicket(selectedTicket.id, user.id, false, reopenComment)
       notifications.success('Ticket reabierto para atención', 'Reabierto')
       setShowReopen(false)
+      setReopenComment('')
       loadTickets()
     } catch (error) {
       notifications.error(error.message, 'Error')

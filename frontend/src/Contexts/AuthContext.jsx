@@ -3,7 +3,6 @@ import { authApi } from '../api/auth'
 import { AuthContext } from './AuthContextObject.js'
 import { load } from '@tauri-apps/plugin-store'
 
-// Cargamos el store de forma diferida (lazy) para evitar top-level await en React
 let storeInstance = null;
 async function getSessionStore() {
   if (!storeInstance) {
@@ -12,14 +11,7 @@ async function getSessionStore() {
   return storeInstance;
 }
 
-/** Mapa de redireccion por rol despues del login */
 const ROLE_DASHBOARD_MAP = {
-  // Los roles en Rust vienen con ID, pero el mapper los puede inferir o el frontend mapea.
-  // En Prisma era ENUM, en Rust es role_id o name. Asumiendo que el login mapea user.role_id -> 'ADMIN'
-  1: '/admin/dashboard',
-  2: '/technician/dashboard',
-  3: '/requester/dashboard',
-  // Por si el frontend inyecta un string (retrocompatibilidad):
   'ADMIN': '/admin/dashboard',
   'TECHNICIAN': '/technician/dashboard',
   'REQUESTER': '/requester/dashboard',
@@ -32,21 +24,14 @@ export function AuthProvider({ children }) {
 
   async function checkAuth() {
     try {
-      // 1. Leemos del store la sesión persistida (session.dat)
       const store = await getSessionStore();
       const savedUser = await store.get('user');
-      
+
       if (savedUser && savedUser.id) {
-        // 2. Si hay sesión, podríamos re-validar con Rust o confiar en el caché.
-        // Hacemos re-fetch para asegurar que el usuario no fue desactivado.
+        // Re-validate with backend
         const data = await authApi.getCurrentUser(savedUser.id);
-        
-        // El frontend espera el nombre del rol para hasRole. Mapeo simple:
-        const roleStr = data.roleId === 1 ? 'ADMIN' : (data.roleId === 2 ? 'TECHNICIAN' : 'REQUESTER');
-        const sessionData = { ...data, role: roleStr };
-        
+        const sessionData = { ...data, role: data.role || savedUser.role };
         setUser(sessionData);
-        // Actualizamos el store en caso de cambios
         await store.set('user', sessionData);
         await store.save();
       } else {
@@ -54,9 +39,11 @@ export function AuthProvider({ children }) {
       }
     } catch {
       setUser(null)
-      const store = await getSessionStore();
-      await store.delete('user');
-      await store.save();
+      try {
+        const store = await getSessionStore();
+        await store.delete('user');
+        await store.save();
+      } catch {}
     } finally {
       setLoading(false)
     }
@@ -70,18 +57,13 @@ export function AuthProvider({ children }) {
     setError(null)
     try {
       const data = await authApi.login(credentials)
-      
-      // Mapeo role_id -> role string para compatibilidad UI
-      const roleStr = data.roleId === 1 ? 'ADMIN' : (data.roleId === 2 ? 'TECHNICIAN' : 'REQUESTER');
-      const sessionData = { ...data, role: roleStr };
+      const sessionData = { ...data, role: data.role || 'REQUESTER' }
 
       setUser(sessionData)
-      
-      // Guardar en el store de Tauri
       const store = await getSessionStore();
       await store.set('user', sessionData)
       await store.save()
-      
+
       return sessionData
     } catch (err) {
       setError(err.message)
@@ -92,7 +74,7 @@ export function AuthProvider({ children }) {
   async function register(userData) {
     setError(null)
     try {
-      const data = await authApi.register(userData)
+      const data = await authApi.registerPublic(userData)
       return data
     } catch (err) {
       setError(err.message)
@@ -103,11 +85,10 @@ export function AuthProvider({ children }) {
   async function logout() {
     try {
       await authApi.logout()
-    } catch(e) {
-      console.warn("Logout error:", e);
+    } catch {
+      // Ignore logout errors
     } finally {
       setUser(null)
-      // Limpiar sesión del store
       const store = await getSessionStore();
       await store.delete('user')
       await store.save()
@@ -122,7 +103,7 @@ export function AuthProvider({ children }) {
 
   function getDashboardPath() {
     if (!user) return '/login'
-    return ROLE_DASHBOARD_MAP[user.role] || ROLE_DASHBOARD_MAP[user.roleId] || '/login'
+    return ROLE_DASHBOARD_MAP[user.role] || '/login'
   }
 
   const value = {
@@ -137,9 +118,10 @@ export function AuthProvider({ children }) {
     getDashboardPath,
     clearError: () => setError(null),
     updateUser: async (userData) => {
-      setUser(userData);
       const store = await getSessionStore();
-      await store.set('user', userData);
+      const sessionData = { ...userData, role: userData.role || user?.role };
+      setUser(sessionData);
+      await store.set('user', sessionData);
       await store.save();
     },
   }

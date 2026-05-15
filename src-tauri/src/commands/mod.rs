@@ -8,3 +8,4 @@ pub mod notifications;
 pub mod metrics;
 pub mod audit;
 pub mod backups;
+pub mod diagnostics;

@@ -1,21 +1,17 @@
 use tauri::State;
 use sqlx::SqlitePool;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::errors::AppError;
+use crate::models::*;
+use crate::commands::tickets::{create_audit_log, create_notification};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AssignPayload {
     pub ticket_id: String,
     pub technician_id: String,
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct WorkloadResponse {
-    pub technician_id: String,
-    pub active_count: i64,
+    pub assigned_by: Option<String>,
 }
 
 #[tauri::command]
@@ -23,18 +19,68 @@ pub async fn assign_technician(
     payload: AssignPayload,
     db: State<'_, SqlitePool>,
 ) -> Result<(), AppError> {
-    // Asignar en la tabla pivote
-    sqlx::query("INSERT OR REPLACE INTO assignments (ticket_id, technician_id) VALUES (?, ?)")
+    let ticket_info: (String, String) = sqlx::query_as(
+        "SELECT ticket_code, creator_id FROM tickets WHERE id = ?1"
+    )
+    .bind(&payload.ticket_id)
+    .fetch_optional(db.inner())
+    .await?
+    .ok_or_else(|| AppError::NotFound("Ticket no encontrado".into()))?;
+
+    let (ticket_code, _) = ticket_info;
+
+    // Validar que el técnico existe y es TECHNICIAN
+    let tech_role: (i64,) = sqlx::query_as(
+        "SELECT COUNT(*) FROM users u INNER JOIN roles r ON r.id = u.role_id
+         WHERE u.id = ?1 AND u.is_active = 1 AND r.name = 'TECHNICIAN'"
+    )
+    .bind(&payload.technician_id)
+    .fetch_one(db.inner())
+    .await?;
+
+    if tech_role.0 == 0 {
+        return Err(AppError::Validation("El usuario seleccionado no es un técnico válido".into()));
+    }
+
+    // Verificar que no esté ya asignado
+    let existing: (i64,) = sqlx::query_as(
+        "SELECT COUNT(*) FROM assignments WHERE ticket_id = ?1 AND technician_id = ?2"
+    )
+    .bind(&payload.ticket_id)
+    .bind(&payload.technician_id)
+    .fetch_one(db.inner())
+    .await?;
+
+    if existing.0 > 0 {
+        return Err(AppError::Validation("Este técnico ya está asignado a este ticket".into()));
+    }
+
+    sqlx::query("INSERT INTO assignments (ticket_id, technician_id) VALUES (?, ?)")
         .bind(&payload.ticket_id)
         .bind(&payload.technician_id)
         .execute(db.inner())
         .await?;
 
-    // Actualizar estado del ticket a ASSIGNED
+    // Update status only if OPEN
     sqlx::query("UPDATE tickets SET status = 'ASSIGNED', updated_at = datetime('now') WHERE id = ? AND status = 'OPEN'")
         .bind(&payload.ticket_id)
         .execute(db.inner())
         .await?;
+
+    let assigned_by = payload.assigned_by.as_deref().unwrap_or("system");
+
+    // Audit log
+    create_audit_log(
+        db.inner(), &payload.ticket_id, assigned_by, "ASSIGNMENT",
+        None, Some(&payload.technician_id),
+    ).await?;
+
+    // Notify technician
+    create_notification(
+        db.inner(), &payload.technician_id, "Nueva asignación",
+        &format!("Se te ha asignado el ticket {}", ticket_code),
+        "ASSIGNMENT", Some(&format!("/technician/ticket/{}", payload.ticket_id)),
+    ).await?;
 
     Ok(())
 }
@@ -44,18 +90,75 @@ pub async fn reassign_technician(
     payload: AssignPayload,
     db: State<'_, SqlitePool>,
 ) -> Result<(), AppError> {
-    // Borrar asignación previa
+    // Find old technician for notification
+    let old_techs: Vec<(String,)> = sqlx::query_as(
+        "SELECT technician_id FROM assignments WHERE ticket_id = ?1"
+    )
+    .bind(&payload.ticket_id)
+    .fetch_all(db.inner())
+    .await?;
+
+    // Verificar ticket existe y no está cerrado
+    let ticket_status: (String,) = sqlx::query_as(
+        "SELECT status FROM tickets WHERE id = ?1"
+    )
+    .bind(&payload.ticket_id)
+    .fetch_optional(db.inner())
+    .await?
+    .ok_or_else(|| AppError::NotFound("Ticket no encontrado".into()))?;
+
+    if ticket_status.0 == "CLOSED" {
+        return Err(AppError::Validation("No se puede reasignar un ticket cerrado".into()));
+    }
+
+    // Validar que el nuevo técnico existe y es TECHNICIAN
+    let tech_role: (i64,) = sqlx::query_as(
+        "SELECT COUNT(*) FROM users u INNER JOIN roles r ON r.id = u.role_id
+         WHERE u.id = ?1 AND u.is_active = 1 AND r.name = 'TECHNICIAN'"
+    )
+    .bind(&payload.technician_id)
+    .fetch_one(db.inner())
+    .await?;
+
+    if tech_role.0 == 0 {
+        return Err(AppError::Validation("El usuario seleccionado no es un técnico válido".into()));
+    }
+
+    // Delete old assignments
     sqlx::query("DELETE FROM assignments WHERE ticket_id = ?")
         .bind(&payload.ticket_id)
         .execute(db.inner())
         .await?;
 
-    // Asignar al nuevo técnico
+    // Assign new
     sqlx::query("INSERT INTO assignments (ticket_id, technician_id) VALUES (?, ?)")
         .bind(&payload.ticket_id)
         .bind(&payload.technician_id)
         .execute(db.inner())
         .await?;
+
+    // Si estaba en OPEN, pasarlo a ASSIGNED
+    if ticket_status.0 == "OPEN" {
+        sqlx::query("UPDATE tickets SET status = 'ASSIGNED', updated_at = datetime('now') WHERE id = ?")
+            .bind(&payload.ticket_id)
+            .execute(db.inner())
+            .await?;
+    }
+
+    let assigned_by = payload.assigned_by.as_deref().unwrap_or("system");
+
+    // Audit log
+    create_audit_log(
+        db.inner(), &payload.ticket_id, assigned_by, "REASSIGNMENT",
+        old_techs.first().map(|t| t.0.as_str()), Some(&payload.technician_id),
+    ).await?;
+
+    // Notify new technician
+    create_notification(
+        db.inner(), &payload.technician_id, "Reasignación",
+        &format!("Se te ha reasignado el ticket para atención"),
+        "ASSIGNMENT", Some(&format!("/technician/ticket/{}", payload.ticket_id)),
+    ).await?;
 
     Ok(())
 }
@@ -64,28 +167,29 @@ pub async fn reassign_technician(
 pub async fn get_workload(
     department: String,
     db: State<'_, SqlitePool>,
-) -> Result<Vec<WorkloadResponse>, AppError> {
-    let workload = sqlx::query_as::<_, (String, i64)>(
-        "SELECT u.id, COUNT(a.ticket_id) as active_count
+) -> Result<WorkloadResponse, AppError> {
+    let technicians: Vec<WorkloadTechInfo> = sqlx::query_as::<_, (String, String, String, Option<String>, i64)>(
+        "SELECT u.id, u.first_name, u.last_name, u.department,
+                COALESCE((SELECT COUNT(*) FROM assignments a
+                 INNER JOIN tickets t ON t.id = a.ticket_id
+                 WHERE a.technician_id = u.id AND t.status NOT IN ('RESOLVED', 'CLOSED')), 0) as active_count
          FROM users u
-         LEFT JOIN assignments a ON u.id = a.technician_id
-           AND a.ticket_id IN (
-             SELECT id FROM tickets WHERE status NOT IN ('RESOLVED', 'CLOSED')
-           )
          WHERE u.role_id = (SELECT id FROM roles WHERE name = 'TECHNICIAN')
            AND u.is_active = 1
-           AND u.department = ?1
-         GROUP BY u.id
+           AND (?1 = '' OR u.department = ?1)
          ORDER BY active_count ASC"
     )
     .bind(&department)
     .fetch_all(db.inner())
-    .await?;
+    .await?
+    .into_iter()
+    .map(|(id, first_name, last_name, dept, active_tickets)| {
+        WorkloadTechInfo { id, first_name, last_name, department: dept, active_tickets }
+    })
+    .collect();
 
-    let res = workload.into_iter().map(|w| WorkloadResponse {
-        technician_id: w.0,
-        active_count: w.1,
-    }).collect();
+    // Suggested = first one (least loaded)
+    let suggested = technicians.first().map(|t| t.id.clone());
 
-    Ok(res)
+    Ok(WorkloadResponse { technicians, suggested })
 }

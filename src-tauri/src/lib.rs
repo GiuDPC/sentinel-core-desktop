@@ -26,7 +26,7 @@ pub fn run() {
 
             let pool = tauri::async_runtime::block_on(async {
                 let pool = SqlitePoolOptions::new()
-                    .max_connections(5)
+                    .max_connections(2)
                     .connect(&db_url)
                     .await
                     .expect("Error crítico: no se pudo conectar a SQLite");
@@ -69,6 +69,7 @@ pub fn run() {
             // Auth
             commands::auth::login,
             commands::auth::logout,
+            commands::auth::register,
             commands::auth::register_public,
             commands::auth::get_profile,
             commands::auth::change_password,
@@ -91,6 +92,7 @@ pub fn run() {
             
             // Categories
             commands::categories::get_categories,
+            commands::categories::get_category,
             commands::categories::create_category,
             commands::categories::update_category,
             commands::categories::delete_category,
@@ -112,11 +114,18 @@ pub fn run() {
             
             // Metrics
             commands::metrics::get_dashboard_metrics,
+            commands::metrics::get_sla_breached,
+            commands::metrics::get_technician_metrics,
+            commands::metrics::get_requester_metrics,
             
             // Audit
             commands::audit::get_audit_logs,
             commands::audit::get_audit_by_ticket,
             
+            // Diagnostics
+            commands::diagnostics::check_db_status,
+            commands::diagnostics::reset_database,
+
             // Backups
             commands::backups::create_backup,
             commands::backups::list_backups,

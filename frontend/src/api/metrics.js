@@ -9,11 +9,11 @@ export const metricsApi = {
     return await api.invoke('get_sla_breached')
   },
 
-  async getRequesterMetrics() {
-    return await api.invoke('get_requester_metrics')
+  async getRequesterMetrics(userId) {
+    return await api.invoke('get_requester_metrics', { userId })
   },
 
-  async getTechnicianMetrics() {
-    return await api.invoke('get_technician_metrics')
+  async getTechnicianMetrics(userId) {
+    return await api.invoke('get_technician_metrics', { userId })
   },
 }

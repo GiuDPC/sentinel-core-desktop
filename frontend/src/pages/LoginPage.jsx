@@ -18,7 +18,7 @@ export default function LoginPage() {
     try {
       const data = await login(formData)
       notifications.success('Bienvenido de vuelta', 'Sesión iniciada')
-      const role = data.user?.role || data.role
+      const role = data.role || data.role_id
       const dashPaths = { ADMIN: '/admin/dashboard', TECHNICIAN: '/technician/dashboard', REQUESTER: '/requester/dashboard' }
       navigate(dashPaths[role] || '/login')
     } catch (error) {

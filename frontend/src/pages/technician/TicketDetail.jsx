@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ticketsApi } from '../../api/tickets'
+import { useAuth } from '../../Contexts/AuthContextObject'
 import StatusBadge from '../../components/dashboard/StatusBadge'
 import LiveTracker from '../../components/dashboard/LiveTracker'
 import notifications from '../../components/ui/Notifications'
@@ -22,6 +23,7 @@ import {
 } from 'lucide-react'
 
 export default function TicketDetail() {
+  const { user } = useAuth()
   const { id } = useParams()
   const navigate = useNavigate()
   const [ticket, setTicket] = useState(null)
@@ -55,7 +57,7 @@ export default function TicketDetail() {
 
   async function handleStatusChange(newStatus) {
     try {
-      await ticketsApi.updateStatus(id, newStatus)
+      await ticketsApi.updateStatus(id, newStatus, user.id)
       notifications.success('Estado actualizado', 'Operación exitosa')
       loadTicket()
     } catch (error) {
@@ -70,7 +72,7 @@ export default function TicketDetail() {
     }
     setSubmitting(true)
     try {
-      await ticketsApi.resolveWithNote(id, resolutionNote)
+      await ticketsApi.resolveWithNote(id, resolutionNote, user.id)
       notifications.success('Ticket enviado para confirmación del solicitante', 'Resuelto')
       setShowResolveForm(false)
       setResolutionNote('')

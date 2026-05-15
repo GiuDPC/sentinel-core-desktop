@@ -32,7 +32,7 @@ export default function Reports() {
         metricsApi.getSlaBreached(),
       ])
       setMetrics(m)
-      setSlaBreached(sla.tickets || [])
+      setSlaBreached(Array.isArray(sla) ? sla : sla.tickets || [])
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
   }

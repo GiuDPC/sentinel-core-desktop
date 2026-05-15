@@ -5,9 +5,11 @@ import LiveTracker from '../../components/dashboard/LiveTracker'
 import RecentActivity from '../../components/dashboard/RecentActivity'
 import { metricsApi } from '../../api/metrics'
 import { ticketsApi } from '../../api/tickets'
+import { useAuth } from '../../Contexts/AuthContextObject'
 import { FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react'
 
 export default function TechDashboard() {
+  const { user } = useAuth()
   const [metrics, setMetrics] = useState(null)
   const [assignedTickets, setAssignedTickets] = useState([])
   const [activeTicket, setActiveTicket] = useState(null)
@@ -17,8 +19,8 @@ export default function TechDashboard() {
   async function loadDashboard() {
     try {
       const [metricsData, ticketsData] = await Promise.all([
-        metricsApi.getTechnicianMetrics(),
-        ticketsApi.getAssigned(),
+        metricsApi.getTechnicianMetrics(user.id),
+        ticketsApi.getAssigned(user.id),
       ])
       setMetrics(metricsData)
       const sortedTickets = (ticketsData.data || []).sort((a, b) => {

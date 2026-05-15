@@ -6,13 +6,13 @@ use sqlx::FromRow;
 use crate::errors::AppError;
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
-#[serde(rename_all = "camelCase")]
 pub struct Notification {
     pub id: String,
     pub user_id: String,
     pub title: String,
     pub message: String,
-    pub r#type: String, // reserved keyword
+    #[serde(rename = "type")]
+    pub r#type: String,
     pub link: Option<String>,
     pub is_read: i64,
     pub created_at: String,

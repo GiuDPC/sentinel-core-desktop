@@ -13,11 +13,37 @@ use crate::models::{User, UserResponse};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct UpdateProfilePayload {
+    pub id: String,
+    pub first_name: String,
+    pub last_name: String,
+    pub phone: Option<String>,
+    pub store_number: Option<String>,
+    pub store_name: Option<String>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RegisterPayload {
     pub first_name: String,
     pub last_name: String,
     pub email: String,
     pub password: String,
+    pub phone: Option<String>,
+    pub store_number: Option<String>,
+    pub store_name: Option<String>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AdminRegisterPayload {
+    pub first_name: String,
+    pub last_name: String,
+    pub email: String,
+    pub password: String,
+    pub phone: Option<String>,
+    pub role_id: Option<i64>,
+    pub department: Option<String>,
     pub store_number: Option<String>,
     pub store_name: Option<String>,
 }
@@ -28,6 +54,25 @@ pub struct ChangePasswordPayload {
     pub user_id: String,
     pub old_password: String,
     pub new_password: String,
+}
+
+async fn user_to_response(user: &User, pool: &SqlitePool) -> UserResponse {
+    let role_name = User::get_role_name(pool, user.role_id).await;
+    UserResponse {
+        id: user.id.clone(),
+        role_id: user.role_id,
+        role: role_name,
+        first_name: user.first_name.clone(),
+        last_name: user.last_name.clone(),
+        email: user.email.clone(),
+        phone: user.phone.clone(),
+        department: user.department.clone(),
+        store_number: user.store_number.clone(),
+        store_name: user.store_name.clone(),
+        is_active: user.is_active,
+        created_at: user.created_at.clone(),
+        updated_at: user.updated_at.clone(),
+    }
 }
 
 #[tauri::command]
@@ -58,7 +103,8 @@ pub async fn login(
         return Err(AppError::Auth("Credenciales inválidas".into()));
     }
 
-    Ok(user.into())
+    let resp = user_to_response(&user, db.inner()).await;
+    Ok(resp)
 }
 
 #[tauri::command]
@@ -92,14 +138,15 @@ pub async fn register_public(
     let id = Uuid::new_v4().to_string();
 
     sqlx::query(
-        "INSERT INTO users (id, role_id, first_name, last_name, email, password_hash, store_number, store_name, is_active) 
-         VALUES (?, 3, ?, ?, ?, ?, ?, ?, 1)"
+        "INSERT INTO users (id, role_id, first_name, last_name, email, password_hash, phone, store_number, store_name, is_active) 
+         VALUES (?, 3, ?, ?, ?, ?, ?, ?, ?, 1)"
     )
     .bind(&id)
     .bind(&payload.first_name)
     .bind(&payload.last_name)
     .bind(&payload.email)
     .bind(&hash)
+    .bind(&payload.phone)
     .bind(&payload.store_number)
     .bind(&payload.store_name)
     .execute(db.inner())
@@ -111,7 +158,57 @@ pub async fn register_public(
         .fetch_one(db.inner())
         .await?;
 
-    Ok(user.into())
+    user_to_response(&user, db.inner()).await
+}
+
+#[tauri::command]
+pub async fn register(
+    payload: AdminRegisterPayload,
+    db: State<'_, SqlitePool>,
+) -> Result<UserResponse, AppError> {
+    // Verificar si el email ya existe
+    let exists: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM users WHERE email = ?1")
+        .bind(&payload.email)
+        .fetch_one(db.inner())
+        .await?;
+
+    if exists.0 > 0 {
+        return Err(AppError::Validation("El correo ya está registrado".into()));
+    }
+
+    let pwd = payload.password.clone();
+    let hash = task::spawn_blocking(move || {
+        let salt = SaltString::generate(&mut OsRng);
+        let argon2 = Argon2::default();
+        argon2.hash_password(pwd.as_bytes(), &salt).map(|h| h.to_string())
+    }).await.map_err(|e| AppError::Internal(e.to_string()))??;
+
+    let id = Uuid::new_v4().to_string();
+    let role_id = payload.role_id.unwrap_or(3);
+
+    sqlx::query(
+        "INSERT INTO users (id, role_id, first_name, last_name, email, password_hash, phone, department, store_number, store_name, is_active) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)"
+    )
+    .bind(&id)
+    .bind(role_id)
+    .bind(&payload.first_name)
+    .bind(&payload.last_name)
+    .bind(&payload.email)
+    .bind(&hash)
+    .bind(&payload.phone)
+    .bind(&payload.department)
+    .bind(&payload.store_number)
+    .bind(&payload.store_name)
+    .execute(db.inner())
+    .await?;
+
+    let user: User = sqlx::query_as("SELECT * FROM users WHERE id = ?1")
+        .bind(&id)
+        .fetch_one(db.inner())
+        .await?;
+
+    user_to_response(&user, db.inner()).await
 }
 
 #[tauri::command]
@@ -125,7 +222,7 @@ pub async fn get_profile(
         .await?
         .ok_or_else(|| AppError::NotFound("Usuario no encontrado".into()))?;
 
-    Ok(user.into())
+    user_to_response(&user, db.inner()).await
 }
 
 #[tauri::command]
@@ -168,4 +265,29 @@ pub async fn change_password(
         .await?;
 
     Ok(())
+}
+
+#[tauri::command]
+pub async fn update_profile(
+    payload: UpdateProfilePayload,
+    db: State<'_, SqlitePool>,
+) -> Result<UserResponse, AppError> {
+    sqlx::query(
+        "UPDATE users SET first_name = ?1, last_name = ?2, phone = ?3, store_number = ?4, store_name = ?5, updated_at = datetime('now') WHERE id = ?6"
+    )
+    .bind(&payload.first_name)
+    .bind(&payload.last_name)
+    .bind(&payload.phone)
+    .bind(&payload.store_number)
+    .bind(&payload.store_name)
+    .bind(&payload.id)
+    .execute(db.inner())
+    .await?;
+
+    let user: User = sqlx::query_as("SELECT * FROM users WHERE id = ?1")
+        .bind(&payload.id)
+        .fetch_one(db.inner())
+        .await?;
+
+    user_to_response(&user, db.inner()).await
 }

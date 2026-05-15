@@ -61,6 +61,7 @@ export default function CommentSection({ ticketId, userRole, initialComments = [
 
     try {
       const data = await commentsApi.create(ticketId, {
+        userId: user.id,
         content,
         isInternal: internal
       })

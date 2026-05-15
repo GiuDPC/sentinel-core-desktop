@@ -6,6 +6,8 @@ use uuid::Uuid;
 
 use crate::errors::AppError;
 
+use super::tickets::create_notification;
+
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct Comment {
@@ -48,17 +50,63 @@ pub async fn create_comment(
         .fetch_one(db.inner())
         .await?;
 
+    // Get ticket info for notifications
+    let ticket_info: (String, String, String) = sqlx::query_as(
+        "SELECT t.ticket_code, t.creator_id, t.title FROM tickets t WHERE t.id = ?1"
+    )
+    .bind(&payload.ticket_id)
+    .fetch_optional(db.inner())
+    .await?
+    .ok_or_else(|| AppError::NotFound("Ticket no encontrado".into()))?;
+
+    let (ticket_code, creator_id, ticket_title) = ticket_info;
+
+    // Check if commenter is the creator → notify assigned technicians
+    if payload.user_id == creator_id {
+        let tech_ids: Vec<(String,)> = sqlx::query_as(
+            "SELECT technician_id FROM assignments WHERE ticket_id = ?1"
+        )
+        .bind(&payload.ticket_id)
+        .fetch_all(db.inner())
+        .await?;
+        for (tid,) in &tech_ids {
+            create_notification(
+                db.inner(), tid, "Nuevo comentario del solicitante",
+                &format!("{} comentó en el ticket {}", payload.user_id, ticket_code),
+                "COMMENT", Some(&format!("/technician/ticket/{}", payload.ticket_id)),
+            ).await?;
+        }
+    }
+
+    // If staff commented and NOT internal → notify creator
+    if payload.is_internal == 0 && payload.user_id != creator_id {
+        create_notification(
+            db.inner(), &creator_id, "Nuevo comentario del equipo técnico",
+            &format!("El equipo técnico respondió en tu ticket {}", ticket_code),
+            "COMMENT", Some(&format!("/requester/my-tickets?id={}", payload.ticket_id)),
+        ).await?;
+    }
+
     Ok(comment)
 }
 
 #[tauri::command]
 pub async fn get_comments(
     ticket_id: String,
+    user_role: Option<String>,
     db: State<'_, SqlitePool>,
 ) -> Result<Vec<Comment>, AppError> {
-    let comments = sqlx::query_as("SELECT * FROM comments WHERE ticket_id = ? ORDER BY created_at ASC")
-        .bind(&ticket_id)
-        .fetch_all(db.inner())
-        .await?;
+    let comments = if user_role.as_deref() == Some("REQUESTER") {
+        // REQUESTER cannot see internal comments
+        sqlx::query_as("SELECT * FROM comments WHERE ticket_id = ?1 AND is_internal = 0 ORDER BY created_at ASC")
+            .bind(&ticket_id)
+            .fetch_all(db.inner())
+            .await?
+    } else {
+        sqlx::query_as("SELECT * FROM comments WHERE ticket_id = ?1 ORDER BY created_at ASC")
+            .bind(&ticket_id)
+            .fetch_all(db.inner())
+            .await?
+    };
     Ok(comments)
 }

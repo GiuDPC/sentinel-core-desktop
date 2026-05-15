@@ -80,6 +80,7 @@ export default function CreateTicket() {
     try {
       await ticketsApi.create({
         ...form,
+        creatorId: user.id,
         location: `${user?.storeNumber || 'S/L'} - ${form.location}`,
         categoryId: parseInt(form.categoryId, 10),
       })

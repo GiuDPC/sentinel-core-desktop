@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion as Motion } from 'framer-motion'
-import { Database, Plus, Calendar, Filter, CloudDownload, Trash2, Info, AlertTriangle } from 'lucide-react'
+import { Database, Plus, Calendar, Filter, CloudDownload, Trash2, Info, AlertTriangle, RefreshCw } from 'lucide-react'
 import { backupsApi } from '../../api/backups'
 import notifications from '../../components/ui/Notifications'
 
@@ -85,12 +85,16 @@ export default function BackupManager() {
     setIsRestoring(true)
     try {
       await backupsApi.restoreBackup(selectedBackup)
-      notifications.success('Base de datos restaurada con éxito.', 'Restauración Completada')
       setShowRestoreModal(false)
-      setTimeout(() => window.location.reload(), 2000)
+      notifications.success('Backup aplicado correctamente. Recargando datos...', 'Restauración Completada')
+
+      // Recargar la webview completa para que todos los componentes
+      // refetchen sus datos desde la DB restaurada
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
     } catch (error) {
-      notifications.error(error.message, 'Error Crítico')
-    } finally {
+      notifications.error(error.message, 'Error al restaurar')
       setIsRestoring(false)
     }
   }
@@ -307,7 +311,10 @@ export default function BackupManager() {
                     className="flex-1 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 disabled:bg-rose-300 text-white font-bold rounded-xl transition-colors shadow-sm flex justify-center items-center gap-2"
                   >
                     {isRestoring ? (
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        Aplicando...
+                      </>
                     ) : 'Ejecutar'}
                   </button>
                 </div>

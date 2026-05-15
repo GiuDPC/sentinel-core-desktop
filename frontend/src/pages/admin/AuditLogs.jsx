@@ -1,41 +1,27 @@
 import { useState, useEffect, useCallback } from 'react'
 import { auditApi } from '../../api/audit'
 import { Search, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { STATUS_LABELS, PRIORITY_LABELS, AUDIT_ACTION_LABELS } from '../../constants/ticket'
 
 const ACTION_LABELS = {
-  TICKET_CREATED: { label: 'Ticket Creado', color: 'bg-blue-50 text-blue-700' },
-  STATUS_CHANGE: { label: 'Cambio de Estado', color: 'bg-amber-50 text-amber-700' },
-  ASSIGNMENT: { label: 'Asignación', color: 'bg-purple-50 text-purple-700' },
-  RESOLUTION_NOTE: { label: 'Nota de Resolución', color: 'bg-emerald-50 text-emerald-700' },
-  TICKET_CONFIRMED: { label: 'Confirmado', color: 'bg-green-50 text-green-700' },
-  TICKET_REOPENED: { label: 'Reabierto', color: 'bg-rose-50 text-rose-700' },
+  TICKET_CREATED: { label: AUDIT_ACTION_LABELS.TICKET_CREATED, color: 'bg-blue-50 text-blue-700' },
+  STATUS_CHANGE: { label: AUDIT_ACTION_LABELS.STATUS_CHANGE, color: 'bg-amber-50 text-amber-700' },
+  PRIORITY_CHANGE: { label: AUDIT_ACTION_LABELS.PRIORITY_CHANGE, color: 'bg-orange-50 text-orange-700' },
+  ASSIGNMENT: { label: AUDIT_ACTION_LABELS.ASSIGNMENT, color: 'bg-purple-50 text-purple-700' },
+  REASSIGNMENT: { label: AUDIT_ACTION_LABELS.REASSIGNMENT, color: 'bg-violet-50 text-violet-700' },
+  RESOLUTION_NOTE: { label: AUDIT_ACTION_LABELS.RESOLUTION_NOTE, color: 'bg-emerald-50 text-emerald-700' },
+  TICKET_CONFIRMED: { label: AUDIT_ACTION_LABELS.TICKET_CONFIRMED, color: 'bg-green-50 text-green-700' },
+  TICKET_REOPENED: { label: AUDIT_ACTION_LABELS.TICKET_REOPENED, color: 'bg-rose-50 text-rose-700' },
 }
 
-const ACTION_OPTIONS = [
-  { value: 'TICKET_CREATED', label: 'Ticket Creado' },
-  { value: 'STATUS_CHANGE', label: 'Cambio de Estado' },
-  { value: 'ASSIGNMENT', label: 'Asignación' },
-  { value: 'RESOLUTION_NOTE', label: 'Nota de Resolución' },
-  { value: 'TICKET_CONFIRMED', label: 'Confirmado' },
-  { value: 'TICKET_REOPENED', label: 'Reabierto' },
-]
+const ACTION_OPTIONS = Object.entries(ACTION_LABELS).map(([value, config]) => ({
+  value,
+  label: config.label,
+}))
 
 const formatValue = (value) => {
   if (!value || value === '-') return '-'
-  const labels = {
-    OPEN: 'Abierto',
-    ASSIGNED: 'Asignado',
-    IN_PROGRESS: 'En Proceso',
-    ON_HOLD: 'En Espera',
-    AWAITING_CONFIRMATION: 'Por Confirmar',
-    RESOLVED: 'Resuelto',
-    CLOSED: 'Cerrado',
-    LOW: 'Baja',
-    MEDIUM: 'Media',
-    HIGH: 'Alta',
-    CRITICAL: 'Crítica'
-  }
-  return labels[value] || value
+  return STATUS_LABELS[value] || PRIORITY_LABELS[value] || value
 }
 
 export default function AuditLogs() {

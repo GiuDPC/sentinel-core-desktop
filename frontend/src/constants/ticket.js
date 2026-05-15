@@ -18,7 +18,7 @@ export const STATUS_LABELS = {
   ASSIGNED: 'Asignado',
   IN_PROGRESS: 'En Proceso',
   ON_HOLD: 'En Espera',
-  AWAITING_CONFIRMATION: 'Esperando Confirmacion',
+  AWAITING_CONFIRMATION: 'Esperando Confirmación',
   RESOLVED: 'Resuelto',
   CLOSED: 'Cerrado',
 }
@@ -29,7 +29,7 @@ export const STATUS_OPTIONS = [
   { value: 'ASSIGNED', label: 'Asignado' },
   { value: 'IN_PROGRESS', label: 'En Proceso' },
   { value: 'ON_HOLD', label: 'En Espera' },
-  { value: 'AWAITING_CONFIRMATION', label: 'Esperando Confirmacion' },
+  { value: 'AWAITING_CONFIRMATION', label: 'Esperando Confirmación' },
   { value: 'RESOLVED', label: 'Resuelto' },
   { value: 'CLOSED', label: 'Cerrado' },
 ]
@@ -38,7 +38,7 @@ export const PRIORITY_LABELS = {
   LOW: 'Baja',
   MEDIUM: 'Media',
   HIGH: 'Alta',
-  CRITICAL: 'Critica',
+  CRITICAL: 'Crítica',
 }
 
 export const PRIORITY_COLORS = {

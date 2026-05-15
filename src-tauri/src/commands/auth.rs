@@ -158,7 +158,7 @@ pub async fn register_public(
         .fetch_one(db.inner())
         .await?;
 
-    user_to_response(&user, db.inner()).await
+    Ok(user_to_response(&user, db.inner()).await)
 }
 
 #[tauri::command]
@@ -208,7 +208,7 @@ pub async fn register(
         .fetch_one(db.inner())
         .await?;
 
-    user_to_response(&user, db.inner()).await
+    Ok(user_to_response(&user, db.inner()).await)
 }
 
 #[tauri::command]
@@ -222,7 +222,7 @@ pub async fn get_profile(
         .await?
         .ok_or_else(|| AppError::NotFound("Usuario no encontrado".into()))?;
 
-    user_to_response(&user, db.inner()).await
+    Ok(user_to_response(&user, db.inner()).await)
 }
 
 #[tauri::command]
@@ -289,5 +289,5 @@ pub async fn update_profile(
         .fetch_one(db.inner())
         .await?;
 
-    user_to_response(&user, db.inner()).await
+    Ok(user_to_response(&user, db.inner()).await)
 }

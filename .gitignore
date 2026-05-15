@@ -1,12 +1,22 @@
+# ─── Sentinel Core Desktop .gitignore ───
+
 # Archivos sensibles y personales
 Prompt.md
 .env
 .env.local
+*.session.sqlite
 
-# Dependencias (cada subcarpeta tiene su propio .gitignore pero por si acaso)
+# Rust / Tauri build artifacts
+src-tauri/target/
+src-tauri/.cargo/
+
+# Frontend build output (Vite)
+frontend/dist/
+
+# Dependencias
 node_modules/
 
-# Prisma generated
+# Prisma generated (legacy web reference)
 generated/
 
 # OS files
@@ -16,3 +26,11 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

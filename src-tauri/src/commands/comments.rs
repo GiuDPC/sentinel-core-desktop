@@ -59,7 +59,7 @@ pub async fn create_comment(
     .await?
     .ok_or_else(|| AppError::NotFound("Ticket no encontrado".into()))?;
 
-    let (ticket_code, creator_id, ticket_title) = ticket_info;
+    let (ticket_code, creator_id, _ticket_title) = ticket_info;
 
     // Check if commenter is the creator → notify assigned technicians
     if payload.user_id == creator_id {

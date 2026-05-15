@@ -57,7 +57,7 @@ pub async fn get_user(id: String, db: State<'_, SqlitePool>) -> Result<UserRespo
         .fetch_optional(db.inner())
         .await?
         .ok_or_else(|| AppError::NotFound("Usuario no encontrado".into()))?;
-    user_to_full_response(&user, db.inner()).await
+    Ok(user_to_full_response(&user, db.inner()).await)
 }
 
 #[tauri::command]
@@ -99,7 +99,7 @@ pub async fn update_user(
         .bind(&payload.id)
         .fetch_one(db.inner())
         .await?;
-    user_to_full_response(&user, db.inner()).await
+    Ok(user_to_full_response(&user, db.inner()).await)
 }
 
 #[tauri::command]

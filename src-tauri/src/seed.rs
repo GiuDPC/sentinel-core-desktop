@@ -8,7 +8,7 @@ use tokio::task;
 use crate::errors::AppError;
 
 pub async fn run_if_empty(pool: &SqlitePool) -> Result<(), AppError> {
-    let count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM tickets")
+    let count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM users")
         .fetch_one(pool)
         .await
         .unwrap_or((0,));
@@ -16,16 +16,16 @@ pub async fn run_if_empty(pool: &SqlitePool) -> Result<(), AppError> {
     if count.0 == 0 {
         println!("Base de datos vacia. Ejecutando seed completo...");
 
-        // ─── 1. Roles ───
+        // ─── 1. Roles (INSERT OR IGNORE por si ya existen de un restore parcial) ───
         let roles = [
             (1, "ADMIN", "Administrador del centro comercial"),
             (2, "TECHNICIAN", "Tecnico de mantenimiento"),
             (3, "REQUESTER", "Locatario del centro comercial"),
         ];
         for (id, name, desc) in roles.iter() {
-            sqlx::query("INSERT INTO roles (id, name, description) VALUES (?, ?, ?)")
+            let _ = sqlx::query("INSERT OR IGNORE INTO roles (id, name, description) VALUES (?, ?, ?)")
                 .bind(id).bind(name).bind(desc)
-                .execute(pool).await?;
+                .execute(pool).await;
         }
 
         // ─── 2. Categorias (EXACTAMENTE como el web) ───

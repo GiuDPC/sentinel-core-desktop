@@ -491,7 +491,7 @@ export default function MyTickets() {
                   selectedTicket?.priority === 'CRITICAL' ? 'bg-rose-50 text-rose-700' :
                   'bg-slate-100 text-slate-600'
                 }`}>
-                  {{ LOW: 'Baja', MEDIUM: 'Media', HIGH: 'Alta', CRITICAL: 'Crítica' }[selectedTicket?.priority] || selectedTicket?.priority}
+                  {PRIORITY_LABELS[selectedTicket?.priority] || selectedTicket?.priority}
                 </span>
               </div>
               <div className="px-4 py-3 border-r border-slate-100">

@@ -6,6 +6,7 @@ import StatusBadge from '../../components/dashboard/StatusBadge'
 import PriorityBadge from '../../components/dashboard/PriorityBadge'
 import notifications from '../../components/ui/Notifications'
 import { Search, Filter, SlidersHorizontal, ChevronLeft, ChevronRight, X, Ticket } from 'lucide-react'
+import { PRIORITY_LABELS } from '../../constants/ticket'
 
 const STATUS_OPTIONS = [
   { label: 'Asignados', value: 'ASSIGNED' },
@@ -13,13 +14,6 @@ const STATUS_OPTIONS = [
   { label: 'En Espera', value: 'ON_HOLD' },
   { label: 'Resueltos', value: 'RESOLVED' },
 ]
-
-const PRIORITY_LABELS = {
-  LOW: 'Baja',
-  MEDIUM: 'Media',
-  HIGH: 'Alta',
-  CRITICAL: 'Crítica',
-}
 
 export default function AssignedTickets() {
   const { user } = useAuth()

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { usersApi } from '../../api/users'
 import notifications from '../../components/ui/Notifications'
-import { Search, Filter, X, ChevronLeft, ChevronRight, Shield } from 'lucide-react'
+import { Search, Filter, X, ChevronLeft, ChevronRight, Shield, Mail, Phone, MapPin, Building, Calendar, Clock, User as UserIcon } from 'lucide-react'
 import { ROLE_LABELS, ROLE_COLORS, ROLE_OPTIONS } from '../../constants/roles'
+import AnimatedModal from '../../components/ui/AnimatedModal'
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Activo' },
@@ -12,6 +13,8 @@ const STATUS_OPTIONS = [
 export default function UserManagement() {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [selectedUser, setSelectedUser] = useState(null)
+  const [showUserModal, setShowUserModal] = useState(false)
   const [filters, setFilters] = useState({ search: '', role: '', status: '' })
   const [openFilter, setOpenFilter] = useState(null)
   const [pagination, setPagination] = useState({ page: 1, limit: 8 })
@@ -252,7 +255,7 @@ export default function UserManagement() {
                   const roleLabel = ROLE_LABELS[roleName] || roleName
                   const roleColor = ROLE_COLORS[roleName] || 'bg-gray-100 text-gray-600'
                   return (
-                    <tr key={user.id} className="hover:bg-slate-50/80 transition-all group cursor-pointer">
+                    <tr key={user.id} className="hover:bg-slate-50/80 transition-all group cursor-pointer" onClick={() => { setSelectedUser(user); setShowUserModal(true) }}>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-gray-200 text-black flex items-center justify-center text-xs font-semibold">
@@ -322,6 +325,142 @@ export default function UserManagement() {
           </>
         )}
       </div>
+
+      {/* Modal de detalle de usuario */}
+      <AnimatedModal show={showUserModal} onClose={() => setShowUserModal(false)} className="w-full max-w-lg">
+        {selectedUser && (
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+            {/* Header con avatar */}
+            <div className="bg-slate-900 px-6 py-6 text-white relative">
+              <button
+                onClick={() => setShowUserModal(false)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <div className="flex items-center gap-5">
+                <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold">
+                  {selectedUser.firstName?.[0]}{selectedUser.lastName?.[0]}
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold font-display">{selectedUser.firstName} {selectedUser.lastName}</h3>
+                  <p className="text-sm text-white/70 mt-0.5">{selectedUser.email}</p>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider mt-2 ${ROLE_COLORS[selectedUser.role] || 'bg-white/10 text-white'}`}>
+                    {ROLE_LABELS[selectedUser.role] || selectedUser.role}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Cuerpo */}
+            <div className="p-6 space-y-5">
+              {/* Información de contacto */}
+              <div>
+                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Información de Contacto</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-slate-50 rounded-xl p-3 flex items-center gap-3">
+                    <Phone className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                    <div>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Teléfono</p>
+                      <p className="text-sm font-bold text-slate-800">{selectedUser.phone || 'No registrado'}</p>
+                    </div>
+                  </div>
+                  <div className="bg-slate-50 rounded-xl p-3 flex items-center gap-3">
+                    <Mail className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                    <div>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Email</p>
+                      <p className="text-sm font-bold text-slate-800 truncate">{selectedUser.email}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Información del local / departamento */}
+              {(selectedUser.storeNumber || selectedUser.storeName || selectedUser.department) && (
+                <div>
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+                    {selectedUser.role === 'REQUESTER' ? 'Información del Local' : 'Departamento'}
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {selectedUser.storeNumber && (
+                      <div className="bg-slate-50 rounded-xl p-3 flex items-center gap-3">
+                        <MapPin className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                        <div>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Local N°</p>
+                          <p className="text-sm font-bold text-slate-800">{selectedUser.storeNumber}</p>
+                        </div>
+                      </div>
+                    )}
+                    {selectedUser.storeName && (
+                      <div className="bg-slate-50 rounded-xl p-3 flex items-center gap-3">
+                        <Building className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                        <div>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Nombre del Local</p>
+                          <p className="text-sm font-bold text-slate-800">{selectedUser.storeName}</p>
+                        </div>
+                      </div>
+                    )}
+                    {selectedUser.department && (
+                      <div className="bg-slate-50 rounded-xl p-3 flex items-center gap-3 col-span-2">
+                        <Building className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                        <div>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Departamento</p>
+                          <p className="text-sm font-bold text-slate-800">{selectedUser.department}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Estado de la cuenta */}
+              <div>
+                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Estado de la Cuenta</h4>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-slate-50 rounded-xl p-3">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Estado</p>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase mt-1 ${
+                      selectedUser.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                    }`}>
+                      {selectedUser.isActive ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </div>
+                  <div className="bg-slate-50 rounded-xl p-3">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Creado</p>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <Calendar className="w-3 h-3 text-slate-400" />
+                      <p className="text-xs font-bold text-slate-800">
+                        {selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString('es-VE') : '—'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-slate-50 rounded-xl p-3">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Actualizado</p>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <Clock className="w-3 h-3 text-slate-400" />
+                      <p className="text-xs font-bold text-slate-800">
+                        {selectedUser.updatedAt ? new Date(selectedUser.updatedAt).toLocaleDateString('es-VE') : '—'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Acción rápida */}
+              <button
+                onClick={(e) => { e.stopPropagation(); handleToggleActive(selectedUser.id, selectedUser.isActive); setShowUserModal(false) }}
+                className={`w-full h-10 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${
+                  selectedUser.isActive
+                    ? 'bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200'
+                    : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200'
+                }`}
+              >
+                {selectedUser.isActive ? 'Desactivar Usuario' : 'Activar Usuario'}
+              </button>
+            </div>
+          </div>
+        )}
+      </AnimatedModal>
     </div>
   )
 }

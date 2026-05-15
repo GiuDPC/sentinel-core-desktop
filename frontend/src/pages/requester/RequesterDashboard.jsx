@@ -7,6 +7,7 @@ import QuickActions from '../../components/dashboard/QuickActions'
 import RecentActivity from '../../components/dashboard/RecentActivity'
 import { metricsApi } from '../../api/metrics'
 import { ticketsApi } from '../../api/tickets'
+import { PRIORITY_LABELS } from '../../constants/ticket'
 import { useAuth } from '../../Contexts/AuthContextObject'
 
 export default function RequesterDashboard() {
@@ -102,9 +103,7 @@ export default function RequesterDashboard() {
             ticketCode={activeTicket.ticketCode}
             title={activeTicket.title}
             currentStatus={activeTicket.status}
-            priority={
-              { LOW: 'Baja', MEDIUM: 'Media', HIGH: 'Alta', CRITICAL: 'Critica' }[activeTicket.priority]
-            }
+            priority={PRIORITY_LABELS[activeTicket.priority]}
             technicianName={
               activeTicket.assignments?.[0]?.technician
                 ? `${activeTicket.assignments[0].technician.firstName} ${activeTicket.assignments[0].technician.lastName}`

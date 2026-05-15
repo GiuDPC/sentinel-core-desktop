@@ -9,8 +9,10 @@ import notifications from '../../components/ui/Notifications'
 import CommentSection from '../../components/dashboard/CommentSection'
 import TicketTimeline from '../../components/dashboard/TicketTimeline'
 import { Search, Filter, SlidersHorizontal, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { useAuth } from '../../Contexts/AuthContextObject.js'
 
 export default function TicketList() {
+  const { user } = useAuth()
   const [tickets, setTickets] = useState([])
   const [searchParams] = useSearchParams()
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 })
@@ -136,11 +138,11 @@ export default function TicketList() {
   async function handleAssign(techId) {
     try {
       if (isReassign) {
-        await ticketsApi.reassignTechnician(assignTicketId, techId)
-        notifications.success('Tecnico reasignado correctamente', 'Reasignacion exitosa')
+        await ticketsApi.reassignTechnician(assignTicketId, techId, user?.id)
+        notifications.success('Técnico reasignado correctamente', 'Reasignación exitosa')
       } else {
-        await ticketsApi.assignTechnician(assignTicketId, techId)
-        notifications.success('Tecnico asignado correctamente', 'Asignacion exitosa')
+        await ticketsApi.assignTechnician(assignTicketId, techId, user?.id)
+        notifications.success('Técnico asignado correctamente', 'Asignación exitosa')
       }
       setAssignModal(false)
       loadTickets()

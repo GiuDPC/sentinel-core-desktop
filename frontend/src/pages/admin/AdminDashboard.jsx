@@ -5,6 +5,7 @@ import KPICard from '../../components/dashboard/KPICard'
 import RecentActivity from '../../components/dashboard/RecentActivity'
 import { metricsApi } from '../../api/metrics'
 import { ticketsApi } from '../../api/tickets'
+import { STATUS_LABELS } from '../../constants/ticket'
 
 export default function AdminDashboard() {
   const [metrics, setMetrics] = useState(null)
@@ -150,18 +151,10 @@ export default function AdminDashboard() {
           <div className="space-y-5">
             {(metrics?.ticketsByStatus || []).map((item) => {
               const percentage = Math.min((item.count / (summary.totalTickets || 1)) * 100, 100)
-              const statusLabels = {
-                OPEN: 'Abierto',
-                ASSIGNED: 'Asignado',
-                IN_PROGRESS: 'En Proceso',
-                ON_HOLD: 'En Espera',
-                RESOLVED: 'Resuelto',
-                CLOSED: 'Cerrado',
-              }
               return (
                 <div key={item.status} className="group">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-slate-600">{statusLabels[item.status] || item.status}</span>
+                    <span className="text-xs font-medium text-slate-600">{STATUS_LABELS[item.status] || item.status}</span>
                     <span className="text-xs font-bold text-slate-800">{item.count}</span>
                   </div>
                   <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">

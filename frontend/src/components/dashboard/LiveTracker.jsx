@@ -1,13 +1,5 @@
 import { motion as Motion } from 'framer-motion'
-
-const STATUS_LABELS = {
-  OPEN: 'Reportado',
-  ASSIGNED: 'Asignado',
-  IN_PROGRESS: 'En proceso',
-  RESOLVED: 'Resuelto',
-  AWAITING_CONFIRMATION: 'Confirmacion',
-  CLOSED: 'Cerrado',
-}
+import { STATUS_LABELS } from '../../constants/ticket'
 
 const STEPS = ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'AWAITING_CONFIRMATION', 'CLOSED']
 

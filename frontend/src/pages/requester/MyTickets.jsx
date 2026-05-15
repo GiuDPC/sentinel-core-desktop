@@ -57,7 +57,7 @@ export default function MyTickets() {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter, priorityFilter, searchFilter, pagination.page])
+  }, [statusFilter, priorityFilter, searchFilter, pagination.page, user.id])
 
   // Carga inicial y por filtros
   useEffect(() => {

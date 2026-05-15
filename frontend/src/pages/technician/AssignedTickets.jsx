@@ -44,7 +44,7 @@ export default function AssignedTickets() {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter, priorityFilter, searchFilter, pagination.page])
+  }, [statusFilter, priorityFilter, searchFilter, pagination.page, user.id])
 
   useEffect(() => {
     const timer = setTimeout(() => {

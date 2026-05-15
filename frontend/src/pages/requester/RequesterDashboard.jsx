@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react'
 import KPICard from '../../components/dashboard/KPICard'
@@ -18,7 +18,7 @@ export default function RequesterDashboard() {
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
-  async function loadDashboard() {
+  const loadDashboard = useCallback(async () => {
     try {
       const [metricsData, ticketsData] = await Promise.all([
         metricsApi.getRequesterMetrics(user.id),
@@ -36,12 +36,12 @@ export default function RequesterDashboard() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user.id])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadDashboard()
-  }, [])
+  }, [loadDashboard])
 
   if (loading) {
     return (

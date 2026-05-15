@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import KPICard from '../../components/dashboard/KPICard'
 import LiveTracker from '../../components/dashboard/LiveTracker'
@@ -17,7 +17,7 @@ export default function TechDashboard() {
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
-  async function loadDashboard() {
+  const loadDashboard = useCallback(async () => {
     try {
       const [metricsData, ticketsData] = await Promise.all([
         metricsApi.getTechnicianMetrics(user.id),
@@ -41,12 +41,12 @@ export default function TechDashboard() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user.id])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadDashboard()
-  }, [])
+  }, [loadDashboard])
 
   if (loading) {
     return (

@@ -43,13 +43,14 @@ export function AuthProvider({ children }) {
         const store = await getSessionStore();
         await store.delete('user');
         await store.save();
-      } catch {}
+      } catch { /* ignore cleanup errors */ }
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     checkAuth()
   }, [])
 

@@ -5,6 +5,8 @@ use serde::Deserialize;
 use crate::errors::AppError;
 use crate::models::*;
 
+type AuditRow = (String, String, String, String, Option<String>, Option<String>, String);
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AuditFilters {
@@ -15,7 +17,7 @@ pub struct AuditFilters {
 
 async fn enrich_audit_logs(
     pool: &SqlitePool,
-    rows: Vec<(String, String, String, String, Option<String>, Option<String>, String)>,
+    rows: Vec<AuditRow>,
 ) -> Result<Vec<AuditLogResponse>, AppError> {
     let mut enriched = Vec::new();
     for (id, tid, uid, action, old_value, new_value, created_at) in rows {
@@ -48,7 +50,7 @@ pub async fn get_audit_by_ticket(
     ticket_id: String,
     db: State<'_, SqlitePool>,
 ) -> Result<Vec<AuditLogResponse>, AppError> {
-    let logs = sqlx::query_as::<_, (String, String, String, String, Option<String>, Option<String>, String)>(
+    let logs = sqlx::query_as::<_, AuditRow>(
         "SELECT al.id, al.ticket_id, al.user_id, al.action, al.old_value, al.new_value, al.created_at
          FROM audit_logs al WHERE al.ticket_id = ?1 ORDER BY al.created_at ASC"
     )
@@ -68,7 +70,7 @@ pub async fn get_audit_logs(
         page: None, limit: None, action: None,
     });
 
-    let limit = f.limit.unwrap_or(100).max(1).min(500);
+    let limit = f.limit.unwrap_or(100).clamp(1, 500);
     let page = f.page.unwrap_or(1).max(1);
     let offset = (page - 1) * limit;
 
@@ -96,7 +98,7 @@ pub async fn get_audit_logs(
         params.len() + 2,
     );
 
-    let mut select_query = sqlx::query_as::<_, (String, String, String, String, Option<String>, Option<String>, String)>(&query_sql);
+    let mut select_query = sqlx::query_as::<_, AuditRow>(&query_sql);
     for p in &params {
         select_query = select_query.bind(p);
     }

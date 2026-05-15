@@ -156,7 +156,7 @@ pub async fn reassign_technician(
     // Notify new technician
     create_notification(
         db.inner(), &payload.technician_id, "Reasignación",
-        &format!("Se te ha reasignado el ticket para atención"),
+        "Se te ha reasignado el ticket para atención",
         "ASSIGNMENT", Some(&format!("/technician/ticket/{}", payload.ticket_id)),
     ).await?;
 

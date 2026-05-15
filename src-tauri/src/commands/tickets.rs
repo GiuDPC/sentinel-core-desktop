@@ -347,7 +347,7 @@ pub async fn get_tickets(
     db: State<'_, SqlitePool>,
 ) -> Result<PaginatedResponse<TicketListItem>, AppError> {
     let page = filters.page.unwrap_or(1).max(1);
-    let limit = filters.limit.unwrap_or(20).max(1).min(100);
+    let limit = filters.limit.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * limit;
 
     // Build dynamic WHERE clause
@@ -371,13 +371,10 @@ pub async fn get_tickets(
     // y también en nombre del creador y del técnico asignado
     if let Some(ref search) = filters.search {
         if !search.is_empty() {
-            let terms: Vec<&str> = search.trim().split_whitespace().collect();
+            let terms: Vec<&str> = search.split_whitespace().collect();
             let mut term_conditions: Vec<String> = Vec::new();
             for term in &terms {
                 let pattern = format!("%{}%", term);
-                // 9 placeholders: ticket_code, title, description, location,
-                // first_name(creator), last_name(creator), email(creator),
-                // first_name(tech), last_name(tech)
                 let search_sql = 
                     "(t.ticket_code LIKE ? OR t.title LIKE ? OR t.description LIKE ? OR t.location LIKE ? \
                      OR EXISTS (SELECT 1 FROM users cr WHERE cr.id = t.creator_id AND (cr.first_name LIKE ? OR cr.last_name LIKE ? OR cr.email LIKE ?)) \
@@ -456,7 +453,7 @@ pub async fn get_my_tickets(
         status: None, priority: None, search: None, page: None, limit: None,
     });
     let page = f.page.unwrap_or(1).max(1);
-    let limit = f.limit.unwrap_or(20).max(1).min(100);
+    let limit = f.limit.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * limit;
 
     // Build WHERE clause: creator_id + filters + search
@@ -478,7 +475,7 @@ pub async fn get_my_tickets(
 
     if let Some(ref search) = f.search {
         if !search.is_empty() {
-            let terms: Vec<&str> = search.trim().split_whitespace().collect();
+            let terms: Vec<&str> = search.split_whitespace().collect();
             let mut term_conditions: Vec<String> = Vec::new();
             for term in &terms {
                 let pattern = format!("%{}%", term);
@@ -540,7 +537,7 @@ pub async fn get_assigned_tickets(
         status: None, priority: None, search: None, page: None, limit: None,
     });
     let page = f.page.unwrap_or(1).max(1);
-    let limit = f.limit.unwrap_or(20).max(1).min(100);
+    let limit = f.limit.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * limit;
 
     // Build WHERE clause: technician_id + filters + search
@@ -562,7 +559,7 @@ pub async fn get_assigned_tickets(
 
     if let Some(ref search) = f.search {
         if !search.is_empty() {
-            let terms: Vec<&str> = search.trim().split_whitespace().collect();
+            let terms: Vec<&str> = search.split_whitespace().collect();
             let mut term_conditions: Vec<String> = Vec::new();
             for term in &terms {
                 let pattern = format!("%{}%", term);

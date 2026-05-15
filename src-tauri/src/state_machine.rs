@@ -15,5 +15,5 @@ pub fn valid_transitions() -> HashMap<&'static str, Vec<&'static str>> {
 pub fn is_valid_transition(current: &str, next: &str) -> bool {
     valid_transitions()
         .get(current)
-        .map_or(false, |allowed| allowed.contains(&next))
+        .is_some_and(|allowed| allowed.contains(&next))
 }

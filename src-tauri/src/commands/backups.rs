@@ -19,7 +19,6 @@ pub struct BackupInfo {
 }
 
 fn send_native_notification(app: &AppHandle, title: &str, body: &str) {
-    // Tauri v2 notification — builder is sync, show() returns Result<NotificationHandle>
     #[cfg(desktop)]
     {
         if let Err(e) = app.notification()
@@ -49,8 +48,7 @@ pub async fn create_backup(app: AppHandle, db: State<'_, SqlitePool>) -> Result<
     let dest = backup_dir.join(&filename);
     let dest_str = dest.to_string_lossy().to_string();
     
-    // VACUUM INTO crea un snapshot 100% consistente del estado actual,
-    // incluyendo datos del WAL. Mucho más seguro que fs::copy.
+    // VACUUM INTO = snapshot transaccional, más seguro que fs::copy
     sqlx::query("VACUUM INTO ?")
         .bind(&dest_str)
         .execute(db.inner())
@@ -109,7 +107,7 @@ pub async fn restore_backup(filename: String, app: AppHandle, db: State<'_, Sqli
         return Err(AppError::NotFound("Archivo de backup no encontrado".into()));
     }
     
-    // ─── SEGURIDAD: crear auto-backup antes de restaurar ───
+    // Auto-backup antes de restaurar
     let backup_dir = app_dir.join("backups");
     fs::create_dir_all(&backup_dir).map_err(|e| AppError::Internal(e.to_string()))?;
     
@@ -117,19 +115,13 @@ pub async fn restore_backup(filename: String, app: AppHandle, db: State<'_, Sqli
     let pre_restore_path = backup_dir.join(&pre_restore_filename);
     let pre_path_str = pre_restore_path.to_string_lossy().to_string();
     
-    // VACUUM INTO sobre cualquier conexión — crea un snapshot consistente
     sqlx::query("VACUUM INTO ?")
         .bind(&pre_path_str)
         .execute(db.inner())
         .await
         .map_err(|e| AppError::Internal(format!("Error al crear backup de seguridad: {}", e)))?;
     
-    // ─── RESTAURAR — UNA SOLA CONEXIÓN PARA TODO ───
-    // CRÍTICO: ATTACH, PRAGMA, DELETE, INSERT y DETACH deben ejecutarse
-    // en la MISMA conexión de SQLite. Si usamos el pool, cada execute()
-    // puede caer en una conexión distinta y el PRAGMA foreign_keys = OFF
-    // no afectaría al DELETE.
-    
+
     let backup_path_str = backup_path.to_string_lossy().to_string();
     let escaped_path = escape_sql_string(&backup_path_str);
     
@@ -137,7 +129,6 @@ pub async fn restore_backup(filename: String, app: AppHandle, db: State<'_, Sqli
     let mut conn: PoolConnection<Sqlite> = db.acquire().await
         .map_err(|e| AppError::Internal(format!("Error al conectar a la base de datos: {}", e)))?;
     
-    // Helper para limpiar en caso de error: rehabilita FK y DETACH en la misma conexión
     macro_rules! cleanup_and_return {
         ($conn:expr, $err:expr) => {{
             let _ = sqlx::query("PRAGMA foreign_keys = ON").execute(&mut *$conn).await;
@@ -238,7 +229,6 @@ pub async fn restore_backup(filename: String, app: AppHandle, db: State<'_, Sqli
         .await;
     }
     
-    // 8. REHABILITAR FK constraints
     if let Err(e) = sqlx::query("PRAGMA foreign_keys = ON").execute(&mut *conn).await {
         cleanup_and_return!(conn, AppError::Internal(format!("Error al habilitar FK: {}", e)));
     }
@@ -248,7 +238,6 @@ pub async fn restore_backup(filename: String, app: AppHandle, db: State<'_, Sqli
         return Err(AppError::Internal(format!("Error al desconectar backup: {}", e)));
     }
     
-    // conn se dropea aquí → vuelve al pool automáticamente
     
     send_native_notification(
         &app,

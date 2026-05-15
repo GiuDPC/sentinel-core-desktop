@@ -10,13 +10,12 @@ use crate::errors::AppError;
 pub async fn run_if_empty(pool: &SqlitePool) -> Result<(), AppError> {
     let count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM users")
         .fetch_one(pool)
-        .await
-        .unwrap_or((0,));
+        .await?;
 
     if count.0 == 0 {
         println!("Base de datos vacia. Ejecutando seed completo...");
 
-        // ─── 1. Roles (INSERT OR IGNORE por si ya existen de un restore parcial) ───
+        // 1. Roles
         let roles = [
             (1, "ADMIN", "Administrador del centro comercial"),
             (2, "TECHNICIAN", "Tecnico de mantenimiento"),
@@ -28,7 +27,7 @@ pub async fn run_if_empty(pool: &SqlitePool) -> Result<(), AppError> {
                 .execute(pool).await;
         }
 
-        // ─── 2. Categorias (EXACTAMENTE como el web) ───
+        // 2. Categorias
         let cats_data = [
             ("Corte Electrico", "MANTENIMIENTO_ELECTRICO", 4),
             ("Fuga de Agua", "PLOMERIA", 6),
@@ -45,12 +44,12 @@ pub async fn run_if_empty(pool: &SqlitePool) -> Result<(), AppError> {
                 .execute(pool).await?;
         }
 
-        // ─── 3. Passwords ───
+        // 3. Passwords
         let admin_hash = hash_password("SentinelAdmin2026!").await?;
         let tech_hash = hash_password("Tecnico2026!").await?;
         let req_hash = hash_password("Locatario2026!").await?;
 
-        // ─── 4. Admins ───
+        // 4. Admins
         let admin_id = Uuid::new_v4().to_string();
         sqlx::query("INSERT INTO users (id, role_id, first_name, last_name, email, password_hash, department, is_active) VALUES (?, 1, ?, ?, ?, ?, 'ADMINISTRACION', 1)")
             .bind(&admin_id).bind("Giuseppe").bind("Admin").bind("admin@sentinel.local").bind(&admin_hash)
@@ -61,7 +60,7 @@ pub async fn run_if_empty(pool: &SqlitePool) -> Result<(), AppError> {
             .bind(&admin2_id).bind("Director").bind("Operaciones").bind("director@sentinel.local").bind(&admin_hash)
             .execute(pool).await?;
 
-        // ─── 5. Tecnicos ───
+        // 5. Tecnicos
         let techs_data = [
             ("Carlos", "Perez", "carlos.perez@sentinel.local", "MANTENIMIENTO_ELECTRICO", "0412-1234567"),
             ("Maria", "Lopez", "maria.lopez@sentinel.local", "PLOMERIA", "0414-7654321"),
@@ -78,7 +77,7 @@ pub async fn run_if_empty(pool: &SqlitePool) -> Result<(), AppError> {
                 .execute(pool).await?;
         }
 
-        // ─── 6. Locatarios ───
+        // 6. Locatarios
         let reqs_data = [
             ("Juan", "Garcia", "juan.garcia@sentinel.local", "L-105", "Tienda JG Fashion"),
             ("Ana", "Martinez", "ana.martinez@sentinel.local", "L-210", "Cafe Martinez"),
@@ -98,7 +97,7 @@ pub async fn run_if_empty(pool: &SqlitePool) -> Result<(), AppError> {
                 .execute(pool).await?;
         }
 
-        // ─── 7. Tickets (35 tickets identicos al web) ───
+        // 7. Tickets
         struct TicketDef {
             title: &'static str,
             desc: &'static str,

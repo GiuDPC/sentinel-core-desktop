@@ -52,6 +52,13 @@ jobs:
         with:
           components: clippy
 
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+          cache-on-failure: true
+          cache-all-crates: true
+
       - name: Install Linux system deps
         run: |
           sudo apt-get update

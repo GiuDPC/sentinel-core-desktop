@@ -1,8 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
-// ─── Modelos base (FromRow para queries SQL directas) ───
-
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct Role {
@@ -50,7 +48,6 @@ pub struct UserResponse {
 }
 
 impl User {
-    /// Obtiene el nombre del rol desde la base de datos
     pub async fn get_role_name(pool: &sqlx::SqlitePool, role_id: i64) -> String {
         let result: Result<(String,), sqlx::Error> = sqlx::query_as(
             "SELECT name FROM roles WHERE id = ?1"
@@ -64,7 +61,6 @@ impl User {
 
 impl From<User> for UserResponse {
     fn from(user: User) -> Self {
-        // Default role — will be overwritten by login/me after querying
         let role = match user.role_id {
             1 => "ADMIN".to_string(),
             2 => "TECHNICIAN".to_string(),
@@ -118,8 +114,6 @@ pub struct Ticket {
     pub created_at: String,
     pub updated_at: String,
 }
-
-// ─── Tipos de respuesta anidados para el frontend ───
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -223,8 +217,6 @@ pub struct TicketDetail {
     pub audit_logs: Vec<AuditLogResponse>,
 }
 
-// ─── Payloads de paginación y listas ───
-
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PaginatedResponse<T: Serialize> {
@@ -239,8 +231,6 @@ pub struct PaginationInfo {
     pub total_pages: i64,
     pub total: i64,
 }
-
-// ─── Métricas ───
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -307,8 +297,6 @@ pub struct RequesterMetricsResponse {
     pub sla_breached: i64,
     pub sla_at_risk: i64,
 }
-
-// ─── Carga de trabajo ───
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

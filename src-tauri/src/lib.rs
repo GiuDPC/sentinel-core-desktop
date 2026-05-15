@@ -1,5 +1,3 @@
-// Sentinel Core — Tauri Builder & Lifecycle
-
 pub mod errors;
 pub mod models;
 pub mod seed;
@@ -27,7 +25,7 @@ pub fn run() {
 
             let pool = tauri::async_runtime::block_on(async {
                 let pool = SqlitePoolOptions::new()
-                    .max_connections(2)
+                    .max_connections(3)
                     .connect(&db_url)
                     .await
                     .expect("Error crítico: no se pudo conectar a SQLite");

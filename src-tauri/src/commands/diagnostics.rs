@@ -52,8 +52,6 @@ pub async fn check_db_status(db: State<'_, SqlitePool>) -> Result<DbStatus, AppE
     })
 }
 
-/// Reinicia la base de datos: crea backup, borra tablas, re-ejecuta migraciones y seed.
-/// La app NO necesita reiniciarse después de esto.
 #[tauri::command]
 pub async fn reset_database(
     app: AppHandle,
@@ -70,13 +68,12 @@ pub async fn reset_database(
         fs::copy(&db_path, &backup_path).map_err(|e| AppError::Internal(e.to_string()))?;
     }
 
-    // 2. Drop todas las tablas (orden inverso por foreign keys)
+    // Drop en orden inverso por FK
     let tables = [
         "audit_logs", "notifications", "comments", "assignments",
         "tickets", "categories", "users", "roles",
     ];
     for table in &tables {
-        // Disable foreign keys to drop without issues
         sqlx::query("PRAGMA foreign_keys=OFF").execute(db.inner()).await.ok();
         sqlx::query(&format!("DROP TABLE IF EXISTS {}", table))
             .execute(db.inner())
@@ -96,7 +93,6 @@ pub async fn reset_database(
     // 4. Re-ejecutar seed
     seed::run_if_empty(db.inner()).await?;
 
-    // 5. Devolver estado actualizado
     let status = check_db_status_inner(db.inner()).await;
     Ok(status)
 }

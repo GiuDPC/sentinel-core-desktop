@@ -1,7 +1,5 @@
 use chrono::{Duration, NaiveDateTime, Utc};
 
-// Calculadora de SLA
-// SQLite maneja las fechas nativas de datetime('now') en formato "YYYY-MM-DD HH:MM:SS"
 pub fn calculate_due_date(created_at: &str, sla_hours: i64) -> Option<String> {
     let dt = NaiveDateTime::parse_from_str(created_at, "%Y-%m-%d %H:%M:%S").ok()?;
     let due = dt + Duration::hours(sla_hours);

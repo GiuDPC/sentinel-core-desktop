@@ -24,7 +24,6 @@ impl fmt::Display for AppError {
 
 impl std::error::Error for AppError {}
 
-// Implementamos Serialize para que Tauri pueda enviar el error al frontend como un JSON/String limpio
 impl Serialize for AppError {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -34,21 +33,18 @@ impl Serialize for AppError {
     }
 }
 
-// Convertimos errores de SQLx automáticamente a AppError::Database
 impl From<sqlx::Error> for AppError {
     fn from(err: sqlx::Error) -> Self {
         AppError::Database(err.to_string())
     }
 }
 
-// Convertimos errores de Argon2 automáticamente a AppError::Internal
 impl From<argon2::password_hash::Error> for AppError {
     fn from(err: argon2::password_hash::Error) -> Self {
         AppError::Internal(format!("Error de seguridad (hashing): {}", err))
     }
 }
 
-// Convertimos errores de IO automáticamente a AppError::Internal
 impl From<std::io::Error> for AppError {
     fn from(err: std::io::Error) -> Self {
         AppError::Internal(err.to_string())

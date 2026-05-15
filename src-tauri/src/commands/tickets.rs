@@ -8,7 +8,6 @@ use crate::models::*;
 use crate::state_machine::is_valid_transition;
 use crate::sla::calculate_due_date;
 
-/// Sanitiza un string escapando caracteres HTML/XSS
 fn sanitize(input: &str) -> String {
     input
         .replace('&', "&amp;")
@@ -62,7 +61,6 @@ pub struct TicketFilters {
     pub limit: Option<i64>,
 }
 
-/// Genera código secuencial TKT-XXXX
 async fn generate_ticket_code(pool: &SqlitePool) -> Result<String, AppError> {
     let count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM tickets")
         .fetch_one(pool)
@@ -73,7 +71,6 @@ async fn generate_ticket_code(pool: &SqlitePool) -> Result<String, AppError> {
     Ok(format!("TKT-{:04}", next_num.min(9999)))
 }
 
-/// Obtiene IDs de todos los administradores para notificarles
 pub async fn get_admin_ids(pool: &SqlitePool) -> Result<Vec<String>, AppError> {
     let admins: Vec<(String,)> = sqlx::query_as(
         "SELECT u.id FROM users u INNER JOIN roles r ON r.id = u.role_id WHERE r.name = 'ADMIN' AND u.is_active = 1"
@@ -82,8 +79,6 @@ pub async fn get_admin_ids(pool: &SqlitePool) -> Result<Vec<String>, AppError> {
     .await?;
     Ok(admins.into_iter().map(|(id,)| id).collect())
 }
-
-// ─── Helpers ───
 
 pub async fn enrich_ticket(pool: &SqlitePool, ticket: &Ticket) -> Result<TicketListItem, AppError> {
     let creator: Option<UserBrief> = sqlx::query_as::<_, (String, String, String)>(
@@ -228,7 +223,6 @@ async fn enrich_ticket_detail(pool: &SqlitePool, ticket: &Ticket) -> Result<Tick
     })
 }
 
-/// Crea un registro de auditoría
 pub async fn create_audit_log(
     pool: &SqlitePool,
     ticket_id: &str,
@@ -252,7 +246,6 @@ pub async fn create_audit_log(
     Ok(())
 }
 
-/// Crea una notificación
 pub async fn create_notification(
     pool: &SqlitePool,
     user_id: &str,
@@ -275,8 +268,6 @@ pub async fn create_notification(
     .await?;
     Ok(())
 }
-
-// ─── Comandos ───
 
 #[tauri::command]
 pub async fn create_ticket(

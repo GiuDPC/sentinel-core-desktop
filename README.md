@@ -1,412 +1,254 @@
-# Sentinel Core - Sistema de Gestión de Tickets para Centro Comercial
+# Sentinel Core Desktop — Gestión de Tickets para Centro Comercial
 
 <div align="center">
 
 ![React](https://img.shields.io/badge/React-19.2.4-61DAFB?style=flat-square&logo=react)
-![TypeScript](https://img.shields.io/badge/TypeScript-6.0.2-3178C6?style=flat-square&logo=typescript)
+![Rust](https://img.shields.io/badge/Rust-1.85+-DEA584?style=flat-square&logo=rust)
+![Tauri](https://img.shields.io/badge/Tauri-2.11.1-FFC131?style=flat-square&logo=tauri)
 ![Vite](https://img.shields.io/badge/Vite-8.0.4-646CFF?style=flat-square&logo=vite)
-![Tailwind](https://img.shields.io/badge/Tailwind%20CSS-4.2.2-38BDF8?style=flat-square&logo=tailwindcss)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?style=flat-square&logo=postgresql)
-![Prisma](https://img.shields.io/badge/Prisma-7.7.0-2D3748?style=flat-square)
-![Vitest](https://img.shields.io/badge/Vitest-4.1.5-6AD05F?style=flat-square)
+![Tailwind](https://img.shields.io/badge/Tailwind_CSS-4.2.2-38BDF8?style=flat-square&logo=tailwindcss)
+![SQLite](https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite)
+![Zustand](https://img.shields.io/badge/Zustand-5-433E38?style=flat-square)
 
 </div>
 
-## Descripción del Proyecto
+---
 
-Sentinel Core es una **plataforma web centralizada de gestión de tickets y monitoreo de SLA** diseñada específicamente para centros comerciales. El sistema permite optimizar la transparencia y el control operativo mediante el registro digital de incidencias, asignación inteligente de técnicos, seguimiento de acuerdos de nivel de servicio (SLA) y trazabilidad completa de todas las acciones realizadas.
+## 📋 Descripción
+
+Sentinel Core Desktop es una **aplicación nativa de escritorio** para la gestión de tickets y monitoreo de SLA en centros comerciales. Es la versión desktop de [Sentinel Core Web](https://github.com/GiuDPC/sentinel-core), migrada a **Tauri v2 + Rust + SQLite**, diseñada para funcionar en equipos de **hasta 2 GB de RAM**.
 
 ### Problema que Resuelve
 
-Los centros comerciales enfrentan desafíos operativos derivados de la comunicación verbal e informal:
-
-- **Falta de trazabilidad**: Los reportes de fallas se realizan de manera verbal, sin registro formal ni evidencia documental
-- **Sin indicadores de rendimiento**: No hay forma de medir tiempos de respuesta ni resolución para evaluar la eficiencia operativa
-- **Asignación opaca**: Los técnicos reciben tareas sin visibilidad de su carga de trabajo actual
-- **Incidentes duplicados**: No existe verificación de tickets previos similares, generando dispersión de esfuerzos
-- **Sin auditoría**: Imposible demostrar qué acciones se tomaron, cuándo y por quién ante situaciones críticas
-
-### Objetivos del Sistema
-
-1. **Diagnosticar** los procesos actuales de reporte y atención de fallas para identificar vulnerabilidades
-2. **Diseñar** la arquitectura del sistema y el modelado de base de datos relacional
-3. **Prototipar** interfaces intuitivas para registro de tickets y visualización de alertas
-4. **Automatizar** el flujo de trabajo de incidencias con persistencia de datos
-5. **Evaluar** mediante pruebas de usuario y estrés de datos
+| Problema | Solución |
+|----------|----------|
+| Reportes verbales sin registro | Sistema digital con trazabilidad completa |
+| Sin métricas de rendimiento | SLA automático + dashboards en tiempo real |
+| Asignación opaca de técnicos | Vista de carga de trabajo + asignación inteligente |
+| Incidentes duplicados | Búsqueda full-text + filtros combinados |
+| Sin auditoría | Trail de auditoría inmutable por ticket |
 
 ---
 
-## Tecnologías Componentes
+## 🚀 Stack Tecnológico
 
 ### Frontend
 
-| Tecnología    | Versión  | Descripción                        |
-| ------------- | -------- | ---------------------------------- |
-| React         | 19.2.4   | Biblioteca UI construir interfaces |
-| Vite          | 8.0.4    | Build tool y dev server            |
-| Tailwind CSS  | 4.2.2    | Framework CSS utility-first        |
-| Framer Motion | 12.38.0  | Animaciones y micro-interacciones  |
-| React Router  | 7.14.1   | Enrutamiento SPA                   |
-| Recharts      | -        | Gráficos y visualizaciones         |
-| Lucide React  | -        | Iconos SVG                         |
-| SweetAlert2   | 11.26.24 | Modales y notificaciones           |
-| Sonner        | 2.0.7    | Notificaciones toast               |
-| XLSX          | 0.18.5   | Exportación a Excel                |
-| Vitest        | 4.1.5    | Testing unitario                   |
-| JSdom         | 29.0.2   | DOM para testing                   |
+| Tecnología | Versión | Propósito |
+|------------|---------|-----------|
+| React | 19.2.4 | UI components |
+| Vite | 8.0.4 | Build tool & dev server |
+| Tailwind CSS | 4.2.2 | Estilos utility-first |
+| React Router | 7.14.1 | Enrutamiento (HashRouter) |
+| Zustand | 5.0.12 | Estado global (notificaciones) |
+| Framer Motion | 12.38.0 | Animaciones |
+| Recharts | 3.8.1 | Gráficos dashboard |
+| Sonner | 2.0.7 | Toasts |
+| SweetAlert2 | 11.26.24 | Modales |
+| Lucide React | 1.14.0 | Iconos SVG |
 
-### Backend
+### Backend (Rust/Tauri)
 
-| Tecnología | Versión | Descripción              |
-| ---------- | ------- | ------------------------ |
-| Express    | 5.2.1   | Framework webNode.js     |
-| TypeScript | 6.0.2   | Tipado estático          |
-| Prisma     | 7.7.0   | ORM PostgreSQL           |
-| PostgreSQL | 15+     | Base de datos relacional |
-| Zod        | 4.3.6   | Validación de esquemas   |
-| Argon2     | 0.44.0  | Hashing de contraseñas   |
-| JWT        | 9.0.3   | Autenticación tokens     |
-| Swagger UI | 5.0.1   | Documentación API        |
-| Vitest     | 4.1.4   | Testing                  |
+| Tecnología | Versión | Propósito |
+|------------|---------|-----------|
+| Tauri | 2.11.1 | Framework desktop nativo |
+| Rust | 2021 edition | Lenguaje backend |
+| SQLx | 0.8.6 | ORM asíncrono para SQLite |
+| Tokio | 1.52.3 | Runtime asíncrono |
+| Argon2 | 0.5 | Hashing de contraseñas |
+| SQLite | WAL mode | Base de datos embebida |
+| Chrono | 0.4 | Manejo de fechas SLA |
+
+### Plugins Tauri
+
+- `tauri-plugin-store` — Persistencia de sesión
+- `tauri-plugin-notification` — Notificaciones nativas
+- `tauri-plugin-dialog` — Diálogos de sistema
+- `tauri-plugin-process` — Gestión de procesos
 
 ---
 
-## Arquitectura del Sistema
+## 📁 Estructura del Proyecto
 
 ```
-sentinel-core/
-├── frontend/                 # Aplicación React
+sentinel-core-desktop/
+├── frontend/                     # React SPA
 │   ├── src/
-│   │   ├── api/            # Cliente API REST
-│   │   ├── components/      # Componentes reutilizables
-│   │   │   ├── auth/       # Autenticación
-│   │   │   ├── common/     # Componentes comunes
-│   │   │   ├── dashboard/ # Dashboard KPIs
-│   │   │   ├── layout/    # Layout principal
-│   │   │   └── ui/        # Componentes UI
-│   │   ├── contexts/      # React Context
-│   │   ├── hooks/        # Custom hooks
-│   │   ├── pages/        # Vistas por rol
-│   │   │   ├── admin/    # Panel Admin
-│   │   │   ├── requester/# Panel Usuario
-│   │   │   └── technician/# Panel Técnico
-│   │   ├── routes/       # Definición rutas
-│   │   ├── store/       # Estado global
-│   │   ├── test/        # Tests componentes
-│   │   └── api/        # Mocks API
-│   ├── public/           # Assets estáticos
+│   │   ├── api/                  # Llamadas IPC a Rust (11 módulos)
+│   │   ├── components/
+│   │   │   ├── auth/             # Login/Register forms
+│   │   │   ├── common/           # ProtectedRoute, LoadingSpinner
+│   │   │   ├── dashboard/        # KPIs y gráficos
+│   │   │   ├── layout/           # Sidebar, Header, MainLayout
+│   │   │   └── ui/               # Button, Input, Modal, Sonner
+│   │   ├── Contexts/             # AuthContext (Provider + Object)
+│   │   ├── hooks/                # Custom hooks
+│   │   ├── pages/                # Vistas por rol
+│   │   │   ├── admin/            # Admin dashboard, tickets, users, etc.
+│   │   │   ├── requester/        # Mis tickets, crear ticket
+│   │   │   └── technician/       # Tickets asignados, detalle
+│   │   ├── routes/               # HashRouter + lazy loading
+│   │   ├── store/                # Zustand store (notificaciones)
+│   │   └── constants/            # Estados, roles, colores
+│   ├── vite.config.js
 │   └── package.json
 │
-├── backend/                  # API REST
-│   ├── prisma/
-│   │   ├── migrations/  # Migraciones DB
-│   └── seed.ts       # Datos iniciales
+├── src-tauri/                    # Backend Rust
 │   ├── src/
-│   │   ├── __tests__/  # Tests unitarios
-│   │   ├── middlewares/# Middlewares Express
-│   │   ├── routes/    # Endpoints API
-│   │   ├── schemas/   # Zod esquemas
-│   │   ├── services/  # Lógica negocio
-│   │   ├── types/    # Tipos TypeScript
-│   │   └── utils/    # Utilidades
-│   └── package.json
+│   │   ├── main.rs               # Entry point
+│   │   ├── lib.rs                # Tauri builder + setup DB
+│   │   ├── commands/             # 11 módulos IPC (~40 comandos)
+│   │   │   ├── auth.rs           # Login, register, perfil
+│   │   │   ├── tickets.rs        # CRUD tickets + state machine
+│   │   │   ├── assignments.rs    # Asignar/reasignar técnicos
+│   │   │   ├── categories.rs     # CRUD categorías con SLA
+│   │   │   ├── users.rs          # Gestión de usuarios
+│   │   │   ├── comments.rs       # Comentarios en tickets
+│   │   │   ├── notifications.rs  # Notificaciones
+│   │   │   ├── metrics.rs        # KPIs del dashboard
+│   │   │   ├── audit.rs          # Trail de auditoría
+│   │   │   ├── diagnostics.rs    # Estado DB, reset
+│   │   │   └── backups.rs        # Backup/restore SQLite
+│   │   ├── models.rs             # 20+ modelos serde
+│   │   ├── errors.rs             # AppError + conversiones
+│   │   ├── sla.rs                # Calculadora SLA
+│   │   ├── state_machine.rs      # Máquina de estados tickets
+│   │   └── seed.rs               # Datos de prueba (35 tickets)
+│   ├── migrations/               # Schema SQLite inicial
+│   ├── icons/                    # Iconos multi-plataforma
+│   └── tauri.conf.json
 │
+├── .github/workflows/            # CI/CD (Windows + Linux)
 └── README.md
 ```
 
 ---
 
-## Modelo de Base de Datos
+## 📊 Modelo de Datos
 
-### Entidades Principales
-
-```
-┌─────────────────┐     ┌─────────────────┐
-│      User       │     │    Category     │
-├─────────────────┤     ├─────────────────┤
-│ id              │     │ id              │
-│ email           │     │ name            │
-│ password        │     │ description     │
-│ firstName       │────<│ departmentId    │
-│ lastName        │     │ priority        │
-│ phone           │     │ slaHours        │
-│ role            │     │ active          │
-│ departmentId    │     └─────────────────┘
-│ active          │               │
-│ createdAt       │               │
-│ updatedAt       │               │
-└─────────────────┘               │
-        │                         │
-        │ 1:N                     │
-        ▼                         ▼
-┌─────────────────┐     ┌─────────────────┐
-│   Assignment    │     │   Department    │
-├─────────────────┤     ├─────────────────┤
-│ id              │     │ id              │
-│ ticketId        │     │ name            │
-│ technicianId    │     │ description     │
-│ assignedAt      │     │ active          │
-│ unassignedAt    │     └─────────────────┘
-│ active          │
-└─────────────────┘
-        │
-        │ 1:N
-        ▼
-┌─────────────────┐     ┌─────────────────┐
-│     Ticket      │     │    Comment      │
-├─────────────────┤     ├─────────────────┤
-│ id              │     │ id              │
-│ ticketCode      │────>│ ticketId        │
-│ title           │     │ userId          │
-│ description     │     │ content         │
-│ location        │     │ isInternal      │
-│ status          │     │ createdAt       │
-│ priority        │     └─────────────────┘
-│ dueDate         │
-│ creatorId       │     ┌─────────────────┐
-│ categoryId      │     │   AuditLog
- slaBreached      │     ├─────────────────┤
-│ resolutionNote  │     │ id              │
-│ ratingComment   │     │ ticketId        │
-│ rating          │     │ userId          │
-│ createdAt       │     │ action          │
-│ updatedAt       │     │ oldValue        │
-└─────────────────┘     │ newValue        │
-                        │ createdAt       │
-                        └─────────────────┘
+```sql
+roles (1:N) → users (1:N) → tickets (M:N) → assignments (technician)
+                                ├── comments
+                                ├── notifications
+                                └── audit_logs
 ```
 
-#### Estados del Ticket
+### Estados del Ticket
 
 ```
-┌──────────────┐
-│     OPEN     │──── Nuevo ticket creado
-└──────┬───────┘
-       │ Asignado a técnico
-       ▼
-┌──────────────┐
-│   ASSIGNED   │──── Ticket asignado
-└──────┬───────┘
-       │ Inicia trabajo
-       ▼
-┌──────────────┐
-│ IN_PROGRESS  │──── Trabajando activamente
-└──────┬───────┘
-       │ En espera repuesto
-       ▼
-┌──────────────┐
-│  ON_HOLD     │──── Esperando repuesto
-└──────┬───────┘
-       │ Listo para confirmar
-       ▼
-┌──────────────┐
-│   AWAITING_  │──── Esperando confirmación
-│ CONFIRMATION │──── del solicitante
-└──────┬───────┘
-       │ Confirmado
-       ▼
-┌──────────────┐
-│  RESOLVED    │──── Completado
-└──────┬───────┘
-       │ Cerrado definit
-       ▼
-┌──────────────┐
-│   CLOSED     │──── Finalizado
-└──────────────┘
+OPEN → ASSIGNED → IN_PROGRESS → ON_HOLD (↻ IN_PROGRESS)
+                               → RESOLVED → AWAITING_CONFIRMATION → CLOSED
+                                                                  → IN_PROGRESS (rechazo)
 ```
 
-### Roles de Usuario
+### Roles
 
-| Rol        | Descripción   | Permisos                                                        |
-| ---------- | ------------- | --------------------------------------------------------------- |
-| ADMIN      | Administrador | Gestionar usuarios,ver todos tickets,asignar técnicoss,reportes |
-| TECHNICIAN | Técnico       | Ver tickets asignados,actualizar estado,resolver                |
-| REQUESTER  | Solicitante   | Crear tickets,ver mis tickets,confirmar resolución              |
+| Rol | Descripción | Acceso |
+|-----|-------------|--------|
+| ADMIN | Administrador centro comercial | Todos los tickets, usuarios, categorías, reportes, backups |
+| TECHNICIAN | Técnico de mantenimiento | Tickets asignados, actualizar estado, resolver |
+| REQUESTER | Locatario del centro comercial | Crear tickets, mis tickets, confirmar resolución |
 
 ---
 
-## SLA - Acuerdos de Nivel de Servicio
-
-El sistema calcula automáticamente el tiempo de vencimiento basado en:
-
-```
-prioridad → slaHours
-CRITICAL → 4 horas
-HIGH     → 8 horas
-MEDIUM   → 24 horas
-LOW      → 72 horas
-```
-
-### Estados SLA
-
-- **Normal**: Tiempo restante > 2 horas
-- **At Risk**: Tiempo restante < 2 horas
-- **Breached**: Tiempo vencido
-
----
-
-## Características Principales
-
-### Panel de Administración
-
-- KPIs en tiempo real (tickets totales,abiertos,vencidos,SLA)
-- Distribución por categoría y estado
-- Listado filtrable de todos los tickets
-- Asignación inteligente de técnicos (menor carga)
-- Reasignación de tickets
-- Reportes exportables a Excel
-- Auditoría completa de acciones
-
-### Panel de Solicitante
-
-- Crear tickets con categoría y prioridad
-- Seguimiento de mis tickets
-- Confirmar resolución con calificación
-- Comentarios y comunicaciones
-
-### Panel de Técnico
-
-- Tickets asignados con filtros
-- Actualización de estado
-- Notas de resolución
-- Carga de trabajo visible
-
-### Funcionalidades Globales
-
-- Generación automática de códigos de ticket
-- Cálculo automático de vencimiento SLA
-- Notificaciones en tiempo real
-- Trail de auditoría completo
-- Validación de esquemas con Zod
-- Documentación Swagger
-
----
-
-## Instalación y Configuración
+## ⚙️ Instalación y Desarrollo
 
 ### Prerrequisitos
 
-- Node.js 20+
-- PostgreSQL 15+
+- **Rust** 1.85+ (`rustup`)
+- **Node.js** 20+ (LTS)
+- **Tauri CLI v2**: `npm install -g @tauri-apps/cli`
+- **Linux**: `libwebkit2gtk-4.1-dev`, `libgtk-3-dev`, `libssl-dev`
 
-### Pasos
-
-1. **Clonar el repositorio**
-
-```bash
-git clone https://github.com/tu-usuario/sentinel-core.git
-cd sentinel-core
-```
-
-2. **Configurar base de datos**
+### Dev
 
 ```bash
-# Crear base de datos PostgreSQL
-createdb sentinel_core
-
-# Configurar variables de entorno
-cp backend/.env.example backend/.env
-# Editar .env con credenciales
-```
-
-3. **Instalar dependencias**
-
-```bash
-# Backend
-cd backend && npm install
+# Clonar
+git clone https://github.com/GiuDPC/sentinel-core-desktop.git
+cd sentinel-core-desktop
 
 # Frontend
-cd ../frontend && npm install
+cd frontend && npm install && cd ..
+
+# Iniciar dev (Tauri + Vite hot-reload)
+npm run tauri dev
 ```
 
-4. **Ejecutar migraciones**
+### Build
 
 ```bash
-cd backend
-npx prisma migrate dev
-npx prisma db seed
+# Windows: genera MSI + NSIS
+npm run tauri build -- --targets msi nsis
+
+# Linux: genera deb + AppImage
+npm run tauri build -- --targets deb appimage
 ```
 
-5. **Iniciar desarrollo**
+### Seed Data
+
+La primera vez que se inicia la app, se crea automáticamente la base de datos con datos de prueba:
+
+| Tipo | Cantidad | Credenciales |
+|------|----------|--------------|
+| Admins | 2 | `admin@sentinel.local` / `SentinelAdmin2026!` |
+| Técnicos | 5 | `carlos.perez@sentinel.local` / `Tecnico2026!` |
+| Locatarios | 8 | `ana.martinez@sentinel.local` / `Locatario2026!` |
+| Tickets | 35 | En varios estados (OPEN, ASSIGNED, IN_PROGRESS, etc.) |
+
+---
+
+## 🧪 Testing
 
 ```bash
-# Terminal 1 - Backend
-cd backend && npm run dev
-
-# Terminal 2 - Frontend
-cd frontend && npm run dev
+cd frontend && npm test           # Vitest
+cd src-tauri && cargo test        # Rust tests
 ```
 
 ---
 
-## Scripts Disponibles
+## 🔧 CI/CD
 
-### Frontend
+GitHub Actions automatiza:
 
-```bash
-npm run dev      # Iniciar desarrollo
-npm run build   # Production build
-npm run preview # Preview build
-npm run lint   # Linting
-npm run test   # Tests unitarios
-```
+1. **Check** — ESLint + Clippy + compile check
+2. **Windows** — Build MSI + NSIS installers
+3. **Linux** — Build deb + AppImage
 
-### Backend
-
-```bash
-npm run dev         # Desarrollo con watch
-npm run build     # Compilar TypeScript
-npm run start      # Production
-npm run test       # Tests
-npm run test:watch # Tests watch mode
-```
+Los artifacts se suben como instalables listos para distribuir.
 
 ---
 
-## Documentación API
+## 📦 Requisitos de Sistema
 
-Accede a `/api/docs` cuando el backend esté运行ando para ver Swagger UI.
-
----
-
-## Testing
-
-### Cobertura Actual
-
-- **Frontend**: 33 tests passing
-- **Backend**: 31 tests passing
-
-### Ejecutar Tests
-
-```bash
-# Frontend
-cd frontend && npm test
-
-# Backend
-cd backend && npm test
-```
+| Plataforma | Mínimo | Recomendado |
+|------------|--------|-------------|
+| Windows | Windows 10 1809+ | Windows 11 |
+| Linux | Ubuntu 22.04+ | Ubuntu 24.04+ |
+| RAM | 2 GB | 4 GB+ |
+| Disco | 500 MB | 1 GB+ |
+| WebView2 | Bootstrapper (descarga automática en Win < 1903) | Integrado |
 
 ---
 
-## Contribución
+## 🔐 Seguridad
 
-1. Fork el repositorio
-2. Crear rama feature (`git checkout -b feature:Nombre`)
-3. commit cambios (`git commit -m 'Add feature'`)
-4. push a rama (`git push origin feature:Nombre`)
-5. Crear Pull Request
-
----
-
-## Licencia
-
-MIT License - Ver [LICENSE.md](LICENSE.md)
+- Contraseñas hasheadas con **Argon2id**
+- Sanitización XSS en inputs
+- SQLite con **WAL mode** + **foreign keys**
+- Backup atómico vía `VACUUM INTO`
+- Auditoría inmutable por ticket
+- Sin JWT — sesión local vía plugin-store (app desktop)
 
 ---
 
-## Autores
+## 📄 Licencia
+
+MIT License — Ver [LICENSE](https://github.com/GiuDPC/sentinel-core-desktop/blob/main/LICENSE)
+
+---
+
+## 👥 Autores
 
 - [@GiuDPC](https://github.com/GiuDPC)
-- [@Gabrielart2005](https://github.com/Gabrielart2005)
 
 Proyecto desarrollado en 2026.

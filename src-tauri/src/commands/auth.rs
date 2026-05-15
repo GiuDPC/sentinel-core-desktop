@@ -109,7 +109,7 @@ pub async fn login(
 
 #[tauri::command]
 pub async fn logout() -> Result<(), AppError> {
-    // Al no usar JWT, el frontend maneja la eliminación de la sesión en su plugin-store.
+    // Sin JWT — el frontend limpia la sesión vía plugin-store
     Ok(())
 }
 
@@ -216,11 +216,11 @@ pub async fn get_profile(
     user_id: String,
     db: State<'_, SqlitePool>,
 ) -> Result<UserResponse, AppError> {
-    let user: User = sqlx::query_as("SELECT * FROM users WHERE id = ?1")
+    let user: User = sqlx::query_as("SELECT * FROM users WHERE id = ?1 AND is_active = 1")
         .bind(&user_id)
         .fetch_optional(db.inner())
         .await?
-        .ok_or_else(|| AppError::NotFound("Usuario no encontrado".into()))?;
+        .ok_or_else(|| AppError::NotFound("Usuario no encontrado o desactivado".into()))?;
 
     Ok(user_to_response(&user, db.inner()).await)
 }

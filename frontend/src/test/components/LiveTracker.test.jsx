@@ -10,10 +10,10 @@ function renderWithRouter(ui) {
 describe('LiveTracker', () => {
   it('renders step labels', () => {
     renderWithRouter(<LiveTracker currentStatus="OPEN" />)
-    expect(screen.getByText('Reportado')).toBeInTheDocument()
+    expect(screen.getByText('Abierto')).toBeInTheDocument()
     expect(screen.getByText('Asignado')).toBeInTheDocument()
-    expect(screen.getByText('En proceso')).toBeInTheDocument()
-    expect(screen.getByText('Confirmacion')).toBeInTheDocument()
+    expect(screen.getByText('En Proceso')).toBeInTheDocument()
+    expect(screen.getByText('Esperando Confirmación')).toBeInTheDocument()
     expect(screen.getByText('Cerrado')).toBeInTheDocument()
   })
 

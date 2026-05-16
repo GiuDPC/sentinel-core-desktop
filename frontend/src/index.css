@@ -1,5 +1,15 @@
 @import "tailwindcss" layer(base);
 
+/* ─── Ocultar botón nativo de revelar contraseña del WebView ───
+ * Chromium/Edge WebView2 agrega su propio botón de visualizar contraseña
+ * en inputs type="password" con contenido. Como ya tenemos el nuestro
+ * personalizado en <Input type="password">, ocultamos el nativo para
+ * evitar duplicados. */
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-reveal-button {
+  display: none !important;
+}
+
 @theme {
   /* Paleta Primary (Escala 50-900)  */
   --color-primary-50: #EFF6FF;
